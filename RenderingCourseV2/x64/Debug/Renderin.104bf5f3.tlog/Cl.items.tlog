@@ -1,1 +1,6 @@
 G:\RenderingCourseV2\RenderingCourseV2\MySuper3DApp.cpp;G:\RenderingCourseV2\RenderingCourseV2\x64\Debug\MySuper3DApp.obj
+G:\RenderingCourseV2\RenderingCourseV2\Game.cpp;G:\RenderingCourseV2\RenderingCourseV2\x64\Debug\Game.obj
+G:\RenderingCourseV2\RenderingCourseV2\GameComponent.cpp;G:\RenderingCourseV2\RenderingCourseV2\x64\Debug\GameComponent.obj
+G:\RenderingCourseV2\RenderingCourseV2\DisplayWin32.cpp;G:\RenderingCourseV2\RenderingCourseV2\x64\Debug\DisplayWin32.obj
+G:\RenderingCourseV2\RenderingCourseV2\InputDevice.cpp;G:\RenderingCourseV2\RenderingCourseV2\x64\Debug\InputDevice.obj
+G:\RenderingCourseV2\RenderingCourseV2\TriangleComponent.cpp;G:\RenderingCourseV2\RenderingCourseV2\x64\Debug\TriangleComponent.obj
