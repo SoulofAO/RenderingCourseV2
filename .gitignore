@@ -33,4 +33,5 @@
 
 .vs\
 /.vs
-/RenderingCourseV2/x64/Debug
+/RenderingCourseV2/x64
+/x64
