@@ -1,8 +1,2 @@
-﻿  MySuper3DApp.cpp
-  Game.cpp
-  GameComponent.cpp
-  DisplayWin32.cpp
-  InputDevice.cpp
-  TriangleComponent.cpp
-  Generating Code...
+﻿  Game.cpp
   RenderingCourseV2.vcxproj -> G:\RenderingCourseV2\x64\Debug\RenderingCourseV2.exe
