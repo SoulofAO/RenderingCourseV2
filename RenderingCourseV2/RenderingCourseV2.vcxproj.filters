@@ -22,42 +22,45 @@
     <ClCompile Include="MySuper3DApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Game.cpp">
+    <ClCompile Include="Abstracts\DisplayWin32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GameComponent.cpp">
+    <ClCompile Include="Abstracts\Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DisplayWin32.cpp">
+    <ClCompile Include="Abstracts\GameComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InputDevice.cpp">
+    <ClCompile Include="Abstracts\InputDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TriangleComponent.cpp">
+    <ClCompile Include="FirstTask\TriangleComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PingPong.cpp">
+    <ClCompile Include="PingPongTask\PingPong.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game.h">
+    <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GameComponent.h">
+    <ClInclude Include="Abstracts\DisplayWin32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DisplayWin32.h">
+    <ClInclude Include="Abstracts\Game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InputDevice.h">
+    <ClInclude Include="Abstracts\GameComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TriangleComponent.h">
+    <ClInclude Include="Abstracts\InputDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PingPongSphere.h">
+    <ClInclude Include="FirstTask\TriangleComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PingPongTask\PingPongSphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -65,5 +68,10 @@
     <None Include="Shaders\MyVeryFirstShader.hlsl">
       <Filter>Shader Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RenderingCourseV2.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

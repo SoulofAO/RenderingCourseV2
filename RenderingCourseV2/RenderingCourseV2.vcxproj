@@ -127,24 +127,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Abstracts\DisplayWin32.cpp" />
+    <ClCompile Include="Abstracts\Game.cpp" />
+    <ClCompile Include="Abstracts\GameComponent.cpp" />
+    <ClCompile Include="Abstracts\InputDevice.cpp" />
+    <ClCompile Include="FirstTask\TriangleComponent.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
-    <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GameComponent.cpp" />
-    <ClCompile Include="DisplayWin32.cpp" />
-    <ClCompile Include="InputDevice.cpp" />
-    <ClCompile Include="PingPong.cpp" />
-    <ClCompile Include="TriangleComponent.cpp" />
+    <ClCompile Include="PingPongTask\PingPong.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game.h" />
-    <ClInclude Include="GameComponent.h" />
-    <ClInclude Include="DisplayWin32.h" />
-    <ClInclude Include="InputDevice.h" />
-    <ClInclude Include="PingPongSphere.h" />
-    <ClInclude Include="TriangleComponent.h" />
+    <ClInclude Include="Abstracts\DisplayWin32.h" />
+    <ClInclude Include="Abstracts\Game.h" />
+    <ClInclude Include="Abstracts\GameComponent.h" />
+    <ClInclude Include="Abstracts\InputDevice.h" />
+    <ClInclude Include="FirstTask\TriangleComponent.h" />
+    <ClInclude Include="PingPongTask\PingPongSphere.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\MyVeryFirstShader.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RenderingCourseV2.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

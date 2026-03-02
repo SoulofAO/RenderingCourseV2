@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GameComponent.h"
+#include "..//Abstracts//GameComponent.h"
 #include <d3d11.h>
 
 class TriangleComponent : public GameComponent
