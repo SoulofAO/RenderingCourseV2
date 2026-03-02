@@ -37,6 +37,9 @@
     <ClCompile Include="TriangleComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PingPong.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -52,6 +55,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TriangleComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PingPongSphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

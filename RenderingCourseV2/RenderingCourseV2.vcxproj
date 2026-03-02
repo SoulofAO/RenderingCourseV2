@@ -132,6 +132,7 @@
     <ClCompile Include="GameComponent.cpp" />
     <ClCompile Include="DisplayWin32.cpp" />
     <ClCompile Include="InputDevice.cpp" />
+    <ClCompile Include="PingPong.cpp" />
     <ClCompile Include="TriangleComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -139,6 +140,7 @@
     <ClInclude Include="GameComponent.h" />
     <ClInclude Include="DisplayWin32.h" />
     <ClInclude Include="InputDevice.h" />
+    <ClInclude Include="PingPongSphere.h" />
     <ClInclude Include="TriangleComponent.h" />
   </ItemGroup>
   <ItemGroup>
