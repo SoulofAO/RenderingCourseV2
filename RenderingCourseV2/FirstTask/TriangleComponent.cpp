@@ -153,7 +153,7 @@ void TriangleComponent::Initialize()
 	IndexData.pSysMem = Indices;
 	IndexData.SysMemPitch = 0;
 	IndexData.SysMemSlicePitch = 0;
-
+	
 	Device->CreateBuffer(&IndexBufferDescription, &IndexData, &IndexBuffer);
 
 	CD3D11_RASTERIZER_DESC RasterizerDescription = {};

@@ -20,10 +20,22 @@ MeshUniversalComponent::MeshUniversalComponent(Game* GameInstance)
 	, IndexCount(0)
 {
 	Vertices = {
-		MeshUniversalVertex{ DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-		MeshUniversalVertex{ DirectX::XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-		MeshUniversalVertex{ DirectX::XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-		MeshUniversalVertex{ DirectX::XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) }
+		MeshUniversalVertex{
+			DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),
+			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT2(1.0f, 0.0f) },
+		MeshUniversalVertex{
+			DirectX::XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f),
+			DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT2(0.0f, 1.0f) },
+		MeshUniversalVertex{
+			DirectX::XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f),
+			DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT2(1.0f, 1.0f) },
+		MeshUniversalVertex{
+			DirectX::XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f),
+			DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT2(0.0f, 0.0f) }
 	};
 
 	Indices = { 0, 1, 2, 1, 0, 3 };
@@ -129,15 +141,24 @@ void MeshUniversalComponent::Initialize()
 			0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		D3D11_INPUT_ELEMENT_DESC{
 			"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		D3D11_INPUT_ELEMENT_DESC{
+			"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
 			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	Device->CreateInputLayout(
+	Result = Device->CreateInputLayout(
 		InputElements,
-		2,
+		3,
 		VertexShaderByteCode->GetBufferPointer(),
 		VertexShaderByteCode->GetBufferSize(),
 		&Layout);
+
+	if (FAILED(Result))
+	{
+		std::cerr << "Failed to create input layout. Shader input signature does not match vertex format." << std::endl;
+		return;
+	}
 
 	if (Vertices.empty())
 	{

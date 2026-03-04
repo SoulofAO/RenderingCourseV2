@@ -10,6 +10,7 @@ struct MeshUniversalVertex
 {
 	DirectX::XMFLOAT4 Position;
 	DirectX::XMFLOAT4 Color;
+	DirectX::XMFLOAT2 TextureCoordinates;
 };
 
 class MeshUniversalComponent : public GameComponent
@@ -27,6 +28,8 @@ public:
 	std::string PixelShaderName = "";
 	std::vector<MeshUniversalVertex> Vertices;
 	std::vector<unsigned int> Indices;
+	
+	DirectX::XMFLOAT3 Position; 
 	
 private:
 	ID3D11InputLayout* Layout;
