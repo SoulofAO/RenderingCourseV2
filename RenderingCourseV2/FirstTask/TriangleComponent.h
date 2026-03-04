@@ -1,18 +1,20 @@
 #pragma once
 
-#include "Abstracts/GameComponent.h"
+#include "Abstracts/Components/RenderingComponent.h"
 #include <d3d11.h>
 
-class TriangleComponent : public GameComponent
+class SceneViewportSubsystem;
+
+class TriangleComponent : public RenderingComponent
 {
 public:
-	TriangleComponent(Game* GameInstance);
+	TriangleComponent();
 	~TriangleComponent() override;
 
 	void Initialize() override;
 	void Update(float DeltaTime) override;
-	void Draw() override;
-	void DestroyResources() override;
+	void Shutdown() override;
+	void Render(SceneViewportSubsystem* SceneViewport) override;
 
 private:
 	ID3D11InputLayout* Layout;

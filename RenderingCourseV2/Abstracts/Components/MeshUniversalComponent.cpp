@@ -1,14 +1,16 @@
-#include "Abstracts/MeshUniversalComponent.h"
-#include "Abstracts/Game.h"
-#include "Abstracts/DisplayWin32.h"
+#include "Abstracts/Components/MeshUniversalComponent.h"
+#include "Abstracts/Core/Game.h"
+#include "Abstracts/Core/Actor.h"
+#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
+#include "Abstracts/Subsystems/DisplayWin32.h"
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <iostream>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
-MeshUniversalComponent::MeshUniversalComponent(Game* GameInstance)
-	: GameComponent(GameInstance)
+MeshUniversalComponent::MeshUniversalComponent()
+	: RenderingComponent()
 	, Layout(nullptr)
 	, VertexShader(nullptr)
 	, VertexShaderByteCode(nullptr)
@@ -45,12 +47,30 @@ MeshUniversalComponent::MeshUniversalComponent(Game* GameInstance)
 
 MeshUniversalComponent::~MeshUniversalComponent()
 {
-	DestroyResources();
+	Shutdown();
 }
 
 void MeshUniversalComponent::Initialize()
 {
-	ID3D11Device* Device = OwningGame->GetDevice();
+	RenderingComponent::Initialize();
+
+	Game* OwningGame = GetOwningGame();
+	if (OwningGame == nullptr)
+	{
+		return;
+	}
+
+	SceneViewportSubsystem* SceneViewport = OwningGame->GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewport == nullptr)
+	{
+		return;
+	}
+
+	ID3D11Device* Device = SceneViewport->GetDevice();
+	if (Device == nullptr)
+	{
+		return;
+	}
 
 	if (VertexShaderName.empty())
 	{
@@ -71,7 +91,7 @@ void MeshUniversalComponent::Initialize()
 	auto Result = D3DCompileFromFile(
 		VertexShaderFilePath.c_str(),
 		nullptr,
-		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		"VSMain",
 		"vs_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
@@ -89,7 +109,7 @@ void MeshUniversalComponent::Initialize()
 		else
 		{
 			MessageBox(
-				OwningGame->GetDisplay()->GetWindowHandle(),
+				SceneViewport->GetDisplay()->GetWindowHandle(),
 				L"MyVeryFirstShader.hlsl",
 				L"Missing Shader File",
 				MB_OK);
@@ -107,7 +127,7 @@ void MeshUniversalComponent::Initialize()
 	Result = D3DCompileFromFile(
 		PixelShaderFilePath.c_str(),
 		ShaderMacros,
-		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		"PSMain",
 		"ps_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
@@ -230,11 +250,16 @@ void MeshUniversalComponent::Initialize()
 
 void MeshUniversalComponent::Update(float DeltaTime)
 {
+	RenderingComponent::Update(DeltaTime);
 }
 
-void MeshUniversalComponent::Draw()
+void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 {
-	ID3D11DeviceContext* DeviceContext = OwningGame->GetDeviceContext();
+	ID3D11DeviceContext* DeviceContext = SceneViewport->GetDeviceContext();
+	if (DeviceContext == nullptr)
+	{
+		return;
+	}
 
 	DeviceContext->RSSetState(RasterState);
 	DeviceContext->IASetInputLayout(Layout);
@@ -247,13 +272,20 @@ void MeshUniversalComponent::Draw()
 
 	if (TransformConstantBuffer)
 	{
+		Game* OwningGame = GetOwningGame();
+		if (OwningGame == nullptr)
+		{
+			return;
+		}
+
 		float ScreenWidth = static_cast<float>(OwningGame->GetScreenWidth());
 		float ScreenHeight = static_cast<float>(OwningGame->GetScreenHeight());
 
-		if (ScreenHeight > 0.0f)
+		if (ScreenHeight > 0.0f && GetOwningActor() != nullptr)
 		{
 			float AspectRatio = ScreenWidth / ScreenHeight;
-			DirectX::XMMATRIX WorldMatrix = DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
+			DirectX::XMFLOAT3 ActorPosition = GetOwningActor()->GetPosition();
+			DirectX::XMMATRIX WorldMatrix = DirectX::XMMatrixTranslation(ActorPosition.x + Position.x, ActorPosition.y + Position.y, ActorPosition.z + Position.z);
 			DirectX::XMMATRIX ViewMatrix = DirectX::XMMatrixIdentity();
 			DirectX::XMMATRIX ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(
 				DirectX::XMConvertToRadians(60.0f),
@@ -285,8 +317,13 @@ void MeshUniversalComponent::Draw()
 	DeviceContext->DrawIndexed(IndexCount, 0, 0);
 }
 
-void MeshUniversalComponent::DestroyResources()
+void MeshUniversalComponent::Shutdown()
 {
+	if (GetIsInitialized() == false)
+	{
+		return;
+	}
+
 	if (Layout)
 	{
 		Layout->Release();
@@ -340,4 +377,6 @@ void MeshUniversalComponent::DestroyResources()
 		RasterState->Release();
 		RasterState = nullptr;
 	}
+
+	RenderingComponent::Shutdown();
 }

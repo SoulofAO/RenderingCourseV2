@@ -1,4 +1,4 @@
-#include "InputDevice.h"
+#include "Abstracts/Subsystems/InputDevice.h"
 
 InputDevice::InputDevice(Game* GameInstance)
 	: OwningGame(GameInstance)

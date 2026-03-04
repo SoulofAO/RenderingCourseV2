@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Abstracts/GameComponent.h"
+#include "Abstracts/Components/RenderingComponent.h"
 #include <d3d11.h>
 #include <directxmath.h>
 #include <string>
@@ -18,24 +18,26 @@ struct MeshUniversalTransformBufferData
 	DirectX::XMFLOAT4X4 WorldViewProjectionMatrix;
 };
 
-class MeshUniversalComponent : public GameComponent
+class SceneViewportSubsystem;
+
+class MeshUniversalComponent : public RenderingComponent
 {
 public:
-	MeshUniversalComponent(Game* GameInstance);
+	MeshUniversalComponent();
 	~MeshUniversalComponent() override;
 
 	void Initialize() override;
 	void Update(float DeltaTime) override;
-	void Draw() override;
-	void DestroyResources() override;
+	void Render(SceneViewportSubsystem* SceneViewport) override;
+	void Shutdown() override;
 
 	std::string VertexShaderName = "";
 	std::string PixelShaderName = "";
 	std::vector<MeshUniversalVertex> Vertices;
 	std::vector<unsigned int> Indices;
-	
-	DirectX::XMFLOAT3 Position; 
-	
+
+	DirectX::XMFLOAT3 Position;
+
 private:
 	ID3D11InputLayout* Layout;
 	ID3D11VertexShader* VertexShader;

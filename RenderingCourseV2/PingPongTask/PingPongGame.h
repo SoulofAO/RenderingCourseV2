@@ -1,11 +1,15 @@
 #pragma once
-#include "Abstracts/Game.h"
+#include "Abstracts/Core/Game.h"
 
 
 class PingPongGame : public Game
 {
-    virtual void BeginPlay();
-    virtual void Update(float DeltaTime);
+public:
+	PingPongGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight);
+
+protected:
+	void BeginPlay() override;
+	void Update(float DeltaTime) override;
     
-    int WinConditionPoint = 5;
+	int WinConditionPoint;
 };

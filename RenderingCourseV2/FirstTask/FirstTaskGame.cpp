@@ -1,14 +1,18 @@
 #include "FirstTaskGame.h"
+#include "FirstTask/TriangleComponent.h"
+#include "Abstracts/Core/Actor.h"
 
 FirstTaskGame::FirstTaskGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Game(ApplicationName, ScreenWidth, ScreenHeight)
 {
 }
 
-void FirstTaskGame::Draw()
+void FirstTaskGame::BeginPlay()
 {
-	float ClearColor[] = { TotalTime, 0.1f, 0.1f, 1.0f };
-	Context->ClearRenderTargetView(RenderView, ClearColor);
+	std::unique_ptr<Actor> TriangleActor = std::make_unique<Actor>();
+	std::unique_ptr<TriangleComponent> Triangle = std::make_unique<TriangleComponent>();
+	TriangleActor->AddComponent(std::move(Triangle));
+	AddActor(std::move(TriangleActor));
 
-	Game::Draw();
+	Game::BeginPlay();
 }

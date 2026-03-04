@@ -1,13 +1,8 @@
 #pragma once
-#include "Abstracts/MeshUniversalComponent.h"
+#include "Abstracts/Core/Actor.h"
 
-class PingPongSphere : public MeshUniversalComponent
+class PingPongSphere : public Actor
 {
 public:
-	PingPongSphere(Game* GameInstance);
-
-public:
-	virtual void Initialize() override;
-	virtual void Update(float DeltaTime) override;
+	PingPongSphere();
 };
-

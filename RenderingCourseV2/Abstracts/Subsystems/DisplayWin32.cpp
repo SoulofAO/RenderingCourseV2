@@ -1,4 +1,4 @@
-#include "DisplayWin32.h"
+#include "Abstracts/Subsystems/DisplayWin32.h"
 
 DisplayWin32::DisplayWin32(LPCWSTR ApplicationName, HINSTANCE InstanceHandle, int Width, int Height, WndProcCallback MessageCallback)
 	: InstanceHandle(InstanceHandle)

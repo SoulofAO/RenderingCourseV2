@@ -1,14 +1,15 @@
 #include "TriangleComponent.h"
-#include "Abstracts/Game.h"
-#include "Abstracts/DisplayWin32.h"
+#include "Abstracts/Core/Game.h"
+#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
+#include "Abstracts/Subsystems/DisplayWin32.h"
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <iostream>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
-TriangleComponent::TriangleComponent(Game* GameInstance)
-	: GameComponent(GameInstance)
+TriangleComponent::TriangleComponent()
+	: RenderingComponent()
 	, Layout(nullptr)
 	, VertexShader(nullptr)
 	, VertexShaderByteCode(nullptr)
@@ -23,18 +24,36 @@ TriangleComponent::TriangleComponent(Game* GameInstance)
 
 TriangleComponent::~TriangleComponent()
 {
-	DestroyResources();
+	Shutdown();
 }
 
 void TriangleComponent::Initialize()
 {
-	ID3D11Device* Device = OwningGame->GetDevice();
+	RenderingComponent::Initialize();
+
+	Game* OwningGame = GetOwningGame();
+	if (OwningGame == nullptr)
+	{
+		return;
+	}
+
+	SceneViewportSubsystem* SceneViewport = OwningGame->GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewport == nullptr)
+	{
+		return;
+	}
+
+	ID3D11Device* Device = SceneViewport->GetDevice();
+	if (Device == nullptr)
+	{
+		return;
+	}
 
 	ID3DBlob* ErrorCode = nullptr;
 	auto Result = D3DCompileFromFile(
 		L"./Shaders/FirstTask/MyVeryFirstShader.hlsl",
 		nullptr,
-		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		"VSMain",
 		"vs_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
@@ -52,7 +71,7 @@ void TriangleComponent::Initialize()
 		else
 		{
 			MessageBox(
-				OwningGame->GetDisplay()->GetWindowHandle(),
+				SceneViewport->GetDisplay()->GetWindowHandle(),
 				L"MyVeryFirstShader.hlsl",
 				L"Missing Shader File",
 				MB_OK);
@@ -70,7 +89,7 @@ void TriangleComponent::Initialize()
 	Result = D3DCompileFromFile(
 		L"./Shaders/FirstTask/MyVeryFirstShader.hlsl",
 		ShaderMacros,
-		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		"PSMain",
 		"ps_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
@@ -165,11 +184,16 @@ void TriangleComponent::Initialize()
 
 void TriangleComponent::Update(float DeltaTime)
 {
+	RenderingComponent::Update(DeltaTime);
 }
 
-void TriangleComponent::Draw()
+void TriangleComponent::Render(SceneViewportSubsystem* SceneViewport)
 {
-	ID3D11DeviceContext* DeviceContext = OwningGame->GetDeviceContext();
+	ID3D11DeviceContext* DeviceContext = SceneViewport->GetDeviceContext();
+	if (DeviceContext == nullptr)
+	{
+		return;
+	}
 
 	DeviceContext->RSSetState(RasterState);
 	DeviceContext->IASetInputLayout(Layout);
@@ -186,8 +210,13 @@ void TriangleComponent::Draw()
 	DeviceContext->DrawIndexed(IndexCount, 0, 0);
 }
 
-void TriangleComponent::DestroyResources()
+void TriangleComponent::Shutdown()
 {
+	if (GetIsInitialized() == false)
+	{
+		return;
+	}
+
 	if (Layout)
 	{
 		Layout->Release();
@@ -235,4 +264,6 @@ void TriangleComponent::DestroyResources()
 		RasterState->Release();
 		RasterState = nullptr;
 	}
+
+	RenderingComponent::Shutdown();
 }

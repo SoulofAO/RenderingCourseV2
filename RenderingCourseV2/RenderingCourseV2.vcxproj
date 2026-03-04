@@ -131,11 +131,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Abstracts\DisplayWin32.cpp" />
-    <ClCompile Include="Abstracts\Game.cpp" />
-    <ClCompile Include="Abstracts\GameComponent.cpp" />
-    <ClCompile Include="Abstracts\InputDevice.cpp" />
-    <ClCompile Include="Abstracts\MeshUniversalComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\ActorComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\GameComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\PhysicsComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\RenderingComponent.cpp" />
+    <ClCompile Include="Abstracts\Core\Actor.cpp" />
+    <ClCompile Include="Abstracts\Core\Game.cpp" />
+    <ClCompile Include="Abstracts\Core\Object.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\DisplayWin32.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\InputDevice.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\PhysicsSubsystem.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\SceneViewportSubsystem.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\Subsystem.cpp" />
     <ClCompile Include="FirstTask\FirstTaskGame.cpp" />
     <ClCompile Include="FirstTask\TriangleComponent.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
@@ -144,11 +152,19 @@
     <ClCompile Include="PingPongTask\PingPongSphere.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Abstracts\DisplayWin32.h" />
-    <ClInclude Include="Abstracts\Game.h" />
-    <ClInclude Include="Abstracts\GameComponent.h" />
-    <ClInclude Include="Abstracts\InputDevice.h" />
-    <ClInclude Include="Abstracts\MeshUniversalComponent.h" />
+    <ClInclude Include="Abstracts\Components\ActorComponent.h" />
+    <ClInclude Include="Abstracts\Components\GameComponent.h" />
+    <ClInclude Include="Abstracts\Components\MeshUniversalComponent.h" />
+    <ClInclude Include="Abstracts\Components\PhysicsComponent.h" />
+    <ClInclude Include="Abstracts\Components\RenderingComponent.h" />
+    <ClInclude Include="Abstracts\Core\Actor.h" />
+    <ClInclude Include="Abstracts\Core\Game.h" />
+    <ClInclude Include="Abstracts\Core\Object.h" />
+    <ClInclude Include="Abstracts\Subsystems\DisplayWin32.h" />
+    <ClInclude Include="Abstracts\Subsystems\InputDevice.h" />
+    <ClInclude Include="Abstracts\Subsystems\PhysicsSubsystem.h" />
+    <ClInclude Include="Abstracts\Subsystems\SceneViewportSubsystem.h" />
+    <ClInclude Include="Abstracts\Subsystems\Subsystem.h" />
     <ClInclude Include="FirstTask\FirstTaskGame.h" />
     <ClInclude Include="FirstTask\TriangleComponent.h" />
     <ClInclude Include="PingPongTask\PingPongGame.h" />

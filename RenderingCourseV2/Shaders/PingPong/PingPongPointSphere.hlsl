@@ -1,4 +1,4 @@
-#include "Abstracts/MeshUniversalShared.hlsli"
+#include "../Abstracts/MeshUniversalShared.hlsli"
 
 PS_IN VSMain( VS_IN input )
 {

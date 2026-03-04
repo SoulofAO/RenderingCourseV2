@@ -19,25 +19,61 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Abstracts\Components\ActorComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="MySuper3DApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Abstracts\DisplayWin32.cpp">
+    <ClCompile Include="Abstracts\Subsystems\DisplayWin32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Abstracts\Game.cpp">
+    <ClCompile Include="Abstracts\Core\Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Abstracts\GameComponent.cpp">
+    <ClCompile Include="Abstracts\Components\GameComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Abstracts\InputDevice.cpp">
+    <ClCompile Include="Abstracts\Subsystems\InputDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Core\Object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Components\PhysicsComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Subsystems\PhysicsSubsystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Components\RenderingComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Subsystems\SceneViewportSubsystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Subsystems\Subsystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Core\Actor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FirstTask\FirstTaskGame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FirstTask\TriangleComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PingPongTask\PingPong.cpp">
+    <ClCompile Include="PingPongTask\PingPongGame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PingPongTask\PingPongPlane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PingPongTask\PingPongSphere.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -45,19 +81,55 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Abstracts\DisplayWin32.h">
+    <ClInclude Include="Abstracts\Subsystems\DisplayWin32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Abstracts\Game.h">
+    <ClInclude Include="Abstracts\Core\Game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Abstracts\GameComponent.h">
+    <ClInclude Include="Abstracts\Core\Actor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Abstracts\InputDevice.h">
+    <ClInclude Include="Abstracts\Components\ActorComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Components\GameComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Subsystems\InputDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FirstTask\TriangleComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Components\MeshUniversalComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Core\Object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Components\PhysicsComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Subsystems\PhysicsSubsystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Components\RenderingComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Subsystems\SceneViewportSubsystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Subsystems\Subsystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FirstTask\FirstTaskGame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PingPongTask\PingPongGame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PingPongTask\PingPongPlane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PingPongTask\PingPongSphere.h">

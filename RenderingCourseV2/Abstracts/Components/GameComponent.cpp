@@ -1,4 +1,4 @@
-#include "GameComponent.h"
+#include "Abstracts/Components/GameComponent.h"
 
 GameComponent::GameComponent(Game* GameInstance)
 	: OwningGame(GameInstance)
