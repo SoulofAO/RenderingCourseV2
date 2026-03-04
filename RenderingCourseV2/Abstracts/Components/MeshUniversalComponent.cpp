@@ -21,6 +21,9 @@ MeshUniversalComponent::MeshUniversalComponent()
 	, IndexBuffer(nullptr)
 	, RasterState(nullptr)
 	, IndexCount(0)
+	, UseOrthographicProjection(true)
+	, OrthographicProjectionWidth(4.5f)
+	, OrthographicProjectionHeight(2.6f)
 {
 	Transform NewLocalTransform;
 	NewLocalTransform.Position = DirectX::XMFLOAT3(0.0f, 0.0f, 2.0f);
@@ -256,6 +259,29 @@ void MeshUniversalComponent::Update(float DeltaTime)
 	RenderingComponent::Update(DeltaTime);
 }
 
+void MeshUniversalComponent::SetUseOrthographicProjection(bool NewUseOrthographicProjection)
+{
+	UseOrthographicProjection = NewUseOrthographicProjection;
+}
+
+bool MeshUniversalComponent::GetUseOrthographicProjection() const
+{
+	return UseOrthographicProjection;
+}
+
+void MeshUniversalComponent::SetOrthographicProjectionSize(float NewOrthographicProjectionWidth, float NewOrthographicProjectionHeight)
+{
+	if (NewOrthographicProjectionWidth > 0.0f)
+	{
+		OrthographicProjectionWidth = NewOrthographicProjectionWidth;
+	}
+
+	if (NewOrthographicProjectionHeight > 0.0f)
+	{
+		OrthographicProjectionHeight = NewOrthographicProjectionHeight;
+	}
+}
+
 void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 {
 	ID3D11DeviceContext* DeviceContext = SceneViewport->GetDeviceContext();
@@ -295,6 +321,24 @@ void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 				AspectRatio,
 				0.1f,
 				100.0f);
+
+			if (UseOrthographicProjection)
+			{
+				float SelectedOrthographicProjectionWidth = OrthographicProjectionWidth;
+				float SelectedOrthographicProjectionHeight = OrthographicProjectionHeight;
+
+				if (SelectedOrthographicProjectionWidth <= 0.0f || SelectedOrthographicProjectionHeight <= 0.0f)
+				{
+					SelectedOrthographicProjectionHeight = 2.6f;
+					SelectedOrthographicProjectionWidth = SelectedOrthographicProjectionHeight * AspectRatio;
+				}
+
+				ProjectionMatrix = DirectX::XMMatrixOrthographicLH(
+					SelectedOrthographicProjectionWidth,
+					SelectedOrthographicProjectionHeight,
+					0.1f,
+					100.0f);
+			}
 			DirectX::XMMATRIX WorldViewProjectionMatrix = WorldMatrix * ViewMatrix * ProjectionMatrix;
 
 			MeshUniversalTransformBufferData TransformBufferData = {};

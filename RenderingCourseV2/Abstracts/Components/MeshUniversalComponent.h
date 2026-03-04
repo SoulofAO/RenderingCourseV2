@@ -30,6 +30,9 @@ public:
 	void Update(float DeltaTime) override;
 	void Render(SceneViewportSubsystem* SceneViewport) override;
 	void Shutdown() override;
+	void SetUseOrthographicProjection(bool NewUseOrthographicProjection);
+	bool GetUseOrthographicProjection() const;
+	void SetOrthographicProjectionSize(float NewOrthographicProjectionWidth, float NewOrthographicProjectionHeight);
 
 	std::string VertexShaderName = "";
 	std::string PixelShaderName = "";
@@ -47,4 +50,7 @@ private:
 	ID3D11Buffer* IndexBuffer;
 	ID3D11RasterizerState* RasterState;
 	UINT IndexCount;
+	bool UseOrthographicProjection;
+	float OrthographicProjectionWidth;
+	float OrthographicProjectionHeight;
 };

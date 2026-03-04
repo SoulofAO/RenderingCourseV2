@@ -4,15 +4,23 @@
 
 class PingPongPlane;
 class PingPongSphere;
+class PingPongUIRenderingComponent;
 
 class PingPongGame : public Game
 {
 public:
 	PingPongGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight);
+	~PingPongGame() override;
+
+	void ResetBallFromUI();
+	const DirectX::XMFLOAT3& GetBallVelocity() const;
+	int GetPlayerVictoryCount() const;
+	int GetComputerVictoryCount() const;
 
 protected:
 	void BeginPlay() override;
 	void Update(float DeltaTime) override;
+	LRESULT MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam) override;
 
 private:
 	void HandlePlayerInput(float DeltaTime);
@@ -25,6 +33,7 @@ private:
 	PingPongPlane* LeftPlaneActor;
 	PingPongPlane* RightPlaneActor;
 	PingPongSphere* BallActor;
+	PingPongUIRenderingComponent* UIRenderingComponent;
 	DirectX::XMFLOAT3 BallVelocity;
 	bool ShouldLaunchBallToRight;
 
@@ -37,4 +46,6 @@ private:
 	float PlayerPlaneSpeed;
 	float ComputerPlaneSpeed;
 	float BallBaseSpeed;
+	int PlayerVictoryCount;
+	int ComputerVictoryCount;
 };

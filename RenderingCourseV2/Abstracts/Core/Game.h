@@ -46,7 +46,7 @@ public:
 		return nullptr;
 	}
 
-	LRESULT MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
+	virtual LRESULT MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 
 protected:
 	virtual void BeginPlay();

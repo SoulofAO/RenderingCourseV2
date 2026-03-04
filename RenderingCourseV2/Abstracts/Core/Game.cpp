@@ -6,6 +6,7 @@
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include "Abstracts/Subsystems/DisplayWin32.h"
+#include <algorithm>
 #include <iostream>
 
 Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
@@ -130,6 +131,7 @@ void Game::Draw()
 
 	SceneViewport->BeginFrame(TotalRunTimeSeconds);
 
+	std::vector<RenderingComponent*> RenderingComponents;
 	for (std::unique_ptr<Actor>& ExistingActor : Actors)
 	{
 		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = ExistingActor->GetComponents();
@@ -138,9 +140,22 @@ void Game::Draw()
 			RenderingComponent* Rendering = dynamic_cast<RenderingComponent*>(ExistingComponent.get());
 			if (Rendering != nullptr && Rendering->GetIsActive())
 			{
-				Rendering->Render(SceneViewport);
+				RenderingComponents.push_back(Rendering);
 			}
 		}
+	}
+
+	std::stable_sort(
+		RenderingComponents.begin(),
+		RenderingComponents.end(),
+		[](const RenderingComponent* LeftRenderingComponent, const RenderingComponent* RightRenderingComponent)
+		{
+			return LeftRenderingComponent->GetRenderOrder() < RightRenderingComponent->GetRenderOrder();
+		});
+
+	for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
+	{
+		ExistingRenderingComponent->Render(SceneViewport);
 	}
 
 	SceneViewport->EndFrame();

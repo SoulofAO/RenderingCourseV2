@@ -1,6 +1,7 @@
 #include "PingPongGame.h"
 #include "PingPongPlane.h"
 #include "PingPongSphere.h"
+#include "PingPongUIRenderingComponent.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Subsystems/InputDevice.h"
 #include <algorithm>
@@ -12,10 +13,11 @@ PingPongGame::PingPongGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, LeftPlaneActor(nullptr)
 	, RightPlaneActor(nullptr)
 	, BallActor(nullptr)
+	, UIRenderingComponent(nullptr)
 	, BallVelocity(0.0f, 0.0f, 0.0f)
 	, ShouldLaunchBallToRight(true)
-	, ArenaHalfWidth(3.0f)
-	, ArenaHalfHeight(2.0f)
+	, ArenaHalfWidth(2.0f)
+	, ArenaHalfHeight(1.0f)
 	, ArenaDepth(2.5f)
 	, PlaneHalfWidth(0.12f)
 	, PlaneHalfHeight(0.65f)
@@ -23,8 +25,12 @@ PingPongGame::PingPongGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, PlayerPlaneSpeed(2.8f)
 	, ComputerPlaneSpeed(2.3f)
 	, BallBaseSpeed(2.0f)
+	, PlayerVictoryCount(0)
+	, ComputerVictoryCount(0)
 {
 }
+
+PingPongGame::~PingPongGame() = default;
 
 void PingPongGame::BeginPlay()
 {
@@ -42,6 +48,13 @@ void PingPongGame::BeginPlay()
 	std::unique_ptr<PingPongSphere> Ball = std::make_unique<PingPongSphere>();
 	BallActor = Ball.get();
 	AddActor(std::move(Ball));
+
+	std::unique_ptr<Actor> UIActor = std::make_unique<Actor>();
+	std::unique_ptr<PingPongUIRenderingComponent> NewUIRenderingComponent = std::make_unique<PingPongUIRenderingComponent>();
+	UIRenderingComponent = NewUIRenderingComponent.get();
+	UIActor->AddComponent(std::move(NewUIRenderingComponent));
+	AddActor(std::move(UIActor));
+
 	ResetBall(true);
 
 	Game::BeginPlay();
@@ -148,8 +161,17 @@ void PingPongGame::UpdateBall(float DeltaTime)
 	const float MaximumVerticalSpeed = BallBaseSpeed * 1.25f;
 	BallVelocity.y = std::clamp(BallVelocity.y, -MaximumVerticalSpeed, MaximumVerticalSpeed);
 
-	if (BallPosition.x + BallRadius < -ArenaHalfWidth || BallPosition.x - BallRadius > ArenaHalfWidth)
+	if (BallPosition.x + BallRadius < -ArenaHalfWidth)
 	{
+		ComputerVictoryCount += 1;
+		ResetBall(ShouldLaunchBallToRight);
+		ShouldLaunchBallToRight = !ShouldLaunchBallToRight;
+		return;
+	}
+
+	if (BallPosition.x - BallRadius > ArenaHalfWidth)
+	{
+		PlayerVictoryCount += 1;
 		ResetBall(ShouldLaunchBallToRight);
 		ShouldLaunchBallToRight = !ShouldLaunchBallToRight;
 		return;
@@ -193,4 +215,37 @@ void PingPongGame::ResetBall(bool ShouldMoveRight)
 	BallActor->SetPosition(DirectX::XMFLOAT3(0.0f, 0.0f, ArenaDepth));
 	const float HorizontalDirection = ShouldMoveRight ? 1.0f : -1.0f;
 	BallVelocity = DirectX::XMFLOAT3(BallBaseSpeed * HorizontalDirection, BallBaseSpeed * 0.35f, 0.0f);
+}
+
+LRESULT PingPongGame::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
+{
+	if (UIRenderingComponent != nullptr)
+	{
+		if (UIRenderingComponent->HandleMessage(WindowHandle, Message, WParam, LParam))
+		{
+			return 1;
+		}
+	}
+
+	return Game::MessageHandler(WindowHandle, Message, WParam, LParam);
+}
+
+void PingPongGame::ResetBallFromUI()
+{
+	ResetBall(true);
+}
+
+const DirectX::XMFLOAT3& PingPongGame::GetBallVelocity() const
+{
+	return BallVelocity;
+}
+
+int PingPongGame::GetPlayerVictoryCount() const
+{
+	return PlayerVictoryCount;
+}
+
+int PingPongGame::GetComputerVictoryCount() const
+{
+	return ComputerVictoryCount;
 }
