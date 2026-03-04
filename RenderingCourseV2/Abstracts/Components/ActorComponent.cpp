@@ -3,6 +3,7 @@
 
 ActorComponent::ActorComponent()
 	: OwningActor(nullptr)
+	, LocalTransform()
 	, IsActive(true)
 {
 }
@@ -27,6 +28,26 @@ Game* ActorComponent::GetOwningGame() const
 	}
 
 	return OwningActor->GetOwningGame();
+}
+
+void ActorComponent::SetLocalTransform(const Transform& NewLocalTransform)
+{
+	LocalTransform = NewLocalTransform;
+}
+
+const Transform& ActorComponent::GetLocalTransform() const
+{
+	return LocalTransform;
+}
+
+Transform ActorComponent::GetWorldTransform() const
+{
+	if (OwningActor == nullptr)
+	{
+		return LocalTransform;
+	}
+
+	return Transform::Combine(OwningActor->GetTransform(), LocalTransform);
 }
 
 void ActorComponent::SetIsActive(bool NewIsActive)

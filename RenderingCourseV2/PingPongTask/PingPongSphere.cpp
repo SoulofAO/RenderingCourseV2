@@ -29,7 +29,6 @@ PingPongSphere::PingPongSphere()
 	};
 
 	MeshComponent->Indices = { 0, 1, 2, 1, 0, 3 };
-	MeshComponent->Position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	AddComponent(std::move(MeshComponent));
 
 	std::unique_ptr<PhysicsComponent> Physics = std::make_unique<PhysicsComponent>();

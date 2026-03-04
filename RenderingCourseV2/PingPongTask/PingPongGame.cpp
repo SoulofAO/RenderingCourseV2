@@ -14,12 +14,18 @@ void PingPongGame::BeginPlay()
 {
 	std::unique_ptr<PingPongPlane> FloorPlane = std::make_unique<PingPongPlane>();
 	FloorPlane->SetPosition(DirectX::XMFLOAT3(0.0f, -1.25f, 2.5f));
+	Transform transform	= Transform();
+	transform.Position = DirectX::XMFLOAT3(90.0f, 0.0f, 0.0);
+	transform.RotationEuler = DirectX::XMFLOAT3(90.0f, 0.0f, 90.0);
+
 	AddActor(std::move(FloorPlane));
 
+	/*
 	std::unique_ptr<PingPongSphere> BallActor = std::make_unique<PingPongSphere>();
 	BallActor->SetPosition(DirectX::XMFLOAT3(0.0f, 0.25f, 2.5f));
 	AddActor(std::move(BallActor));
-
+	*/
+	
     Game::BeginPlay();
 }
 

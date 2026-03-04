@@ -108,6 +108,9 @@
     <ClInclude Include="Abstracts\Core\Object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Abstracts\Core\Transform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Abstracts\Components\PhysicsComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>

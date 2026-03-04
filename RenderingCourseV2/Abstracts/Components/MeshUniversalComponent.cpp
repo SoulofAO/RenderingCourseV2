@@ -21,8 +21,11 @@ MeshUniversalComponent::MeshUniversalComponent()
 	, IndexBuffer(nullptr)
 	, RasterState(nullptr)
 	, IndexCount(0)
-	, Position(0.0f, 0.0f, 2.0f)
 {
+	Transform NewLocalTransform;
+	NewLocalTransform.Position = DirectX::XMFLOAT3(0.0f, 0.0f, 2.0f);
+	SetLocalTransform(NewLocalTransform);
+
 	Vertices = {
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),
@@ -284,8 +287,8 @@ void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 		if (ScreenHeight > 0.0f && GetOwningActor() != nullptr)
 		{
 			float AspectRatio = ScreenWidth / ScreenHeight;
-			DirectX::XMFLOAT3 ActorPosition = GetOwningActor()->GetPosition();
-			DirectX::XMMATRIX WorldMatrix = DirectX::XMMatrixTranslation(ActorPosition.x + Position.x, ActorPosition.y + Position.y, ActorPosition.z + Position.z);
+			Transform WorldTransform = GetWorldTransform();
+			DirectX::XMMATRIX WorldMatrix = WorldTransform.ToMatrix();
 			DirectX::XMMATRIX ViewMatrix = DirectX::XMMatrixIdentity();
 			DirectX::XMMATRIX ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(
 				DirectX::XMConvertToRadians(60.0f),

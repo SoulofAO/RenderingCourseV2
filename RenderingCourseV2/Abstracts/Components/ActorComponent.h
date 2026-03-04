@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Abstracts/Core/Object.h"
+#include "Abstracts/Core/Transform.h"
 
 class Actor;
 class Game;
@@ -15,10 +16,15 @@ public:
 	Actor* GetOwningActor() const;
 	Game* GetOwningGame() const;
 
+	void SetLocalTransform(const Transform& NewLocalTransform);
+	const Transform& GetLocalTransform() const;
+	Transform GetWorldTransform() const;
+
 	void SetIsActive(bool NewIsActive);
 	bool GetIsActive() const;
 
 protected:
 	Actor* OwningActor;
+	Transform LocalTransform;
 	bool IsActive;
 };

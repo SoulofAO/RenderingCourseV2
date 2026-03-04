@@ -22,7 +22,7 @@ int PingPongTask()
 
 int main()
 {
-	FirstTask();
+	PingPongTask();
 	return 0; 
 }
 

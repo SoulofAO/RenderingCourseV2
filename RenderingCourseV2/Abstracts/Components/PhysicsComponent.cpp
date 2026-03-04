@@ -129,14 +129,14 @@ bool PhysicsComponent::GetUsesSphereCollider() const
 
 DirectX::BoundingSphere PhysicsComponent::GetBoundingSphere() const
 {
-	const DirectX::XMFLOAT3& Position = GetOwningActor()->GetPosition();
-	return DirectX::BoundingSphere(Position, SphereRadius);
+	Transform WorldTransform = GetWorldTransform();
+	return DirectX::BoundingSphere(WorldTransform.Position, SphereRadius);
 }
 
 DirectX::BoundingBox PhysicsComponent::GetBoundingBox() const
 {
-	const DirectX::XMFLOAT3& Position = GetOwningActor()->GetPosition();
-	return DirectX::BoundingBox(Position, HalfExtents);
+	Transform WorldTransform = GetWorldTransform();
+	return DirectX::BoundingBox(WorldTransform.Position, HalfExtents);
 }
 
 const DirectX::XMFLOAT3& PhysicsComponent::GetHalfExtents() const
@@ -167,11 +167,13 @@ void PhysicsComponent::Integrate(float DeltaTime)
 	Velocity.z += Acceleration.z * DeltaTime;
 
 	Actor* OwningActor = GetOwningActor();
-	DirectX::XMFLOAT3 Position = OwningActor->GetPosition();
+	Transform ActorTransform = OwningActor->GetTransform();
+	DirectX::XMFLOAT3 Position = ActorTransform.Position;
 	Position.x += Velocity.x * DeltaTime;
 	Position.y += Velocity.y * DeltaTime;
 	Position.z += Velocity.z * DeltaTime;
-	OwningActor->SetPosition(Position);
+	ActorTransform.Position = Position;
+	OwningActor->SetTransform(ActorTransform);
 
 	ClearForces();
 }
@@ -196,11 +198,13 @@ void PhysicsComponent::ApplyPositionCorrection(const DirectX::XMFLOAT3& Correcti
 	}
 
 	Actor* OwningActor = GetOwningActor();
-	DirectX::XMFLOAT3 Position = OwningActor->GetPosition();
+	Transform ActorTransform = OwningActor->GetTransform();
+	DirectX::XMFLOAT3 Position = ActorTransform.Position;
 	Position.x += Correction.x;
 	Position.y += Correction.y;
 	Position.z += Correction.z;
-	OwningActor->SetPosition(Position);
+	ActorTransform.Position = Position;
+	OwningActor->SetTransform(ActorTransform);
 }
 
 void PhysicsComponent::RecalculateInverseMass()

@@ -36,8 +36,6 @@ public:
 	std::vector<MeshUniversalVertex> Vertices;
 	std::vector<unsigned int> Indices;
 
-	DirectX::XMFLOAT3 Position;
-
 private:
 	ID3D11InputLayout* Layout;
 	ID3D11VertexShader* VertexShader;

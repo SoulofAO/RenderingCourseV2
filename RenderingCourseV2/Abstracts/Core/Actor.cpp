@@ -3,7 +3,7 @@
 
 Actor::Actor()
 	: OwningGame(nullptr)
-	, Position(0.0f, 0.0f, 0.0f)
+	, WorldTransform()
 {
 }
 
@@ -76,12 +76,22 @@ const std::vector<std::unique_ptr<ActorComponent>>& Actor::GetComponents() const
 	return Components;
 }
 
+void Actor::SetTransform(const Transform& NewTransform)
+{
+	WorldTransform = NewTransform;
+}
+
+const Transform& Actor::GetTransform() const
+{
+	return WorldTransform;
+}
+
 void Actor::SetPosition(const DirectX::XMFLOAT3& NewPosition)
 {
-	Position = NewPosition;
+	WorldTransform.Position = NewPosition;
 }
 
 const DirectX::XMFLOAT3& Actor::GetPosition() const
 {
-	return Position;
+	return WorldTransform.Position;
 }

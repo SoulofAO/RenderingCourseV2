@@ -91,14 +91,22 @@ void SceneViewportSubsystem::BeginFrame(float TotalTimeSeconds)
 		return;
 	}
 
-	float ColorCycle = TotalTimeSeconds;
-	while (ColorCycle > 1.0f)
+	if (bDisplayChangedColor)
 	{
-		ColorCycle -= 1.0f;
-	}
+		float ColorCycle = TotalTimeSeconds;
+		while (ColorCycle > 1.0f)
+		{
+			ColorCycle -= 1.0f;
+		}
 
-	float ClearColor[] = { ColorCycle, 0.1f, 0.1f, 1.0f };
-	Context->ClearRenderTargetView(RenderView, ClearColor);
+		float ClearColor[] = { ColorCycle, 0.1f, 0.1f, 1.0f };
+		Context->ClearRenderTargetView(RenderView, ClearColor);
+	}
+	else
+	{
+		float ClearColor[] = { 0.0, 0.0f, 0.0f, 1.0f };
+		Context->ClearRenderTargetView(RenderView, ClearColor);
+	}
 
 	Context->ClearState();
 	RestoreTargets();

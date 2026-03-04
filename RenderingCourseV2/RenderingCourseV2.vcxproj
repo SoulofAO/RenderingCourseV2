@@ -160,6 +160,7 @@
     <ClInclude Include="Abstracts\Core\Actor.h" />
     <ClInclude Include="Abstracts\Core\Game.h" />
     <ClInclude Include="Abstracts\Core\Object.h" />
+    <ClInclude Include="Abstracts\Core\Transform.h" />
     <ClInclude Include="Abstracts\Subsystems\DisplayWin32.h" />
     <ClInclude Include="Abstracts\Subsystems\InputDevice.h" />
     <ClInclude Include="Abstracts\Subsystems\PhysicsSubsystem.h" />

@@ -26,6 +26,8 @@ public:
 	DisplayWin32* GetDisplay() const;
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
+	
+	bool bDisplayChangedColor = false;
 
 private:
 	void CreateBackBuffer();

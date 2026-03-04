@@ -6,25 +6,25 @@ PingPongPlane::PingPongPlane()
 	: Actor()
 {
 	std::unique_ptr<MeshUniversalComponent> MeshComponent = std::make_unique<MeshUniversalComponent>();
-	MeshComponent->VertexShaderName = "./Shaders/PingPong/PingPongPointSphere.hlsl";
-	MeshComponent->PixelShaderName = "./Shaders/PingPong/PingPongPointSphere.hlsl";
+	MeshComponent->VertexShaderName = "./Shaders/PingPong/PingPongBaseShader.hlsl";
+	MeshComponent->PixelShaderName = "./Shaders/PingPong/PingPongBaseShader.hlsl";
 
 	MeshComponent->Vertices = {
 		MeshUniversalVertex{
-			DirectX::XMFLOAT4(3.0f, 0.2f, 0.5f, 1.0f),
+			DirectX::XMFLOAT4(0.5f, 0.2f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
 			DirectX::XMFLOAT2(1.0f, 0.0f) },
 		MeshUniversalVertex{
-			DirectX::XMFLOAT4(-3.0f, -0.2f, 0.5f, 1.0f),
-			DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT4(-0.5f, -0.2f, 0.5f, 1.0f),
+			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
 			DirectX::XMFLOAT2(0.0f, 1.0f) },
 		MeshUniversalVertex{
-			DirectX::XMFLOAT4(3.0f, -0.2f, 0.5f, 1.0f),
-			DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT4(0.5f, -0.2f, 0.5f, 1.0f),
+			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
 			DirectX::XMFLOAT2(1.0f, 1.0f) },
 		MeshUniversalVertex{
-			DirectX::XMFLOAT4(-3.0f, 0.2f, 0.5f, 1.0f),
-			DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT4(-0.5f, 0.2f, 0.5f, 1.0f),
+			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
 			DirectX::XMFLOAT2(0.0f, 0.0f) }
 	};
 
