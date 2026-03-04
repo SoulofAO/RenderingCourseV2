@@ -9,21 +9,11 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ActorComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ActorComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ActorComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ActorComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/PhysicsComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/PhysicsComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Actor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Actor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Actor.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Actor.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongGame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongGame.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongGame.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongPlane.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongPlane.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongSphere.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongSphere.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj.filters" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj.filters" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPong/PingPongBaseShader.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPong/PingPongBaseShader.hlsl" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +30,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://8" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://21" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" root0="FORCE_HIGHLIGHTING" />
@@ -109,7 +99,7 @@
       <workItem from="1772623856826" duration="483000" />
       <workItem from="1772624396416" duration="486000" />
       <workItem from="1772624971135" duration="5604000" />
-      <workItem from="1772637372002" duration="2415000" />
+      <workItem from="1772637372002" duration="5508000" />
     </task>
     <servers />
   </component>

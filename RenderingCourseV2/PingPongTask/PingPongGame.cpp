@@ -1,35 +1,196 @@
 #include "PingPongGame.h"
 #include "PingPongPlane.h"
 #include "PingPongSphere.h"
-#include <directxmath.h>
+#include "Abstracts/Core/Actor.h"
+#include "Abstracts/Subsystems/InputDevice.h"
+#include <algorithm>
+#include <cmath>
 #include <memory>
 
 PingPongGame::PingPongGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Game(ApplicationName, ScreenWidth, ScreenHeight)
-	, WinConditionPoint(5)
+	, LeftPlaneActor(nullptr)
+	, RightPlaneActor(nullptr)
+	, BallActor(nullptr)
+	, BallVelocity(0.0f, 0.0f, 0.0f)
+	, ShouldLaunchBallToRight(true)
+	, ArenaHalfWidth(3.0f)
+	, ArenaHalfHeight(2.0f)
+	, ArenaDepth(2.5f)
+	, PlaneHalfWidth(0.12f)
+	, PlaneHalfHeight(0.65f)
+	, BallRadius(0.08f)
+	, PlayerPlaneSpeed(2.8f)
+	, ComputerPlaneSpeed(2.3f)
+	, BallBaseSpeed(2.0f)
 {
 }
 
 void PingPongGame::BeginPlay()
 {
-	std::unique_ptr<PingPongPlane> FloorPlane = std::make_unique<PingPongPlane>();
-	FloorPlane->SetPosition(DirectX::XMFLOAT3(0.0f, -1.25f, 2.5f));
-	Transform transform	= Transform();
-	transform.Position = DirectX::XMFLOAT3(90.0f, 0.0f, 0.0);
-	transform.RotationEuler = DirectX::XMFLOAT3(90.0f, 0.0f, 90.0);
-
-	AddActor(std::move(FloorPlane));
-
-	/*
-	std::unique_ptr<PingPongSphere> BallActor = std::make_unique<PingPongSphere>();
-	BallActor->SetPosition(DirectX::XMFLOAT3(0.0f, 0.25f, 2.5f));
-	AddActor(std::move(BallActor));
-	*/
+	std::unique_ptr<PingPongPlane> LeftPlane = std::make_unique<PingPongPlane>();
+	LeftPlaneActor = LeftPlane.get();
 	
-    Game::BeginPlay();
+	LeftPlaneActor->SetPosition(DirectX::XMFLOAT3(-ArenaHalfWidth + 0.2f, 0.0f, ArenaDepth));
+	AddActor(std::move(LeftPlane));
+
+	std::unique_ptr<PingPongPlane> RightPlane = std::make_unique<PingPongPlane>();
+	RightPlaneActor = RightPlane.get();
+	RightPlaneActor->SetPosition(DirectX::XMFLOAT3(ArenaHalfWidth - 0.2f, 0.0f, ArenaDepth));
+	AddActor(std::move(RightPlane));
+
+	std::unique_ptr<PingPongSphere> Ball = std::make_unique<PingPongSphere>();
+	BallActor = Ball.get();
+	AddActor(std::move(Ball));
+	ResetBall(true);
+
+	Game::BeginPlay();
 }
 
 void PingPongGame::Update(float DeltaTime)
 {
-    Game::Update(DeltaTime);
+	HandlePlayerInput(DeltaTime);
+	UpdateComputerPlane(DeltaTime);
+	UpdateBall(DeltaTime);
+	Game::Update(DeltaTime);
+}
+
+void PingPongGame::HandlePlayerInput(float DeltaTime)
+{
+	if (LeftPlaneActor == nullptr)
+	{
+		return;
+	}
+
+	InputDevice* Input = GetInputDevice();
+	if (Input == nullptr)
+	{
+		return;
+	}
+
+	float Direction = 0.0f;
+	if (Input->IsKeyDown(0x57) || Input->IsKeyDown(VK_UP))
+	{
+		Direction += 1.0f;
+	}
+
+	if (Input->IsKeyDown(0x53) || Input->IsKeyDown(VK_DOWN))
+	{
+		Direction -= 1.0f;
+	}
+
+	DirectX::XMFLOAT3 Position = LeftPlaneActor->GetPosition();
+	Position.y += Direction * PlayerPlaneSpeed * DeltaTime;
+	LeftPlaneActor->SetPosition(Position);
+	ClampPlanePosition(LeftPlaneActor);
+}
+
+void PingPongGame::UpdateComputerPlane(float DeltaTime)
+{
+	if (RightPlaneActor == nullptr || BallActor == nullptr)
+	{
+		return;
+	}
+
+	DirectX::XMFLOAT3 BallPosition = BallActor->GetPosition();
+	DirectX::XMFLOAT3 PlanePosition = RightPlaneActor->GetPosition();
+	float VerticalDifference = BallPosition.y - PlanePosition.y;
+
+	if (std::fabs(VerticalDifference) > 0.03f)
+	{
+		float Direction = VerticalDifference > 0.0f ? 1.0f : -1.0f;
+		PlanePosition.y += Direction * ComputerPlaneSpeed * DeltaTime;
+		RightPlaneActor->SetPosition(PlanePosition);
+		ClampPlanePosition(RightPlaneActor);
+	}
+}
+
+void PingPongGame::UpdateBall(float DeltaTime)
+{
+	if (BallActor == nullptr)
+	{
+		return;
+	}
+
+	DirectX::XMFLOAT3 BallPosition = BallActor->GetPosition();
+	BallPosition.x += BallVelocity.x * DeltaTime;
+	BallPosition.y += BallVelocity.y * DeltaTime;
+
+	if (BallPosition.y + BallRadius >= ArenaHalfHeight)
+	{
+		BallPosition.y = ArenaHalfHeight - BallRadius;
+		BallVelocity.y = -std::fabs(BallVelocity.y);
+	}
+	else if (BallPosition.y - BallRadius <= -ArenaHalfHeight)
+	{
+		BallPosition.y = -ArenaHalfHeight + BallRadius;
+		BallVelocity.y = std::fabs(BallVelocity.y);
+	}
+
+	if (LeftPlaneActor != nullptr && BallVelocity.x < 0.0f && IsBallCollidingWithPlane(BallPosition, LeftPlaneActor))
+	{
+		const float PlaneCenterY = LeftPlaneActor->GetPosition().y;
+		const float HitOffset = (BallPosition.y - PlaneCenterY) / PlaneHalfHeight;
+		BallPosition.x = LeftPlaneActor->GetPosition().x + PlaneHalfWidth + BallRadius;
+		BallVelocity.x = std::fabs(BallVelocity.x);
+		BallVelocity.y += HitOffset * 0.8f;
+	}
+
+	if (RightPlaneActor != nullptr && BallVelocity.x > 0.0f && IsBallCollidingWithPlane(BallPosition, RightPlaneActor))
+	{
+		const float PlaneCenterY = RightPlaneActor->GetPosition().y;
+		const float HitOffset = (BallPosition.y - PlaneCenterY) / PlaneHalfHeight;
+		BallPosition.x = RightPlaneActor->GetPosition().x - PlaneHalfWidth - BallRadius;
+		BallVelocity.x = -std::fabs(BallVelocity.x);
+		BallVelocity.y += HitOffset * 0.8f;
+	}
+
+	const float MaximumVerticalSpeed = BallBaseSpeed * 1.25f;
+	BallVelocity.y = std::clamp(BallVelocity.y, -MaximumVerticalSpeed, MaximumVerticalSpeed);
+
+	if (BallPosition.x + BallRadius < -ArenaHalfWidth || BallPosition.x - BallRadius > ArenaHalfWidth)
+	{
+		ResetBall(ShouldLaunchBallToRight);
+		ShouldLaunchBallToRight = !ShouldLaunchBallToRight;
+		return;
+	}
+
+	BallActor->SetPosition(BallPosition);
+}
+
+void PingPongGame::ClampPlanePosition(Actor* PlaneActor) const
+{
+	if (PlaneActor == nullptr)
+	{
+		return;
+	}
+
+	DirectX::XMFLOAT3 PlanePosition = PlaneActor->GetPosition();
+	PlanePosition.y = std::clamp(PlanePosition.y, -ArenaHalfHeight + PlaneHalfHeight, ArenaHalfHeight - PlaneHalfHeight);
+	PlaneActor->SetPosition(PlanePosition);
+}
+
+bool PingPongGame::IsBallCollidingWithPlane(const DirectX::XMFLOAT3& BallPosition, const Actor* PlaneActor) const
+{
+	if (PlaneActor == nullptr)
+	{
+		return false;
+	}
+
+	const DirectX::XMFLOAT3 PlanePosition = PlaneActor->GetPosition();
+	const bool IsOverlappingX = std::fabs(BallPosition.x - PlanePosition.x) <= (PlaneHalfWidth + BallRadius);
+	const bool IsOverlappingY = std::fabs(BallPosition.y - PlanePosition.y) <= (PlaneHalfHeight + BallRadius);
+	return IsOverlappingX && IsOverlappingY;
+}
+
+void PingPongGame::ResetBall(bool ShouldMoveRight)
+{
+	if (BallActor == nullptr)
+	{
+		return;
+	}
+
+	BallActor->SetPosition(DirectX::XMFLOAT3(0.0f, 0.0f, ArenaDepth));
+	const float HorizontalDirection = ShouldMoveRight ? 1.0f : -1.0f;
+	BallVelocity = DirectX::XMFLOAT3(BallBaseSpeed * HorizontalDirection, BallBaseSpeed * 0.35f, 0.0f);
 }
