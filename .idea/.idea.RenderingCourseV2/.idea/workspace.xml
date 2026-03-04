@@ -13,10 +13,12 @@
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/MeshUniversalComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/MeshUniversalComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongPlane.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongPlane.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongPlane.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongPlane.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongSphere.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongSphere.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongSphere.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongSphere.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPongPointSphere.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPongPointSphere.hlsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj.filters" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj.filters" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/MyVeryFirstShader.hlsl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPongBaseShader.hlsl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPongPointSphere.hlsl" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,7 +106,7 @@
       <updated>1772623855286</updated>
       <workItem from="1772623856826" duration="483000" />
       <workItem from="1772624396416" duration="486000" />
-      <workItem from="1772624971135" duration="3695000" />
+      <workItem from="1772624971135" duration="5604000" />
     </task>
     <servers />
   </component>

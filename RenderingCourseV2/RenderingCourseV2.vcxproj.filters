@@ -65,7 +65,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\MyVeryFirstShader.hlsl">
+    <ClInclude Include="Shaders\Abstracts\MeshUniversalShared.hlsli">
+      <Filter>Shader Files</Filter>
+    </ClInclude>
+    <None Include="Shaders\FirstTask\MyVeryFirstShader.hlsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="Shaders\PingPong\PingPongBaseShader.hlsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="Shaders\PingPong\PingPongPointSphere.hlsl">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

@@ -3,8 +3,8 @@
 PingPongSphere::PingPongSphere(Game* GameInstance)
 	: MeshUniversalComponent(GameInstance)
 {
-	VertexShaderName = "./Shaders/PingPongPointSphere.hlsl";
-	PixelShaderName = "./Shaders/PingPongPointSphere.hlsl";
+	VertexShaderName = "./Shaders/PingPong/PingPongPointSphere.hlsl";
+	PixelShaderName = "./Shaders/PingPong/PingPongPointSphere.hlsl";
 
 	Vertices = {
 		MeshUniversalVertex{

@@ -14,10 +14,12 @@ MeshUniversalComponent::MeshUniversalComponent(Game* GameInstance)
 	, VertexShaderByteCode(nullptr)
 	, PixelShader(nullptr)
 	, PixelShaderByteCode(nullptr)
+	, TransformConstantBuffer(nullptr)
 	, VertexBuffer(nullptr)
 	, IndexBuffer(nullptr)
 	, RasterState(nullptr)
 	, IndexCount(0)
+	, Position(0.0f, 0.0f, 2.0f)
 {
 	Vertices = {
 		MeshUniversalVertex{
@@ -204,6 +206,21 @@ void MeshUniversalComponent::Initialize()
 
 	Device->CreateBuffer(&IndexBufferDescription, &IndexData, &IndexBuffer);
 
+	D3D11_BUFFER_DESC TransformBufferDescription = {};
+	TransformBufferDescription.Usage = D3D11_USAGE_DEFAULT;
+	TransformBufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	TransformBufferDescription.CPUAccessFlags = 0;
+	TransformBufferDescription.MiscFlags = 0;
+	TransformBufferDescription.StructureByteStride = 0;
+	TransformBufferDescription.ByteWidth = static_cast<UINT>(sizeof(MeshUniversalTransformBufferData));
+
+	Result = Device->CreateBuffer(&TransformBufferDescription, nullptr, &TransformConstantBuffer);
+	if (FAILED(Result))
+	{
+		std::cerr << "Failed to create transform constant buffer." << std::endl;
+		return;
+	}
+
 	CD3D11_RASTERIZER_DESC RasterizerDescription = {};
 	RasterizerDescription.CullMode = D3D11_CULL_NONE;
 	RasterizerDescription.FillMode = D3D11_FILL_SOLID;
@@ -227,6 +244,40 @@ void MeshUniversalComponent::Draw()
 	UINT Strides[] = { static_cast<UINT>(sizeof(MeshUniversalVertex)) };
 	UINT Offsets[] = { 0 };
 	DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, Strides, Offsets);
+
+	if (TransformConstantBuffer)
+	{
+		float ScreenWidth = static_cast<float>(OwningGame->GetScreenWidth());
+		float ScreenHeight = static_cast<float>(OwningGame->GetScreenHeight());
+
+		if (ScreenHeight > 0.0f)
+		{
+			float AspectRatio = ScreenWidth / ScreenHeight;
+			DirectX::XMMATRIX WorldMatrix = DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
+			DirectX::XMMATRIX ViewMatrix = DirectX::XMMatrixIdentity();
+			DirectX::XMMATRIX ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(
+				DirectX::XMConvertToRadians(60.0f),
+				AspectRatio,
+				0.1f,
+				100.0f);
+			DirectX::XMMATRIX WorldViewProjectionMatrix = WorldMatrix * ViewMatrix * ProjectionMatrix;
+
+			MeshUniversalTransformBufferData TransformBufferData = {};
+			DirectX::XMStoreFloat4x4(
+				&TransformBufferData.WorldViewProjectionMatrix,
+				DirectX::XMMatrixTranspose(WorldViewProjectionMatrix));
+
+			DeviceContext->UpdateSubresource(
+				TransformConstantBuffer,
+				0,
+				nullptr,
+				&TransformBufferData,
+				0,
+				0);
+
+			DeviceContext->VSSetConstantBuffers(0, 1, &TransformConstantBuffer);
+		}
+	}
 
 	DeviceContext->VSSetShader(VertexShader, nullptr, 0);
 	DeviceContext->PSSetShader(PixelShader, nullptr, 0);
@@ -264,6 +315,12 @@ void MeshUniversalComponent::DestroyResources()
 	{
 		PixelShaderByteCode->Release();
 		PixelShaderByteCode = nullptr;
+	}
+
+	if (TransformConstantBuffer)
+	{
+		TransformConstantBuffer->Release();
+		TransformConstantBuffer = nullptr;
 	}
 
 	if (VertexBuffer)

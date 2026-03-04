@@ -95,7 +95,8 @@ void Game::Run()
 {
 	StartTime = std::chrono::steady_clock::now();
 	PreviousTime = StartTime;
-
+	BeginPlay();
+	
 	MSG Message = {};
 	while (!IsExitRequested)
 	{
@@ -306,4 +307,8 @@ LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPA
 		return DefWindowProc(WindowHandle, Message, WParam, LParam);
 	}
 	}
+}
+
+void Game::BeginPlay()
+{
 }

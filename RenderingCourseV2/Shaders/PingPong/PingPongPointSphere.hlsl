@@ -1,22 +1,10 @@
-struct VS_IN
-{
-	float4 Position : POSITION0;
-	float4 Color : COLOR0;
-	float2 TextureCoordinates : TEXCOORD0;
-};
-
-struct PS_IN
-{
-	float4 Position : SV_POSITION;
-	float4 Color : COLOR;
-	float2 TextureCoordinates : TEXCOORD0;
-};
+#include "Abstracts/MeshUniversalShared.hlsli"
 
 PS_IN VSMain( VS_IN input )
 {
 	PS_IN output = (PS_IN)0;
 	
-	output.Position = input.Position;
+	output.Position = mul(input.Position, WorldViewProjectionMatrix);
 	output.Color = input.Color;
 	output.TextureCoordinates = input.TextureCoordinates;
 	

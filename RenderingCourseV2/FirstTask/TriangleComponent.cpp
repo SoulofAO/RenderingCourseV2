@@ -32,7 +32,7 @@ void TriangleComponent::Initialize()
 
 	ID3DBlob* ErrorCode = nullptr;
 	auto Result = D3DCompileFromFile(
-		L"./Shaders/MyVeryFirstShader.hlsl",
+		L"./Shaders/FirstTask/MyVeryFirstShader.hlsl",
 		nullptr,
 		nullptr,
 		"VSMain",
@@ -68,7 +68,7 @@ void TriangleComponent::Initialize()
 
 	ID3DBlob* PixelErrorCode = nullptr;
 	Result = D3DCompileFromFile(
-		L"./Shaders/MyVeryFirstShader.hlsl",
+		L"./Shaders/FirstTask/MyVeryFirstShader.hlsl",
 		ShaderMacros,
 		nullptr,
 		"PSMain",

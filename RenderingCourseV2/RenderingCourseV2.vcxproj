@@ -139,6 +139,7 @@
     <ClCompile Include="FirstTask\FirstTaskGame.cpp" />
     <ClCompile Include="FirstTask\TriangleComponent.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
+    <ClCompile Include="PingPongTask\PingPongGame.cpp" />
     <ClCompile Include="PingPongTask\PingPongPlane.cpp" />
     <ClCompile Include="PingPongTask\PingPongSphere.cpp" />
   </ItemGroup>
@@ -150,14 +151,16 @@
     <ClInclude Include="Abstracts\MeshUniversalComponent.h" />
     <ClInclude Include="FirstTask\FirstTaskGame.h" />
     <ClInclude Include="FirstTask\TriangleComponent.h" />
+    <ClInclude Include="PingPongTask\PingPongGame.h" />
     <ClInclude Include="PingPongTask\PingPongPlane.h" />
     <ClInclude Include="PingPongTask\PingPongSphere.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Shaders\Abstracts\MeshUniversalShared.hlsli" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\MyVeryFirstShader.hlsl" />
-    <None Include="Shaders\PingPongBaseShader.hlsl" />
-    <None Include="Shaders\PingPongPointSphere.hlsl" />
+    <None Include="Shaders\FirstTask\MyVeryFirstShader.hlsl" />
+    <None Include="Shaders\PingPong\PingPongBaseShader.hlsl" />
+    <None Include="Shaders\PingPong\PingPongPointSphere.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RenderingCourseV2.rc" />

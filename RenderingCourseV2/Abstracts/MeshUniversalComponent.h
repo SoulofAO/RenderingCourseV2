@@ -13,6 +13,11 @@ struct MeshUniversalVertex
 	DirectX::XMFLOAT2 TextureCoordinates;
 };
 
+struct MeshUniversalTransformBufferData
+{
+	DirectX::XMFLOAT4X4 WorldViewProjectionMatrix;
+};
+
 class MeshUniversalComponent : public GameComponent
 {
 public:
@@ -37,6 +42,7 @@ private:
 	ID3DBlob* VertexShaderByteCode;
 	ID3D11PixelShader* PixelShader;
 	ID3DBlob* PixelShaderByteCode;
+	ID3D11Buffer* TransformConstantBuffer;
 	ID3D11Buffer* VertexBuffer;
 	ID3D11Buffer* IndexBuffer;
 	ID3D11RasterizerState* RasterState;

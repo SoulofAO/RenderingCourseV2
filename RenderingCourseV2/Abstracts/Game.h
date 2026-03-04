@@ -38,6 +38,8 @@ public:
 
 protected:
 	virtual void PrepareResources();
+	
+	virtual void BeginPlay();
 	virtual void Update(float DeltaTime);
 	virtual void Draw();
 	void PrepareFrame();
