@@ -16,6 +16,8 @@ public:
 	const DirectX::XMFLOAT3& GetBallVelocity() const;
 	int GetPlayerVictoryCount() const;
 	int GetComputerVictoryCount() const;
+	bool GetBounceAccelerationEnabled() const;
+	void SetBounceAccelerationEnabledFromUI(bool NewBounceAccelerationEnabled);
 
 protected:
 	void BeginPlay() override;
@@ -29,6 +31,8 @@ private:
 	void ClampPlanePosition(Actor* PlaneActor) const;
 	bool IsBallCollidingWithPlane(const DirectX::XMFLOAT3& BallPosition, const Actor* PlaneActor) const;
 	void ResetBall(bool ShouldMoveRight);
+	void ApplyBounceAcceleration();
+	void ResetBallSpeedToNormal();
 
 	PingPongPlane* LeftPlaneActor;
 	PingPongPlane* RightPlaneActor;
@@ -46,6 +50,8 @@ private:
 	float PlayerPlaneSpeed;
 	float ComputerPlaneSpeed;
 	float BallBaseSpeed;
+	float BounceAccelerationFactor;
+	bool IsBounceAccelerationEnabled;
 	int PlayerVictoryCount;
 	int ComputerVictoryCount;
 };

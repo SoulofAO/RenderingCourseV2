@@ -8,16 +8,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/RenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/RenderingComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/RenderingComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/RenderingComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongGame.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongGame.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongGame.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongUIRenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongUIRenderingComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,7 +100,7 @@
       <workItem from="1772624971135" duration="5604000" />
       <workItem from="1772637372002" duration="7161000" />
       <workItem from="1772650103846" duration="191000" />
-      <workItem from="1772650338104" duration="2474000" />
+      <workItem from="1772650338104" duration="2785000" />
     </task>
     <servers />
   </component>

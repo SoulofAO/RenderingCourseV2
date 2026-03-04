@@ -28,9 +28,11 @@ void PingPongUIRenderingComponent::RenderUI()
 		OwningPingPongGame->ResetBallFromUI();
 	}
 
-	const DirectX::XMFLOAT3 BallVelocity = OwningPingPongGame->GetBallVelocity();
-	ImGui::Text("Ball Velocity X: %.2f", BallVelocity.x);
-	ImGui::Text("Ball Velocity Y: %.2f", BallVelocity.y);
+	bool IsBounceAccelerationEnabled = OwningPingPongGame->GetBounceAccelerationEnabled();
+	if (ImGui::Checkbox("Increase speed every bounce", &IsBounceAccelerationEnabled))
+	{
+		OwningPingPongGame->SetBounceAccelerationEnabledFromUI(IsBounceAccelerationEnabled);
+	}
 	ImGui::End();
 
 	const ImVec2 DisplaySize = ImGui::GetIO().DisplaySize;

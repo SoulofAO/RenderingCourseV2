@@ -25,6 +25,8 @@ PingPongGame::PingPongGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, PlayerPlaneSpeed(2.8f)
 	, ComputerPlaneSpeed(2.3f)
 	, BallBaseSpeed(2.0f)
+	, BounceAccelerationFactor(1.08f)
+	, IsBounceAccelerationEnabled(false)
 	, PlayerVictoryCount(0)
 	, ComputerVictoryCount(0)
 {
@@ -128,16 +130,19 @@ void PingPongGame::UpdateBall(float DeltaTime)
 	DirectX::XMFLOAT3 BallPosition = BallActor->GetPosition();
 	BallPosition.x += BallVelocity.x * DeltaTime;
 	BallPosition.y += BallVelocity.y * DeltaTime;
+	int BounceEventCount = 0;
 
 	if (BallPosition.y + BallRadius >= ArenaHalfHeight)
 	{
 		BallPosition.y = ArenaHalfHeight - BallRadius;
 		BallVelocity.y = -std::fabs(BallVelocity.y);
+		BounceEventCount += 1;
 	}
 	else if (BallPosition.y - BallRadius <= -ArenaHalfHeight)
 	{
 		BallPosition.y = -ArenaHalfHeight + BallRadius;
 		BallVelocity.y = std::fabs(BallVelocity.y);
+		BounceEventCount += 1;
 	}
 
 	if (LeftPlaneActor != nullptr && BallVelocity.x < 0.0f && IsBallCollidingWithPlane(BallPosition, LeftPlaneActor))
@@ -147,6 +152,7 @@ void PingPongGame::UpdateBall(float DeltaTime)
 		BallPosition.x = LeftPlaneActor->GetPosition().x + PlaneHalfWidth + BallRadius;
 		BallVelocity.x = std::fabs(BallVelocity.x);
 		BallVelocity.y += HitOffset * 0.8f;
+		BounceEventCount += 1;
 	}
 
 	if (RightPlaneActor != nullptr && BallVelocity.x > 0.0f && IsBallCollidingWithPlane(BallPosition, RightPlaneActor))
@@ -156,9 +162,19 @@ void PingPongGame::UpdateBall(float DeltaTime)
 		BallPosition.x = RightPlaneActor->GetPosition().x - PlaneHalfWidth - BallRadius;
 		BallVelocity.x = -std::fabs(BallVelocity.x);
 		BallVelocity.y += HitOffset * 0.8f;
+		BounceEventCount += 1;
 	}
 
-	const float MaximumVerticalSpeed = BallBaseSpeed * 1.25f;
+	if (IsBounceAccelerationEnabled)
+	{
+		for (int BounceIndex = 0; BounceIndex < BounceEventCount; ++BounceIndex)
+		{
+			ApplyBounceAcceleration();
+		}
+	}
+
+	const float CurrentHorizontalSpeed = std::fabs(BallVelocity.x);
+	const float MaximumVerticalSpeed = (std::max)(BallBaseSpeed, CurrentHorizontalSpeed) * 1.25f;
 	BallVelocity.y = std::clamp(BallVelocity.y, -MaximumVerticalSpeed, MaximumVerticalSpeed);
 
 	if (BallPosition.x + BallRadius < -ArenaHalfWidth)
@@ -248,4 +264,44 @@ int PingPongGame::GetPlayerVictoryCount() const
 int PingPongGame::GetComputerVictoryCount() const
 {
 	return ComputerVictoryCount;
+}
+
+bool PingPongGame::GetBounceAccelerationEnabled() const
+{
+	return IsBounceAccelerationEnabled;
+}
+
+void PingPongGame::SetBounceAccelerationEnabledFromUI(bool NewBounceAccelerationEnabled)
+{
+	if (IsBounceAccelerationEnabled == NewBounceAccelerationEnabled)
+	{
+		return;
+	}
+
+	IsBounceAccelerationEnabled = NewBounceAccelerationEnabled;
+	if (IsBounceAccelerationEnabled == false)
+	{
+		ResetBallSpeedToNormal();
+	}
+}
+
+void PingPongGame::ApplyBounceAcceleration()
+{
+	const float CurrentSpeed = std::sqrt((BallVelocity.x * BallVelocity.x) + (BallVelocity.y * BallVelocity.y));
+	if (CurrentSpeed <= 0.0f)
+	{
+		return;
+	}
+
+	const float NewSpeed = CurrentSpeed * BounceAccelerationFactor;
+	const float SpeedScaleFactor = NewSpeed / CurrentSpeed;
+	BallVelocity.x *= SpeedScaleFactor;
+	BallVelocity.y *= SpeedScaleFactor;
+}
+
+void PingPongGame::ResetBallSpeedToNormal()
+{
+	const float HorizontalDirection = BallVelocity.x < 0.0f ? -1.0f : 1.0f;
+	const float VerticalDirection = BallVelocity.y < 0.0f ? -1.0f : 1.0f;
+	BallVelocity = DirectX::XMFLOAT3(BallBaseSpeed * HorizontalDirection, BallBaseSpeed * 0.35f * VerticalDirection, 0.0f);
 }
