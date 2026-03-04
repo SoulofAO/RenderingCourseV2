@@ -2,18 +2,32 @@
 
 #include "Abstracts/GameComponent.h"
 #include <d3d11.h>
+#include <directxmath.h>
+#include <string>
+#include <vector>
 
-class TriangleComponent : public GameComponent
+struct MeshUniversalVertex
+{
+	DirectX::XMFLOAT4 Position;
+	DirectX::XMFLOAT4 Color;
+};
+
+class MeshUniversalComponent : public GameComponent
 {
 public:
-	TriangleComponent(Game* GameInstance);
-	~TriangleComponent() override;
+	MeshUniversalComponent(Game* GameInstance);
+	~MeshUniversalComponent() override;
 
 	void Initialize() override;
 	void Update(float DeltaTime) override;
 	void Draw() override;
 	void DestroyResources() override;
 
+	std::string VertexShaderName = "";
+	std::string PixelShaderName = "";
+	std::vector<MeshUniversalVertex> Vertices;
+	std::vector<unsigned int> Indices;
+	
 private:
 	ID3D11InputLayout* Layout;
 	ID3D11VertexShader* VertexShader;

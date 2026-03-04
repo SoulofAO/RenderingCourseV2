@@ -1,6 +1,6 @@
 #pragma once
 #include "Abstracts/MeshUniversalComponent.h"
-class PingPongSphere : public MeshUniversalComponent
+class PingPongPlane : public MeshUniversalComponent
 {
 	virtual void Initialize() override;
 	virtual void Update(float DeltaTime) override;

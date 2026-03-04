@@ -162,9 +162,6 @@ void Game::Update(float DeltaTime)
 
 void Game::Draw()
 {
-	float ClearColor[] = { TotalTime, 0.1f, 0.1f, 1.0f };
-	Context->ClearRenderTargetView(RenderView, ClearColor);
-
 	for (auto& Component : Components)
 	{
 		Component->Draw();

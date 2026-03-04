@@ -1,4 +1,4 @@
-#include "TriangleComponent.h"
+#include "Abstracts/MeshUniversalComponent.h"
 #include "Abstracts/Game.h"
 #include "Abstracts/DisplayWin32.h"
 #include <d3dcompiler.h>
@@ -7,7 +7,7 @@
 
 #pragma comment(lib, "d3dcompiler.lib")
 
-TriangleComponent::TriangleComponent(Game* GameInstance)
+MeshUniversalComponent::MeshUniversalComponent(Game* GameInstance)
 	: GameComponent(GameInstance)
 	, Layout(nullptr)
 	, VertexShader(nullptr)
@@ -19,20 +19,43 @@ TriangleComponent::TriangleComponent(Game* GameInstance)
 	, RasterState(nullptr)
 	, IndexCount(0)
 {
+	Vertices = {
+		MeshUniversalVertex{ DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+		MeshUniversalVertex{ DirectX::XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+		MeshUniversalVertex{ DirectX::XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+		MeshUniversalVertex{ DirectX::XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) }
+	};
+
+	Indices = { 0, 1, 2, 1, 0, 3 };
 }
 
-TriangleComponent::~TriangleComponent()
+MeshUniversalComponent::~MeshUniversalComponent()
 {
 	DestroyResources();
 }
 
-void TriangleComponent::Initialize()
+void MeshUniversalComponent::Initialize()
 {
 	ID3D11Device* Device = OwningGame->GetDevice();
 
+	if (VertexShaderName.empty())
+	{
+		std::cerr << "VertexShaderName is not initialized." << std::endl;
+		return;
+	}
+
+	if (PixelShaderName.empty())
+	{
+		std::cerr << "PixelShaderName is not initialized." << std::endl;
+		return;
+	}
+
+	std::wstring VertexShaderFilePath(VertexShaderName.begin(), VertexShaderName.end());
+	std::wstring PixelShaderFilePath(PixelShaderName.begin(), PixelShaderName.end());
+
 	ID3DBlob* ErrorCode = nullptr;
 	auto Result = D3DCompileFromFile(
-		L"./Shaders/MyVeryFirstShader.hlsl",
+		VertexShaderFilePath.c_str(),
 		nullptr,
 		nullptr,
 		"VSMain",
@@ -68,7 +91,7 @@ void TriangleComponent::Initialize()
 
 	ID3DBlob* PixelErrorCode = nullptr;
 	Result = D3DCompileFromFile(
-		L"./Shaders/MyVeryFirstShader.hlsl",
+		PixelShaderFilePath.c_str(),
 		ShaderMacros,
 		nullptr,
 		"PSMain",
@@ -116,12 +139,17 @@ void TriangleComponent::Initialize()
 		VertexShaderByteCode->GetBufferSize(),
 		&Layout);
 
-	DirectX::XMFLOAT4 Points[8] = {
-		DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),   DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
-		DirectX::XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f),  DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
-		DirectX::XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f),   DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
-		DirectX::XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f),   DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	};
+	if (Vertices.empty())
+	{
+		std::cerr << "Vertices are empty." << std::endl;
+		return;
+	}
+
+	if (Indices.empty())
+	{
+		std::cerr << "Indices are empty." << std::endl;
+		return;
+	}
 
 	D3D11_BUFFER_DESC VertexBufferDescription = {};
 	VertexBufferDescription.Usage = D3D11_USAGE_DEFAULT;
@@ -129,17 +157,16 @@ void TriangleComponent::Initialize()
 	VertexBufferDescription.CPUAccessFlags = 0;
 	VertexBufferDescription.MiscFlags = 0;
 	VertexBufferDescription.StructureByteStride = 0;
-	VertexBufferDescription.ByteWidth = sizeof(DirectX::XMFLOAT4) * std::size(Points);
+	VertexBufferDescription.ByteWidth = static_cast<UINT>(sizeof(MeshUniversalVertex) * Vertices.size());
 
 	D3D11_SUBRESOURCE_DATA VertexData = {};
-	VertexData.pSysMem = Points;
+	VertexData.pSysMem = Vertices.data();
 	VertexData.SysMemPitch = 0;
 	VertexData.SysMemSlicePitch = 0;
 
 	Device->CreateBuffer(&VertexBufferDescription, &VertexData, &VertexBuffer);
 
-	int Indices[] = { 0, 1, 2, 1, 0, 3 };
-	IndexCount = static_cast<UINT>(std::size(Indices));
+	IndexCount = static_cast<UINT>(Indices.size());
 
 	D3D11_BUFFER_DESC IndexBufferDescription = {};
 	IndexBufferDescription.Usage = D3D11_USAGE_DEFAULT;
@@ -147,10 +174,10 @@ void TriangleComponent::Initialize()
 	IndexBufferDescription.CPUAccessFlags = 0;
 	IndexBufferDescription.MiscFlags = 0;
 	IndexBufferDescription.StructureByteStride = 0;
-	IndexBufferDescription.ByteWidth = sizeof(int) * IndexCount;
+	IndexBufferDescription.ByteWidth = static_cast<UINT>(sizeof(unsigned int) * Indices.size());
 
 	D3D11_SUBRESOURCE_DATA IndexData = {};
-	IndexData.pSysMem = Indices;
+	IndexData.pSysMem = Indices.data();
 	IndexData.SysMemPitch = 0;
 	IndexData.SysMemSlicePitch = 0;
 
@@ -163,11 +190,11 @@ void TriangleComponent::Initialize()
 	Device->CreateRasterizerState(&RasterizerDescription, &RasterState);
 }
 
-void TriangleComponent::Update(float DeltaTime)
+void MeshUniversalComponent::Update(float DeltaTime)
 {
 }
 
-void TriangleComponent::Draw()
+void MeshUniversalComponent::Draw()
 {
 	ID3D11DeviceContext* DeviceContext = OwningGame->GetDeviceContext();
 
@@ -176,7 +203,7 @@ void TriangleComponent::Draw()
 	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-	UINT Strides[] = { 32 };
+	UINT Strides[] = { static_cast<UINT>(sizeof(MeshUniversalVertex)) };
 	UINT Offsets[] = { 0 };
 	DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, Strides, Offsets);
 
@@ -186,7 +213,7 @@ void TriangleComponent::Draw()
 	DeviceContext->DrawIndexed(IndexCount, 0, 0);
 }
 
-void TriangleComponent::DestroyResources()
+void MeshUniversalComponent::DestroyResources()
 {
 	if (Layout)
 	{
