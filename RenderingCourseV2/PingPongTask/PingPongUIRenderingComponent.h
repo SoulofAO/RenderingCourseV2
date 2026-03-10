@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 
-#include "Abstracts/Components/UIRenderingComponent.h"
+#include "Engine/Core/Runtime/Abstract/Components/UIRenderingComponent.h"
 
 class PingPongGame;
 
@@ -16,3 +16,4 @@ protected:
 private:
 	PingPongGame* GetOwningPingPongGame() const;
 };
+

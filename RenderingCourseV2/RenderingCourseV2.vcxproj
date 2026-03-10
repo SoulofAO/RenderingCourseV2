@@ -131,22 +131,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Abstracts\Components\ActorComponent.cpp" />
-    <ClCompile Include="Abstracts\Components\GameComponent.cpp" />
-    <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp" />
-    <ClCompile Include="Abstracts\Components\PhysicsComponent.cpp" />
-    <ClCompile Include="Abstracts\Components\RenderingComponent.cpp" />
-    <ClCompile Include="Abstracts\Components\UIRenderingComponent.cpp" />
-    <ClCompile Include="Abstracts\Core\Actor.cpp" />
-    <ClCompile Include="Abstracts\Core\Game.cpp" />
-    <ClCompile Include="Abstracts\Core\Object.cpp" />
-    <ClCompile Include="Abstracts\Subsystems\DisplayWin32.cpp" />
-    <ClCompile Include="Abstracts\Subsystems\InputDevice.cpp" />
-    <ClCompile Include="Abstracts\Subsystems\PhysicsSubsystem.cpp" />
-    <ClCompile Include="Abstracts\Subsystems\SceneViewportSubsystem.cpp" />
-    <ClCompile Include="Abstracts\Subsystems\Subsystem.cpp" />
-    <ClCompile Include="FirstTask\FirstTaskGame.cpp" />
-    <ClCompile Include="FirstTask\TriangleComponent.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Components\ActorComponent.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Components\GameComponent.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Components\MeshUniversalComponent.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Components\PhysicsComponent.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Components\RenderingComponent.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Components\UIRenderingComponent.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\Actor.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\Editor.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\Game.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\Object.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\RuntimeObjectSystem.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\UClass.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\AssetManager.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\DisplayWin32.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\InputDevice.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\PhysicsSubsystem.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\SceneViewportSubsystem.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\Subsystem.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx10.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx12.cpp" />
@@ -158,30 +160,28 @@
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
-    <ClCompile Include="PingPongTask\PingPongGame.cpp" />
-    <ClCompile Include="PingPongTask\PingPongPlane.cpp" />
-    <ClCompile Include="PingPongTask\PingPongSphere.cpp" />
-    <ClCompile Include="PingPongTask\PingPongUIRenderingComponent.cpp" />
 
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Abstracts\Components\ActorComponent.h" />
-    <ClInclude Include="Abstracts\Components\GameComponent.h" />
-    <ClInclude Include="Abstracts\Components\MeshUniversalComponent.h" />
-    <ClInclude Include="Abstracts\Components\PhysicsComponent.h" />
-    <ClInclude Include="Abstracts\Components\RenderingComponent.h" />
-    <ClInclude Include="Abstracts\Components\UIRenderingComponent.h" />
-    <ClInclude Include="Abstracts\Core\Actor.h" />
-    <ClInclude Include="Abstracts\Core\Game.h" />
-    <ClInclude Include="Abstracts\Core\Object.h" />
-    <ClInclude Include="Abstracts\Core\Transform.h" />
-    <ClInclude Include="Abstracts\Subsystems\DisplayWin32.h" />
-    <ClInclude Include="Abstracts\Subsystems\InputDevice.h" />
-    <ClInclude Include="Abstracts\Subsystems\PhysicsSubsystem.h" />
-    <ClInclude Include="Abstracts\Subsystems\SceneViewportSubsystem.h" />
-    <ClInclude Include="Abstracts\Subsystems\Subsystem.h" />
-    <ClInclude Include="FirstTask\FirstTaskGame.h" />
-    <ClInclude Include="FirstTask\TriangleComponent.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Components\ActorComponent.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Components\GameComponent.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Components\MeshUniversalComponent.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Components\PhysicsComponent.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Components\RenderingComponent.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Components\UIRenderingComponent.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Actor.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Editor.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Game.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Object.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\RuntimeObjectSystem.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Transform.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\UClass.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\AssetManager.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\DisplayWin32.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\InputDevice.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\PhysicsSubsystem.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\SceneViewportSubsystem.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\Subsystem.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx10.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx12.h" />
@@ -194,17 +194,10 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="imgui\misc\cpp\imgui_stdlib.h" />
     <ClInclude Include="imgui\misc\single_file\imgui_single_file.h" />
-    <ClInclude Include="PingPongTask\PingPongGame.h" />
-    <ClInclude Include="PingPongTask\PingPongPlane.h" />
-    <ClInclude Include="PingPongTask\PingPongSphere.h" />
-    <ClInclude Include="PingPongTask\PingPongUIRenderingComponent.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Shaders\Abstracts\MeshUniversalShared.hlsli" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\FirstTask\MyVeryFirstShader.hlsl" />
-    <None Include="Shaders\PingPong\PingPongBaseShader.hlsl" />
-    <None Include="Shaders\PingPong\PingPongPointSphere.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RenderingCourseV2.rc" />

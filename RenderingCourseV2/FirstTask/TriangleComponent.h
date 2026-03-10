@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 
-#include "Abstracts/Components/RenderingComponent.h"
+#include "Engine/Core/Runtime/Abstract/Components/RenderingComponent.h"
 #include <d3d11.h>
 
 class SceneViewportSubsystem;
@@ -27,3 +27,4 @@ private:
 	ID3D11RasterizerState* RasterState;
 	UINT IndexCount;
 };
+

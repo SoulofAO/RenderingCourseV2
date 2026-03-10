@@ -1,9 +1,9 @@
-#include "PingPongGame.h"
+﻿#include "PingPongGame.h"
 #include "PingPongPlane.h"
 #include "PingPongSphere.h"
 #include "PingPongUIRenderingComponent.h"
-#include "Abstracts/Core/Actor.h"
-#include "Abstracts/Subsystems/InputDevice.h"
+#include "Engine/Core/Runtime/Abstract/Core/Actor.h"
+#include "Engine/Core/Runtime/Abstract/Subsystems/InputDevice.h"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -305,3 +305,4 @@ void PingPongGame::ResetBallSpeedToNormal()
 	const float VerticalDirection = BallVelocity.y < 0.0f ? -1.0f : 1.0f;
 	BallVelocity = DirectX::XMFLOAT3(BallBaseSpeed * HorizontalDirection, BallBaseSpeed * 0.35f * VerticalDirection, 0.0f);
 }
+

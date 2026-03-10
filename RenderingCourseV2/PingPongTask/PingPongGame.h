@@ -1,5 +1,5 @@
-#pragma once
-#include "Abstracts/Core/Game.h"
+﻿#pragma once
+#include "Engine/Core/Runtime/Abstract/Core/Game.h"
 #include <directxmath.h>
 
 class PingPongPlane;
@@ -55,3 +55,4 @@ private:
 	int PlayerVictoryCount;
 	int ComputerVictoryCount;
 };
+

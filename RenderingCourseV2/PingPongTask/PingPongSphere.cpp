@@ -1,5 +1,5 @@
-#include "PingPongSphere.h"
-#include "Abstracts/Components/MeshUniversalComponent.h"
+﻿#include "PingPongSphere.h"
+#include "Engine/Core/Runtime/Abstract/Components/MeshUniversalComponent.h"
 
 PingPongSphere::PingPongSphere()
 	: Actor()
@@ -30,3 +30,4 @@ PingPongSphere::PingPongSphere()
 	MeshComponent->Indices = { 0, 1, 2, 1, 0, 3 };
 	AddComponent(std::move(MeshComponent));
 }
+

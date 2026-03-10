@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 
-#include "Abstracts/Core/Game.h"
+#include "Engine/Core/Runtime/Abstract/Core/Game.h"
 
 class FirstTaskGame : public Game
 {
@@ -10,3 +10,4 @@ public:
 protected:
 	void BeginPlay() override;
 };
+

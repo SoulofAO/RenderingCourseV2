@@ -1,7 +1,7 @@
-#include "TriangleComponent.h"
-#include "Abstracts/Core/Game.h"
-#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
-#include "Abstracts/Subsystems/DisplayWin32.h"
+﻿#include "TriangleComponent.h"
+#include "Engine/Core/Runtime/Abstract/Core/Game.h"
+#include "Engine/Core/Runtime/Abstract/Subsystems/SceneViewportSubsystem.h"
+#include "Engine/Core/Runtime/Abstract/Subsystems/DisplayWin32.h"
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <iostream>
@@ -267,3 +267,4 @@ void TriangleComponent::Shutdown()
 
 	RenderingComponent::Shutdown();
 }
+

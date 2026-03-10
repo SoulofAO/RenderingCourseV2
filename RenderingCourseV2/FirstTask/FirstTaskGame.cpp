@@ -1,7 +1,7 @@
-#include "FirstTaskGame.h"
+﻿#include "FirstTaskGame.h"
 #include "FirstTask/TriangleComponent.h"
-#include "Abstracts/Core/Actor.h"
-#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
+#include "Engine/Core/Runtime/Abstract/Core/Actor.h"
+#include "Engine/Core/Runtime/Abstract/Subsystems/SceneViewportSubsystem.h"
 
 FirstTaskGame::FirstTaskGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Game(ApplicationName, ScreenWidth, ScreenHeight)
@@ -17,3 +17,4 @@ void FirstTaskGame::BeginPlay()
 	GetSubsystem<SceneViewportSubsystem>()->bDisplayChangedColor = true;
 	Game::BeginPlay();
 }
+
