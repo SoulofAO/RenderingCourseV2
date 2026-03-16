@@ -327,12 +327,6 @@ void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 				float SelectedOrthographicProjectionWidth = OrthographicProjectionWidth;
 				float SelectedOrthographicProjectionHeight = OrthographicProjectionHeight;
 
-				if (SelectedOrthographicProjectionWidth <= 0.0f || SelectedOrthographicProjectionHeight <= 0.0f)
-				{
-					SelectedOrthographicProjectionHeight = 2.6f;
-					SelectedOrthographicProjectionWidth = SelectedOrthographicProjectionHeight * AspectRatio;
-				}
-
 				ProjectionMatrix = DirectX::XMMatrixOrthographicLH(
 					SelectedOrthographicProjectionWidth,
 					SelectedOrthographicProjectionHeight,

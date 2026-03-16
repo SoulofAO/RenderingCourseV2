@@ -20,13 +20,6 @@ float4 PSMain( PS_IN input ) : SV_Target
 		discard;
 	}
 
-	float SphereDepth = sqrt(1.0f - RadiusSquared);
-	float3 SphereNormal = normalize(float3(SphereCoordinates.x, -SphereCoordinates.y, SphereDepth));
-	float3 LightDirection = normalize(float3(-0.4f, 0.6f, 1.0f));
-	float DiffuseIntensity = saturate(dot(SphereNormal, LightDirection));
-	float AmbientIntensity = 0.2f;
-	float LightIntensity = AmbientIntensity + DiffuseIntensity * 0.8f;
-
-	float3 FinalColor = input.Color.rgb * LightIntensity;
+	float3 FinalColor = input.Color.rgb;
 	return float4(FinalColor, 1.0f);
 }
