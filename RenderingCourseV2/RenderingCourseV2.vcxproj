@@ -75,7 +75,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)imgui;$(DirectXTexIncludeDir);$(AssimpIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -91,7 +91,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)imgui;$(DirectXTexIncludeDir);$(AssimpIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -105,7 +105,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)imgui;$(DirectXTexIncludeDir);$(AssimpIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -121,7 +121,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)imgui;$(DirectXTexIncludeDir);$(AssimpIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -132,7 +132,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Abstracts\Components\ActorComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\CameraComponent.cpp" />
     <ClCompile Include="Abstracts\Components\GameComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\LightComponent.cpp" />
     <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp" />
     <ClCompile Include="Abstracts\Components\PhysicsComponent.cpp" />
     <ClCompile Include="Abstracts\Components\RenderingComponent.cpp" />
@@ -140,9 +142,16 @@
     <ClCompile Include="Abstracts\Core\Actor.cpp" />
     <ClCompile Include="Abstracts\Core\Game.cpp" />
     <ClCompile Include="Abstracts\Core\Object.cpp" />
+    <ClCompile Include="Abstracts\Input\EngineHotkeyInputHandler.cpp" />
+    <ClCompile Include="Abstracts\Input\FreeCameraInputHandler.cpp" />
     <ClCompile Include="Abstracts\Subsystems\DisplayWin32.cpp" />
     <ClCompile Include="Abstracts\Subsystems\InputDevice.cpp" />
     <ClCompile Include="Abstracts\Subsystems\PhysicsSubsystem.cpp" />
+    <ClCompile Include="Abstracts\Rendering\DeferredRenderer.cpp" />
+    <ClCompile Include="Abstracts\Resources\MeshResourceBindingHelper.cpp" />
+    <ClCompile Include="Abstracts\Resources\ResourceCooker.cpp" />
+    <ClCompile Include="Abstracts\Resources\ResourceManager.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\CameraSubsystem.cpp" />
     <ClCompile Include="Abstracts\Subsystems\SceneViewportSubsystem.cpp" />
     <ClCompile Include="Abstracts\Subsystems\Subsystem.cpp" />
     <ClCompile Include="FirstTask\FirstTaskGame.cpp" />
@@ -166,8 +175,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Abstracts\Components\ActorComponent.h" />
+    <ClInclude Include="Abstracts\Components\CameraComponent.h" />
     <ClInclude Include="Abstracts\Components\GameComponent.h" />
+    <ClInclude Include="Abstracts\Components\LightComponent.h" />
     <ClInclude Include="Abstracts\Components\MeshUniversalComponent.h" />
+    <ClInclude Include="Abstracts\Rendering\DeferredRenderer.h" />
+    <ClInclude Include="Abstracts\Resources\MeshResourceBindingHelper.h" />
+    <ClInclude Include="Abstracts\Resources\ModelResource.h" />
+    <ClInclude Include="Abstracts\Resources\ResourceBase.h" />
+    <ClInclude Include="Abstracts\Resources\ResourceCooker.h" />
+    <ClInclude Include="Abstracts\Resources\ResourceManager.h" />
+    <ClInclude Include="Abstracts\Resources\TextureResource.h" />
     <ClInclude Include="Abstracts\Components\PhysicsComponent.h" />
     <ClInclude Include="Abstracts\Components\RenderingComponent.h" />
     <ClInclude Include="Abstracts\Components\UIRenderingComponent.h" />
@@ -175,9 +193,13 @@
     <ClInclude Include="Abstracts\Core\Game.h" />
     <ClInclude Include="Abstracts\Core\Object.h" />
     <ClInclude Include="Abstracts\Core\Transform.h" />
+    <ClInclude Include="Abstracts\Input\EngineHotkeyInputHandler.h" />
+    <ClInclude Include="Abstracts\Input\FreeCameraInputHandler.h" />
+    <ClInclude Include="Abstracts\Input\GameInputHandler.h" />
     <ClInclude Include="Abstracts\Subsystems\DisplayWin32.h" />
     <ClInclude Include="Abstracts\Subsystems\InputDevice.h" />
     <ClInclude Include="Abstracts\Subsystems\PhysicsSubsystem.h" />
+    <ClInclude Include="Abstracts\Subsystems\CameraSubsystem.h" />
     <ClInclude Include="Abstracts\Subsystems\SceneViewportSubsystem.h" />
     <ClInclude Include="Abstracts\Subsystems\Subsystem.h" />
     <ClInclude Include="FirstTask\FirstTaskGame.h" />
@@ -202,6 +224,10 @@
     <ClInclude Include="Shaders\Abstracts\MeshUniversalShared.hlsli" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\Abstracts\LightingShared.hlsli" />
+    <None Include="Shaders\Abstracts\MeshUniversalDefault.hlsl" />
+    <None Include="Shaders\Deferred\DeferredGeometryPass.hlsl" />
+    <None Include="Shaders\Deferred\DeferredLightingPass.hlsl" />
     <None Include="Shaders\FirstTask\MyVeryFirstShader.hlsl" />
     <None Include="Shaders\PingPong\PingPongBaseShader.hlsl" />
     <None Include="Shaders\PingPong\PingPongPointSphere.hlsl" />

@@ -12,18 +12,26 @@ PingPongSphere::PingPongSphere()
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(0.08f, 0.08f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT2(1.0f, 0.0f) },
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(-0.08f, -0.08f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT2(0.0f, 1.0f) },
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(0.08f, -0.08f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT2(1.0f, 1.0f) },
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(-0.08f, 0.08f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT2(0.0f, 0.0f) }
 	};
 

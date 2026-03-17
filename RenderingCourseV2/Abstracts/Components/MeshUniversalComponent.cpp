@@ -1,10 +1,10 @@
 #include "Abstracts/Components/MeshUniversalComponent.h"
-#include "Abstracts/Core/Game.h"
 #include "Abstracts/Core/Actor.h"
+#include "Abstracts/Core/Game.h"
+#include "Abstracts/Resources/MeshResourceBindingHelper.h"
+#include "Abstracts/Resources/ResourceManager.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
-#include "Abstracts/Subsystems/DisplayWin32.h"
 #include <d3dcompiler.h>
-#include <directxmath.h>
 #include <iostream>
 
 #pragma comment(lib, "d3dcompiler.lib")
@@ -16,12 +16,19 @@ MeshUniversalComponent::MeshUniversalComponent()
 	, VertexShaderByteCode(nullptr)
 	, PixelShader(nullptr)
 	, PixelShaderByteCode(nullptr)
+	, DeferredVertexShader(nullptr)
+	, DeferredVertexShaderByteCode(nullptr)
+	, DeferredPixelShader(nullptr)
+	, DeferredPixelShaderByteCode(nullptr)
 	, TransformConstantBuffer(nullptr)
+	, LightConstantBuffer(nullptr)
+	, MaterialConstantBuffer(nullptr)
 	, VertexBuffer(nullptr)
 	, IndexBuffer(nullptr)
 	, RasterState(nullptr)
+	, DefaultSamplerState(nullptr)
 	, IndexCount(0)
-	, UseOrthographicProjection(true)
+	, UseOrthographicProjection(false)
 	, OrthographicProjectionWidth(4.5f)
 	, OrthographicProjectionHeight(2.6f)
 {
@@ -33,18 +40,26 @@ MeshUniversalComponent::MeshUniversalComponent()
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT2(1.0f, 0.0f) },
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT2(0.0f, 1.0f) },
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT2(1.0f, 1.0f) },
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f),
 			DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT2(0.0f, 0.0f) }
 	};
 
@@ -78,77 +93,36 @@ void MeshUniversalComponent::Initialize()
 		return;
 	}
 
+	if (!InitializeShaderProgram(Device, SceneViewport))
+	{
+		return;
+	}
+
+	InitializeRenderResources(Device, SceneViewport);
+}
+
+bool MeshUniversalComponent::InitializeShaderProgram(ID3D11Device* Device, SceneViewportSubsystem* SceneViewport)
+{
+	(void)SceneViewport;
+
 	if (VertexShaderName.empty())
 	{
-		std::cerr << "VertexShaderName is not initialized." << std::endl;
-		return;
+		VertexShaderName = "./Shaders/Abstracts/MeshUniversalDefault.hlsl";
 	}
 
 	if (PixelShaderName.empty())
 	{
-		std::cerr << "PixelShaderName is not initialized." << std::endl;
-		return;
+		PixelShaderName = "./Shaders/Abstracts/MeshUniversalDefault.hlsl";
 	}
 
-	std::wstring VertexShaderFilePath(VertexShaderName.begin(), VertexShaderName.end());
-	std::wstring PixelShaderFilePath(PixelShaderName.begin(), PixelShaderName.end());
-
-	ID3DBlob* ErrorCode = nullptr;
-	auto Result = D3DCompileFromFile(
-		VertexShaderFilePath.c_str(),
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"VSMain",
-		"vs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&VertexShaderByteCode,
-		&ErrorCode);
-
-	if (FAILED(Result))
+	if (!CompileShaderFromFile(VertexShaderName, "VSMain", "vs_5_0", &VertexShaderByteCode))
 	{
-		if (ErrorCode)
-		{
-			char* CompileErrors = static_cast<char*>(ErrorCode->GetBufferPointer());
-			std::cout << CompileErrors << std::endl;
-		}
-		else
-		{
-			MessageBox(
-				SceneViewport->GetDisplay()->GetWindowHandle(),
-				L"MyVeryFirstShader.hlsl",
-				L"Missing Shader File",
-				MB_OK);
-		}
-		return;
+		return false;
 	}
 
-	D3D_SHADER_MACRO ShaderMacros[] = {
-		"TEST", "1",
-		"TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)",
-		nullptr, nullptr
-	};
-
-	ID3DBlob* PixelErrorCode = nullptr;
-	Result = D3DCompileFromFile(
-		PixelShaderFilePath.c_str(),
-		ShaderMacros,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"PSMain",
-		"ps_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&PixelShaderByteCode,
-		&PixelErrorCode);
-
-	if (FAILED(Result))
+	if (!CompileShaderFromFile(PixelShaderName, "PSMain", "ps_5_0", &PixelShaderByteCode))
 	{
-		if (PixelErrorCode)
-		{
-			char* CompileErrors = static_cast<char*>(PixelErrorCode->GetBufferPointer());
-			std::cout << CompileErrors << std::endl;
-		}
-		return;
+		return false;
 	}
 
 	Device->CreateVertexShader(
@@ -163,56 +137,60 @@ void MeshUniversalComponent::Initialize()
 		nullptr,
 		&PixelShader);
 
+	CompileShaderFromFile(DeferredVertexShaderName, "VSMain", "vs_5_0", &DeferredVertexShaderByteCode);
+	CompileShaderFromFile(DeferredPixelShaderName, "PSMain", "ps_5_0", &DeferredPixelShaderByteCode);
+
+	if (DeferredVertexShaderByteCode != nullptr)
+	{
+		Device->CreateVertexShader(
+			DeferredVertexShaderByteCode->GetBufferPointer(),
+			DeferredVertexShaderByteCode->GetBufferSize(),
+			nullptr,
+			&DeferredVertexShader);
+	}
+
+	if (DeferredPixelShaderByteCode != nullptr)
+	{
+		Device->CreatePixelShader(
+			DeferredPixelShaderByteCode->GetBufferPointer(),
+			DeferredPixelShaderByteCode->GetBufferSize(),
+			nullptr,
+			&DeferredPixelShader);
+	}
+
 	D3D11_INPUT_ELEMENT_DESC InputElements[] = {
-		D3D11_INPUT_ELEMENT_DESC{
-			"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,
-			0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		D3D11_INPUT_ELEMENT_DESC{
-			"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,
-			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		D3D11_INPUT_ELEMENT_DESC{
-			"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
-			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		D3D11_INPUT_ELEMENT_DESC{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		D3D11_INPUT_ELEMENT_DESC{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		D3D11_INPUT_ELEMENT_DESC{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		D3D11_INPUT_ELEMENT_DESC{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		D3D11_INPUT_ELEMENT_DESC{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
-	Result = Device->CreateInputLayout(
+	HRESULT Result = Device->CreateInputLayout(
 		InputElements,
-		3,
+		5,
 		VertexShaderByteCode->GetBufferPointer(),
 		VertexShaderByteCode->GetBufferSize(),
 		&Layout);
+	return SUCCEEDED(Result);
+}
 
-	if (FAILED(Result))
-	{
-		std::cerr << "Failed to create input layout. Shader input signature does not match vertex format." << std::endl;
-		return;
-	}
+bool MeshUniversalComponent::InitializeRenderResources(ID3D11Device* Device, SceneViewportSubsystem* SceneViewport)
+{
+	(void)SceneViewport;
 
-	if (Vertices.empty())
+	if (Vertices.empty() || Indices.empty())
 	{
-		std::cerr << "Vertices are empty." << std::endl;
-		return;
-	}
-
-	if (Indices.empty())
-	{
-		std::cerr << "Indices are empty." << std::endl;
-		return;
+		return false;
 	}
 
 	D3D11_BUFFER_DESC VertexBufferDescription = {};
 	VertexBufferDescription.Usage = D3D11_USAGE_DEFAULT;
 	VertexBufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	VertexBufferDescription.CPUAccessFlags = 0;
-	VertexBufferDescription.MiscFlags = 0;
-	VertexBufferDescription.StructureByteStride = 0;
 	VertexBufferDescription.ByteWidth = static_cast<UINT>(sizeof(MeshUniversalVertex) * Vertices.size());
 
 	D3D11_SUBRESOURCE_DATA VertexData = {};
 	VertexData.pSysMem = Vertices.data();
-	VertexData.SysMemPitch = 0;
-	VertexData.SysMemSlicePitch = 0;
-
 	Device->CreateBuffer(&VertexBufferDescription, &VertexData, &VertexBuffer);
 
 	IndexCount = static_cast<UINT>(Indices.size());
@@ -220,38 +198,63 @@ void MeshUniversalComponent::Initialize()
 	D3D11_BUFFER_DESC IndexBufferDescription = {};
 	IndexBufferDescription.Usage = D3D11_USAGE_DEFAULT;
 	IndexBufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	IndexBufferDescription.CPUAccessFlags = 0;
-	IndexBufferDescription.MiscFlags = 0;
-	IndexBufferDescription.StructureByteStride = 0;
 	IndexBufferDescription.ByteWidth = static_cast<UINT>(sizeof(unsigned int) * Indices.size());
 
 	D3D11_SUBRESOURCE_DATA IndexData = {};
 	IndexData.pSysMem = Indices.data();
-	IndexData.SysMemPitch = 0;
-	IndexData.SysMemSlicePitch = 0;
-
 	Device->CreateBuffer(&IndexBufferDescription, &IndexData, &IndexBuffer);
 
 	D3D11_BUFFER_DESC TransformBufferDescription = {};
 	TransformBufferDescription.Usage = D3D11_USAGE_DEFAULT;
 	TransformBufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	TransformBufferDescription.CPUAccessFlags = 0;
-	TransformBufferDescription.MiscFlags = 0;
-	TransformBufferDescription.StructureByteStride = 0;
 	TransformBufferDescription.ByteWidth = static_cast<UINT>(sizeof(MeshUniversalTransformBufferData));
+	Device->CreateBuffer(&TransformBufferDescription, nullptr, &TransformConstantBuffer);
 
-	Result = Device->CreateBuffer(&TransformBufferDescription, nullptr, &TransformConstantBuffer);
-	if (FAILED(Result))
-	{
-		std::cerr << "Failed to create transform constant buffer." << std::endl;
-		return;
-	}
+	D3D11_BUFFER_DESC LightBufferDescription = {};
+	LightBufferDescription.Usage = D3D11_USAGE_DEFAULT;
+	LightBufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	LightBufferDescription.ByteWidth = static_cast<UINT>(sizeof(MeshUniversalLightBufferData));
+	Device->CreateBuffer(&LightBufferDescription, nullptr, &LightConstantBuffer);
+
+	D3D11_BUFFER_DESC MaterialBufferDescription = {};
+	MaterialBufferDescription.Usage = D3D11_USAGE_DEFAULT;
+	MaterialBufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	MaterialBufferDescription.ByteWidth = static_cast<UINT>(sizeof(MeshUniversalMaterialBufferData));
+	Device->CreateBuffer(&MaterialBufferDescription, nullptr, &MaterialConstantBuffer);
+
+	D3D11_SAMPLER_DESC SamplerDescription = {};
+	SamplerDescription.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	SamplerDescription.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	SamplerDescription.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	SamplerDescription.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	SamplerDescription.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	SamplerDescription.MinLOD = 0.0f;
+	SamplerDescription.MaxLOD = D3D11_FLOAT32_MAX;
+	Device->CreateSamplerState(&SamplerDescription, &DefaultSamplerState);
 
 	CD3D11_RASTERIZER_DESC RasterizerDescription = {};
-	RasterizerDescription.CullMode = D3D11_CULL_NONE;
+	RasterizerDescription.CullMode = D3D11_CULL_BACK;
 	RasterizerDescription.FillMode = D3D11_FILL_SOLID;
-
 	Device->CreateRasterizerState(&RasterizerDescription, &RasterState);
+
+	ResourceManager* Resources = GetOwningGame() != nullptr ? GetOwningGame()->GetResourceManager() : nullptr;
+	AlbedoTexture = MeshResourceBindingHelper::LoadTexture(Resources, Device, AlbedoTexturePath);
+	NormalTexture = MeshResourceBindingHelper::LoadTexture(Resources, Device, NormalTexturePath);
+	SpecularTexture = MeshResourceBindingHelper::LoadTexture(Resources, Device, SpecularTexturePath);
+	EmissiveTexture = MeshResourceBindingHelper::LoadTexture(Resources, Device, EmissiveTexturePath);
+	return true;
+}
+
+void MeshUniversalComponent::BindMaterialResources(ID3D11DeviceContext* DeviceContext)
+{
+	ID3D11ShaderResourceView* ShaderResourceViews[4] = {
+		AlbedoTexture.Get(),
+		NormalTexture.Get(),
+		SpecularTexture.Get(),
+		EmissiveTexture.Get()
+	};
+	DeviceContext->PSSetShaderResources(0, 4, ShaderResourceViews);
+	DeviceContext->PSSetSamplers(0, 1, &DefaultSamplerState);
 }
 
 void MeshUniversalComponent::Update(float DeltaTime)
@@ -284,8 +287,8 @@ void MeshUniversalComponent::SetOrthographicProjectionSize(float NewOrthographic
 
 void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 {
-	ID3D11DeviceContext* DeviceContext = SceneViewport->GetDeviceContext();
-	if (DeviceContext == nullptr)
+	ID3D11DeviceContext* DeviceContext = SceneViewport != nullptr ? SceneViewport->GetDeviceContext() : nullptr;
+	if (DeviceContext == nullptr || VertexBuffer == nullptr || IndexBuffer == nullptr)
 	{
 		return;
 	}
@@ -299,63 +302,221 @@ void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 	UINT Offsets[] = { 0 };
 	DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, Strides, Offsets);
 
-	if (TransformConstantBuffer)
+	if (TransformConstantBuffer != nullptr)
 	{
-		Game* OwningGame = GetOwningGame();
-		if (OwningGame == nullptr)
-		{
-			return;
-		}
+		Transform WorldTransform = GetWorldTransform();
+		DirectX::XMMATRIX WorldMatrix = WorldTransform.ToMatrix();
+		DirectX::XMMATRIX ViewMatrix = SceneViewport->GetViewMatrix();
+		DirectX::XMMATRIX ProjectionMatrix = SceneViewport->GetProjectionMatrix();
 
-		float ScreenWidth = static_cast<float>(OwningGame->GetScreenWidth());
-		float ScreenHeight = static_cast<float>(OwningGame->GetScreenHeight());
-
-		if (ScreenHeight > 0.0f && GetOwningActor() != nullptr)
+		if (UseOrthographicProjection)
 		{
-			float AspectRatio = ScreenWidth / ScreenHeight;
-			Transform WorldTransform = GetWorldTransform();
-			DirectX::XMMATRIX WorldMatrix = WorldTransform.ToMatrix();
-			DirectX::XMMATRIX ViewMatrix = DirectX::XMMatrixIdentity();
-			DirectX::XMMATRIX ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(
-				DirectX::XMConvertToRadians(60.0f),
-				AspectRatio,
+			ProjectionMatrix = DirectX::XMMatrixOrthographicLH(
+				OrthographicProjectionWidth,
+				OrthographicProjectionHeight,
 				0.1f,
-				100.0f);
-
-			if (UseOrthographicProjection)
-			{
-				float SelectedOrthographicProjectionWidth = OrthographicProjectionWidth;
-				float SelectedOrthographicProjectionHeight = OrthographicProjectionHeight;
-
-				ProjectionMatrix = DirectX::XMMatrixOrthographicLH(
-					SelectedOrthographicProjectionWidth,
-					SelectedOrthographicProjectionHeight,
-					0.1f,
-					100.0f);
-			}
-			DirectX::XMMATRIX WorldViewProjectionMatrix = WorldMatrix * ViewMatrix * ProjectionMatrix;
-
-			MeshUniversalTransformBufferData TransformBufferData = {};
-			DirectX::XMStoreFloat4x4(
-				&TransformBufferData.WorldViewProjectionMatrix,
-				DirectX::XMMatrixTranspose(WorldViewProjectionMatrix));
-
-			DeviceContext->UpdateSubresource(
-				TransformConstantBuffer,
-				0,
-				nullptr,
-				&TransformBufferData,
-				0,
-				0);
-
-			DeviceContext->VSSetConstantBuffers(0, 1, &TransformConstantBuffer);
+				1000.0f);
 		}
+
+		DirectX::XMMATRIX WorldViewProjectionMatrix = WorldMatrix * ViewMatrix * ProjectionMatrix;
+		MeshUniversalTransformBufferData TransformBufferData = {};
+		DirectX::XMStoreFloat4x4(
+			&TransformBufferData.WorldViewProjectionMatrix,
+			DirectX::XMMatrixTranspose(WorldViewProjectionMatrix));
+		DirectX::XMStoreFloat4x4(&TransformBufferData.WorldMatrix, DirectX::XMMatrixTranspose(WorldMatrix));
+		TransformBufferData.CameraWorldPosition = SceneViewport->GetCameraWorldPosition();
+
+		DeviceContext->UpdateSubresource(TransformConstantBuffer, 0, nullptr, &TransformBufferData, 0, 0);
+		DeviceContext->VSSetConstantBuffers(0, 1, &TransformConstantBuffer);
+		DeviceContext->PSSetConstantBuffers(0, 1, &TransformConstantBuffer);
 	}
 
-	DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-	DeviceContext->PSSetShader(PixelShader, nullptr, 0);
+	if (LightConstantBuffer != nullptr)
+	{
+		MeshUniversalLightBufferData LightBufferData = {};
+		LightBufferData.DirectionalLightDirection = SceneViewport->GetDirectionalLightDirection();
+		LightBufferData.DirectionalLightColor = SceneViewport->GetDirectionalLightColor();
+		LightBufferData.DirectionalLightIntensity = SceneViewport->GetDirectionalLightIntensity();
+		DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
+		DeviceContext->PSSetConstantBuffers(1, 1, &LightConstantBuffer);
+	}
+
+	if (MaterialConstantBuffer != nullptr)
+	{
+		MeshUniversalMaterialBufferData MaterialBufferData = {};
+		MaterialBufferData.BaseColor = BaseColor;
+		MaterialBufferData.SpecularPower = SpecularPower;
+		MaterialBufferData.SpecularIntensity = SpecularIntensity;
+		MaterialBufferData.UseAlbedoTexture = AlbedoTexture ? 1.0f : 0.0f;
+		MaterialBufferData.UseNormalTexture = NormalTexture ? 1.0f : 0.0f;
+		DeviceContext->UpdateSubresource(MaterialConstantBuffer, 0, nullptr, &MaterialBufferData, 0, 0);
+		DeviceContext->PSSetConstantBuffers(2, 1, &MaterialConstantBuffer);
+	}
+
+	BindMaterialResources(DeviceContext);
+
+	if (SceneViewport->IsDeferredRenderingEnabled() && DeferredVertexShader != nullptr && DeferredPixelShader != nullptr)
+	{
+		DeviceContext->VSSetShader(DeferredVertexShader, nullptr, 0);
+		DeviceContext->PSSetShader(DeferredPixelShader, nullptr, 0);
+	}
+	else
+	{
+		DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+		DeviceContext->PSSetShader(PixelShader, nullptr, 0);
+	}
 
 	DeviceContext->DrawIndexed(IndexCount, 0, 0);
+}
+
+bool MeshUniversalComponent::CompileShaderFromFile(
+	const std::string& ShaderPath,
+	const char* EntryPoint,
+	const char* ShaderModel,
+	ID3DBlob** OutputByteCode) const
+{
+	if (ShaderPath.empty() || EntryPoint == nullptr || ShaderModel == nullptr || OutputByteCode == nullptr)
+	{
+		return false;
+	}
+
+	std::wstring ShaderFilePath(ShaderPath.begin(), ShaderPath.end());
+	ID3DBlob* ErrorCode = nullptr;
+	HRESULT Result = D3DCompileFromFile(
+		ShaderFilePath.c_str(),
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		EntryPoint,
+		ShaderModel,
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		OutputByteCode,
+		&ErrorCode);
+
+	if (FAILED(Result))
+	{
+		if (ErrorCode != nullptr)
+		{
+			char* CompileErrors = static_cast<char*>(ErrorCode->GetBufferPointer());
+			std::cout << CompileErrors << std::endl;
+			ErrorCode->Release();
+		}
+		return false;
+	}
+
+	if (ErrorCode != nullptr)
+	{
+		ErrorCode->Release();
+	}
+
+	return true;
+}
+
+void MeshUniversalComponent::ReleaseShaderProgramResources()
+{
+	if (Layout != nullptr)
+	{
+		Layout->Release();
+		Layout = nullptr;
+	}
+
+	if (VertexShader != nullptr)
+	{
+		VertexShader->Release();
+		VertexShader = nullptr;
+	}
+
+	if (VertexShaderByteCode != nullptr)
+	{
+		VertexShaderByteCode->Release();
+		VertexShaderByteCode = nullptr;
+	}
+
+	if (PixelShader != nullptr)
+	{
+		PixelShader->Release();
+		PixelShader = nullptr;
+	}
+
+	if (PixelShaderByteCode != nullptr)
+	{
+		PixelShaderByteCode->Release();
+		PixelShaderByteCode = nullptr;
+	}
+
+	if (DeferredVertexShader != nullptr)
+	{
+		DeferredVertexShader->Release();
+		DeferredVertexShader = nullptr;
+	}
+
+	if (DeferredVertexShaderByteCode != nullptr)
+	{
+		DeferredVertexShaderByteCode->Release();
+		DeferredVertexShaderByteCode = nullptr;
+	}
+
+	if (DeferredPixelShader != nullptr)
+	{
+		DeferredPixelShader->Release();
+		DeferredPixelShader = nullptr;
+	}
+
+	if (DeferredPixelShaderByteCode != nullptr)
+	{
+		DeferredPixelShaderByteCode->Release();
+		DeferredPixelShaderByteCode = nullptr;
+	}
+}
+
+void MeshUniversalComponent::ReleaseRenderResources()
+{
+	if (TransformConstantBuffer != nullptr)
+	{
+		TransformConstantBuffer->Release();
+		TransformConstantBuffer = nullptr;
+	}
+
+	if (LightConstantBuffer != nullptr)
+	{
+		LightConstantBuffer->Release();
+		LightConstantBuffer = nullptr;
+	}
+
+	if (MaterialConstantBuffer != nullptr)
+	{
+		MaterialConstantBuffer->Release();
+		MaterialConstantBuffer = nullptr;
+	}
+
+	if (VertexBuffer != nullptr)
+	{
+		VertexBuffer->Release();
+		VertexBuffer = nullptr;
+	}
+
+	if (IndexBuffer != nullptr)
+	{
+		IndexBuffer->Release();
+		IndexBuffer = nullptr;
+	}
+
+	if (RasterState != nullptr)
+	{
+		RasterState->Release();
+		RasterState = nullptr;
+	}
+
+	if (DefaultSamplerState != nullptr)
+	{
+		DefaultSamplerState->Release();
+		DefaultSamplerState = nullptr;
+	}
+
+	AlbedoTexture.Reset();
+	NormalTexture.Reset();
+	SpecularTexture.Reset();
+	EmissiveTexture.Reset();
 }
 
 void MeshUniversalComponent::Shutdown()
@@ -365,59 +526,8 @@ void MeshUniversalComponent::Shutdown()
 		return;
 	}
 
-	if (Layout)
-	{
-		Layout->Release();
-		Layout = nullptr;
-	}
-
-	if (VertexShader)
-	{
-		VertexShader->Release();
-		VertexShader = nullptr;
-	}
-
-	if (VertexShaderByteCode)
-	{
-		VertexShaderByteCode->Release();
-		VertexShaderByteCode = nullptr;
-	}
-
-	if (PixelShader)
-	{
-		PixelShader->Release();
-		PixelShader = nullptr;
-	}
-
-	if (PixelShaderByteCode)
-	{
-		PixelShaderByteCode->Release();
-		PixelShaderByteCode = nullptr;
-	}
-
-	if (TransformConstantBuffer)
-	{
-		TransformConstantBuffer->Release();
-		TransformConstantBuffer = nullptr;
-	}
-
-	if (VertexBuffer)
-	{
-		VertexBuffer->Release();
-		VertexBuffer = nullptr;
-	}
-
-	if (IndexBuffer)
-	{
-		IndexBuffer->Release();
-		IndexBuffer = nullptr;
-	}
-
-	if (RasterState)
-	{
-		RasterState->Release();
-		RasterState = nullptr;
-	}
+	ReleaseShaderProgramResources();
+	ReleaseRenderResources();
 
 	RenderingComponent::Shutdown();
 }

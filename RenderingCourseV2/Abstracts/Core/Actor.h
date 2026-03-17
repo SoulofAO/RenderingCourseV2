@@ -25,13 +25,25 @@ public:
 	const std::vector<std::unique_ptr<ActorComponent>>& GetComponents() const;
 
 	void SetTransform(const Transform& NewTransform);
-	const Transform& GetTransform() const;
+	Transform GetTransform() const;
+	const Transform& GetLocalTransform() const;
+	void SetPivotTransform(const Transform& NewPivotTransform);
+	const Transform& GetPivotTransform() const;
+	void AttachToActor(Actor* NewParentActor);
+	void DetachFromActor();
+	Actor* GetParentActor() const;
+	const std::vector<Actor*>& GetChildActors() const;
 
 	void SetPosition(const DirectX::XMFLOAT3& NewPosition);
 	const DirectX::XMFLOAT3& GetPosition() const;
 
 private:
+	void RemoveChildActorReference(Actor* ExistingChildActor);
+
 	Game* OwningGame;
 	std::vector<std::unique_ptr<ActorComponent>> Components;
-	Transform WorldTransform;
+	Transform LocalTransform;
+	Transform PivotTransform;
+	Actor* ParentActor;
+	std::vector<Actor*> ChildActors;
 };

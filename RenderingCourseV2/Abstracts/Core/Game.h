@@ -9,6 +9,9 @@
 class InputDevice;
 class Actor;
 class SceneViewportSubsystem;
+class ResourceManager;
+class GameInputHandler;
+class CameraComponent;
 
 class Game
 {
@@ -27,9 +30,12 @@ public:
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
 	float GetTotalRunTimeSeconds() const;
+	ResourceManager* GetResourceManager() const;
 
 	void AddSubsystem(std::unique_ptr<Subsystem> NewSubsystem);
 	void AddActor(std::unique_ptr<Actor> NewActor);
+	void RegisterInputHandler(std::unique_ptr<GameInputHandler> NewInputHandler);
+	void UnregisterInputHandler(GameInputHandler* ExistingInputHandler);
 
 	template<typename TSubsystem>
 	TSubsystem* GetSubsystem() const
@@ -58,8 +64,12 @@ protected:
 	int ScreenHeight;
 
 	std::unique_ptr<InputDevice> Input;
+	std::unique_ptr<ResourceManager> Resources;
 	std::vector<std::unique_ptr<Subsystem>> Subsystems;
 	std::vector<std::unique_ptr<Actor>> Actors;
+	std::vector<std::unique_ptr<GameInputHandler>> InputHandlers;
+	Actor* FallbackCameraActor;
+	CameraComponent* FallbackCameraComponent;
 
 	std::chrono::time_point<std::chrono::steady_clock> StartTime;
 	std::chrono::time_point<std::chrono::steady_clock> PreviousTime;
