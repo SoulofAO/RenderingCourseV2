@@ -26,6 +26,11 @@ float4 PSMain(PS_IN Input) : SV_Target
 
 	float4 TextureColor = UseAlbedoTexture > 0.5f ? AlbedoTexture.Sample(DefaultSampler, Input.TextureCoordinates) : float4(1.0f, 1.0f, 1.0f, 1.0f);
 	float3 BaseSurfaceColor = Input.Color.rgb * BaseColor.rgb * TextureColor.rgb;
+	if (UseFullBrightnessWithoutLighting > 0.5f)
+	{
+		return float4(BaseSurfaceColor, BaseColor.a * TextureColor.a);
+	}
+
 	float3 AmbientColor = BaseSurfaceColor * 0.15f;
 	float3 DiffuseColor = BaseSurfaceColor * DiffuseFactor * DirectionalLightColor.rgb * DirectionalLightIntensity;
 	float3 SpecularColor = SpecularFactor * DirectionalLightColor.rgb * DirectionalLightIntensity;

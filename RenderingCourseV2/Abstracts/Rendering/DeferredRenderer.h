@@ -22,7 +22,8 @@ public:
 		const DirectX::XMFLOAT3& CameraWorldPosition,
 		const DirectX::XMFLOAT3& DirectionalLightDirection,
 		const DirectX::XMFLOAT4& DirectionalLightColor,
-		float DirectionalLightIntensity);
+		float DirectionalLightIntensity,
+		float UseFullBrightnessWithoutLighting);
 
 	ID3D11DepthStencilView* GetDepthStencilView() const;
 

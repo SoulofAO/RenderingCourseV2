@@ -16,6 +16,8 @@ cbuffer DeferredLightBuffer : register(b1)
 	float3 DirectionalLightDirection;
 	float DirectionalLightIntensity;
 	float4 DirectionalLightColor;
+	float UseFullBrightnessWithoutLighting;
+	float3 Padding0;
 };
 
 struct VS_OUT
@@ -57,6 +59,10 @@ float4 PSMain(VS_OUT Input) : SV_Target
 	float SpecularPower = Material.x;
 	float SpecularIntensity = Material.y;
 	float Specular = pow(max(dot(NormalDirection, HalfDirection), 0.0f), SpecularPower) * SpecularIntensity;
+	if (UseFullBrightnessWithoutLighting > 0.5f)
+	{
+		return Albedo;
+	}
 
 	float3 AmbientColor = Albedo.rgb * 0.15f;
 	float3 DiffuseColor = Albedo.rgb * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity;

@@ -2,6 +2,7 @@
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Game.h"
 #include "Abstracts/Resources/MeshResourceBindingHelper.h"
+#include "Abstracts/Resources/ModelResource.h"
 #include "Abstracts/Resources/ResourceManager.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include <d3dcompiler.h>
@@ -179,6 +180,30 @@ bool MeshUniversalComponent::InitializeRenderResources(ID3D11Device* Device, Sce
 {
 	(void)SceneViewport;
 
+	ResourceManager* Resources = GetOwningGame() != nullptr ? GetOwningGame()->GetResourceManager() : nullptr;
+	if (!ModelMeshPath.empty() && Resources != nullptr)
+	{
+		std::shared_ptr<ModelResource> LoadedModelResource = Resources->LoadModelResource(ModelMeshPath);
+		if (LoadedModelResource && !LoadedModelResource->Vertices.empty() && !LoadedModelResource->Indices.empty())
+		{
+			Vertices.clear();
+			Indices.clear();
+			Vertices.reserve(LoadedModelResource->Vertices.size());
+			Indices = LoadedModelResource->Indices;
+
+			for (const ModelResourceVertex& ExistingVertex : LoadedModelResource->Vertices)
+			{
+				MeshUniversalVertex NewVertex = {};
+				NewVertex.Position = ExistingVertex.Position;
+				NewVertex.Color = ExistingVertex.Color;
+				NewVertex.Normal = ExistingVertex.Normal;
+				NewVertex.Tangent = ExistingVertex.Tangent;
+				NewVertex.TextureCoordinates = ExistingVertex.TextureCoordinates;
+				Vertices.push_back(NewVertex);
+			}
+		}
+	}
+
 	if (Vertices.empty() || Indices.empty())
 	{
 		return false;
@@ -233,11 +258,10 @@ bool MeshUniversalComponent::InitializeRenderResources(ID3D11Device* Device, Sce
 	Device->CreateSamplerState(&SamplerDescription, &DefaultSamplerState);
 
 	CD3D11_RASTERIZER_DESC RasterizerDescription = {};
-	RasterizerDescription.CullMode = D3D11_CULL_BACK;
+	RasterizerDescription.CullMode = D3D11_CULL_NONE;
 	RasterizerDescription.FillMode = D3D11_FILL_SOLID;
 	Device->CreateRasterizerState(&RasterizerDescription, &RasterState);
 
-	ResourceManager* Resources = GetOwningGame() != nullptr ? GetOwningGame()->GetResourceManager() : nullptr;
 	AlbedoTexture = MeshResourceBindingHelper::LoadTexture(Resources, Device, AlbedoTexturePath);
 	NormalTexture = MeshResourceBindingHelper::LoadTexture(Resources, Device, NormalTexturePath);
 	SpecularTexture = MeshResourceBindingHelper::LoadTexture(Resources, Device, SpecularTexturePath);
@@ -337,6 +361,7 @@ void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 		LightBufferData.DirectionalLightDirection = SceneViewport->GetDirectionalLightDirection();
 		LightBufferData.DirectionalLightColor = SceneViewport->GetDirectionalLightColor();
 		LightBufferData.DirectionalLightIntensity = SceneViewport->GetDirectionalLightIntensity();
+		LightBufferData.UseFullBrightnessWithoutLighting = SceneViewport->GetUseFullBrightnessWithoutLighting();
 		DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
 		DeviceContext->PSSetConstantBuffers(1, 1, &LightConstantBuffer);
 	}

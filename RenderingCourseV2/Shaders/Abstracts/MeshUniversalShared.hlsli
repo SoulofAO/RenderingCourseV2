@@ -11,6 +11,8 @@ cbuffer LightConstantBuffer : register(b1)
     float3 DirectionalLightDirection;
     float DirectionalLightIntensity;
     float4 DirectionalLightColor;
+    float UseFullBrightnessWithoutLighting;
+    float3 Padding1;
 };
 
 cbuffer MaterialConstantBuffer : register(b2)

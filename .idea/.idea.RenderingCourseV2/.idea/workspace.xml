@@ -11,21 +11,16 @@
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Actor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Actor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Actor.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Actor.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/InputDevice.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/InputDevice.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/InputDevice.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/InputDevice.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongPlane.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongPlane.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongSphere.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongSphere.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Abstracts/MeshUniversalDefault.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Abstracts/MeshUniversalDefault.hlsl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Abstracts/MeshUniversalShared.hlsli" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Abstracts/MeshUniversalShared.hlsli" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPong/PingPongBaseShader.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPong/PingPongBaseShader.hlsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPong/PingPongPointSphere.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/PingPong/PingPongPointSphere.hlsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,7 +59,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "C/C++ Project.RenderingCourseV2.executor": "Debug",
+    "C/C++ Project.RenderingCourseV2.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -116,7 +111,7 @@
       <workItem from="1772650103846" duration="191000" />
       <workItem from="1772650338104" duration="2785000" />
       <workItem from="1773756439269" duration="102000" />
-      <workItem from="1773772569915" duration="2036000" />
+      <workItem from="1773772569915" duration="3270000" />
     </task>
     <servers />
   </component>

@@ -40,9 +40,10 @@ public:
 	DirectX::XMFLOAT3 GetDirectionalLightDirection() const;
 	DirectX::XMFLOAT4 GetDirectionalLightColor() const;
 	float GetDirectionalLightIntensity() const;
+	float GetUseFullBrightnessWithoutLighting() const;
 
 	void SetFrameCameraData(const DirectX::XMMATRIX& NewViewMatrix, const DirectX::XMMATRIX& NewProjectionMatrix, const DirectX::XMFLOAT3& NewCameraWorldPosition);
-	void SetDirectionalLightData(const DirectX::XMFLOAT3& NewLightDirection, const DirectX::XMFLOAT4& NewLightColor, float NewLightIntensity);
+	void SetDirectionalLightData(const DirectX::XMFLOAT3& NewLightDirection, const DirectX::XMFLOAT4& NewLightColor, float NewLightIntensity, float NewUseFullBrightnessWithoutLighting);
 	void SetRenderPipelineType(RenderPipelineType NewRenderPipelineType);
 	RenderPipelineType GetRenderPipelineType() const;
 	bool IsDeferredRenderingEnabled() const;
@@ -71,6 +72,7 @@ private:
 	DirectX::XMFLOAT3 DirectionalLightDirection;
 	DirectX::XMFLOAT4 DirectionalLightColor;
 	float DirectionalLightIntensity;
+	float UseFullBrightnessWithoutLighting;
 	RenderPipelineType CurrentRenderPipelineType;
 	std::unique_ptr<DeferredRenderer> DeferredRendererInstance;
 };

@@ -15,6 +15,8 @@ struct DeferredLightBufferData
 	DirectX::XMFLOAT3 DirectionalLightDirection;
 	float DirectionalLightIntensity;
 	DirectX::XMFLOAT4 DirectionalLightColor;
+	float UseFullBrightnessWithoutLighting;
+	DirectX::XMFLOAT3 Padding0;
 };
 
 DeferredRenderer::DeferredRenderer()
@@ -226,7 +228,8 @@ void DeferredRenderer::RenderLightingPass(
 	const DirectX::XMFLOAT3& CameraWorldPosition,
 	const DirectX::XMFLOAT3& DirectionalLightDirection,
 	const DirectX::XMFLOAT4& DirectionalLightColor,
-	float DirectionalLightIntensity)
+	float DirectionalLightIntensity,
+	float UseFullBrightnessWithoutLighting)
 {
 	if (DeviceContext == nullptr || FinalRenderTargetView == nullptr || LightingVertexShader == nullptr || LightingPixelShader == nullptr)
 	{
@@ -244,6 +247,7 @@ void DeferredRenderer::RenderLightingPass(
 	LightBufferData.DirectionalLightDirection = DirectionalLightDirection;
 	LightBufferData.DirectionalLightColor = DirectionalLightColor;
 	LightBufferData.DirectionalLightIntensity = DirectionalLightIntensity;
+	LightBufferData.UseFullBrightnessWithoutLighting = UseFullBrightnessWithoutLighting;
 	DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
 
 	ID3D11ShaderResourceView* ShaderResourceViews[4] = {

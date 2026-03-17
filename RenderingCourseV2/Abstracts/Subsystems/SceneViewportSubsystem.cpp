@@ -18,6 +18,7 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, DirectionalLightDirection(0.0f, -1.0f, 0.0f)
 	, DirectionalLightColor(1.0f, 1.0f, 1.0f, 1.0f)
 	, DirectionalLightIntensity(1.0f)
+	, UseFullBrightnessWithoutLighting(0.0f)
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, DirectX::XMMatrixIdentity());
@@ -231,6 +232,11 @@ float SceneViewportSubsystem::GetDirectionalLightIntensity() const
 	return DirectionalLightIntensity;
 }
 
+float SceneViewportSubsystem::GetUseFullBrightnessWithoutLighting() const
+{
+	return UseFullBrightnessWithoutLighting;
+}
+
 void SceneViewportSubsystem::SetFrameCameraData(const DirectX::XMMATRIX& NewViewMatrix, const DirectX::XMMATRIX& NewProjectionMatrix, const DirectX::XMFLOAT3& NewCameraWorldPosition)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, NewViewMatrix);
@@ -238,11 +244,12 @@ void SceneViewportSubsystem::SetFrameCameraData(const DirectX::XMMATRIX& NewView
 	CameraWorldPosition = NewCameraWorldPosition;
 }
 
-void SceneViewportSubsystem::SetDirectionalLightData(const DirectX::XMFLOAT3& NewLightDirection, const DirectX::XMFLOAT4& NewLightColor, float NewLightIntensity)
+void SceneViewportSubsystem::SetDirectionalLightData(const DirectX::XMFLOAT3& NewLightDirection, const DirectX::XMFLOAT4& NewLightColor, float NewLightIntensity, float NewUseFullBrightnessWithoutLighting)
 {
 	DirectionalLightDirection = NewLightDirection;
 	DirectionalLightColor = NewLightColor;
 	DirectionalLightIntensity = NewLightIntensity;
+	UseFullBrightnessWithoutLighting = NewUseFullBrightnessWithoutLighting;
 }
 
 void SceneViewportSubsystem::SetRenderPipelineType(RenderPipelineType NewRenderPipelineType)
@@ -299,7 +306,8 @@ void SceneViewportSubsystem::ExecuteDeferredLightingPass()
 		CameraWorldPosition,
 		DirectionalLightDirection,
 		DirectionalLightColor,
-		DirectionalLightIntensity);
+		DirectionalLightIntensity,
+		UseFullBrightnessWithoutLighting);
 }
 
 void SceneViewportSubsystem::CreateBackBuffer()

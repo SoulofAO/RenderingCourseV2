@@ -29,6 +29,8 @@ struct MeshUniversalLightBufferData
 	DirectX::XMFLOAT3 DirectionalLightDirection;
 	float DirectionalLightIntensity;
 	DirectX::XMFLOAT4 DirectionalLightColor;
+	float UseFullBrightnessWithoutLighting;
+	DirectX::XMFLOAT3 Padding0;
 };
 
 struct MeshUniversalMaterialBufferData
@@ -66,6 +68,7 @@ public:
 	std::string DeferredPixelShaderName = "./Shaders/Deferred/DeferredGeometryPass.hlsl";
 	std::vector<MeshUniversalVertex> Vertices;
 	std::vector<unsigned int> Indices;
+	std::string ModelMeshPath = "";
 	std::string AlbedoTexturePath = "";
 	std::string NormalTexturePath = "";
 	std::string SpecularTexturePath = "";

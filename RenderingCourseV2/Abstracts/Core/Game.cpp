@@ -230,6 +230,7 @@ void Game::Draw()
 		}
 	}
 
+	bool HasDirectionalLight = false;
 	for (LightComponent* ExistingLightComponent : LightComponents)
 	{
 		if (ExistingLightComponent->GetLightType() == LightType::Directional)
@@ -237,9 +238,19 @@ void Game::Draw()
 			SceneViewport->SetDirectionalLightData(
 				ExistingLightComponent->GetDirection(),
 				ExistingLightComponent->GetColor(),
-				ExistingLightComponent->GetIntensity());
+				ExistingLightComponent->GetIntensity(),
+				0.0f);
+			HasDirectionalLight = true;
 			break;
 		}
+	}
+	if (!HasDirectionalLight)
+	{
+		SceneViewport->SetDirectionalLightData(
+			DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f),
+			DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+			0.0f,
+			1.0f);
 	}
 
 	std::stable_sort(
@@ -418,38 +429,6 @@ void Game::BeginPlay()
 	if (CameraSystem != nullptr)
 	{
 		CameraSystem->SetFallbackCamera(FallbackCameraComponent);
-	}
-
-	bool HasDirectionalLight = false;
-	for (const std::unique_ptr<Actor>& ExistingActor : Actors)
-	{
-		for (const std::unique_ptr<ActorComponent>& ExistingComponent : ExistingActor->GetComponents())
-		{
-			LightComponent* ExistingLightComponent = dynamic_cast<LightComponent*>(ExistingComponent.get());
-			if (ExistingLightComponent != nullptr && ExistingLightComponent->GetLightType() == LightType::Directional)
-			{
-				HasDirectionalLight = true;
-				break;
-			}
-		}
-		if (HasDirectionalLight)
-		{
-			break;
-		}
-	}
-
-	if (!HasDirectionalLight)
-	{
-		std::unique_ptr<Actor> LightActor = std::make_unique<Actor>();
-		Transform LightTransform;
-		LightTransform.RotationEuler = DirectX::XMFLOAT3(-0.6f, 0.7f, 0.0f);
-		LightActor->SetTransform(LightTransform);
-		std::unique_ptr<LightComponent> DirectionalLight = std::make_unique<LightComponent>();
-		DirectionalLight->SetLightType(LightType::Directional);
-		DirectionalLight->SetIntensity(1.0f);
-		DirectionalLight->SetColor(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
-		LightActor->AddComponent(std::move(DirectionalLight));
-		AddActor(std::move(LightActor));
 	}
 }
 

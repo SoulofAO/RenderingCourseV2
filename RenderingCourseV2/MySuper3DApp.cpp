@@ -1,4 +1,5 @@
 #include "FirstTask/FirstTaskGame.h"
+#include "Planets/PlanetsGame.h"
 #include "PingPongTask/PingPongGame.h"
 #include <memory>
 
@@ -20,9 +21,18 @@ int PingPongTask()
 	return 0;
 }
 
+int PlanetsTask()
+{
+	PlanetsGame MyGame(L"My3DApp Planets", 1280, 720);
+	MyGame.Initialize();
+	MyGame.Run();
+
+	return 0;
+}
+
 int main()
 {
-	PingPongTask();
+	PlanetsTask();
 	return 0; 
 }
 

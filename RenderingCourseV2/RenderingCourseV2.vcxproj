@@ -167,6 +167,7 @@
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
+    <ClCompile Include="Planets\PlanetsGame.cpp" />
     <ClCompile Include="PingPongTask\PingPongGame.cpp" />
     <ClCompile Include="PingPongTask\PingPongPlane.cpp" />
     <ClCompile Include="PingPongTask\PingPongSphere.cpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="imgui\misc\cpp\imgui_stdlib.h" />
     <ClInclude Include="imgui\misc\single_file\imgui_single_file.h" />
     <ClInclude Include="PingPongTask\PingPongGame.h" />
+    <ClInclude Include="Planets\PlanetsGame.h" />
     <ClInclude Include="PingPongTask\PingPongPlane.h" />
     <ClInclude Include="PingPongTask\PingPongSphere.h" />
     <ClInclude Include="PingPongTask\PingPongUIRenderingComponent.h" />
