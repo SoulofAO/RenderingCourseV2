@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <directxmath.h>
 
-#include "imgui.h"
+#include <imgui.h>
+
 
 PingPongUIRenderingComponent::PingPongUIRenderingComponent()
 	: UIRenderingComponent()

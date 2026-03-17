@@ -8,7 +8,54 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Planets/PlanetsGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Planets/PlanetsGame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/UIRenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/UIRenderingComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongUIRenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongUIRenderingComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/unsuccessfulbuild" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx10.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx10.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx11.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx11.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx12.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx12.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_win32.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_win32.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/BACKENDS.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/CHANGELOG.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/CONTRIBUTING.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/EXAMPLES.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/FAQ.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/FONTS.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/TODO.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imconfig.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_demo.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_draw.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_internal.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_tables.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_widgets.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imstb_rectpack.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imstb_textedit.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imstb_truetype.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/README.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/cpp/README.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/cpp/imgui_stdlib.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/cpp/imgui_stdlib.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/Cousine-Regular.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/DroidSans.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/Karla-Regular.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/ProggyClean.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/ProggyTiny.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/Roboto-Medium.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/single_file/imgui_single_file.h" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,7 +72,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://7" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://14" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" root0="FORCE_HIGHLIGHTING" />
@@ -99,7 +146,7 @@
       <workItem from="1772650103846" duration="191000" />
       <workItem from="1772650338104" duration="2785000" />
       <workItem from="1773756439269" duration="102000" />
-      <workItem from="1773772569915" duration="3704000" />
+      <workItem from="1773772569915" duration="6000000" />
     </task>
     <servers />
   </component>

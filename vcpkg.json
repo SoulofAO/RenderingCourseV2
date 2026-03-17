@@ -1,0 +1,14 @@
+{
+  "name": "rendering-course-v2",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "assimp",
+    {
+      "name": "imgui",
+      "features": [
+        "dx11-binding",
+        "win32-binding"
+      ]
+    }
+  ]
+}
