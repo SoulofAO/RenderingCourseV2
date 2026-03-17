@@ -44,6 +44,8 @@ public:
 	UClass* FindClass(const std::string& ClassName) const;
 	UObject* GetClassDefaultObject(const std::string& ClassName) const;
 	bool SetClassDefaultObject(const std::string& ClassName, std::unique_ptr<UObject> ClassDefaultObject);
+	bool RegisterPropertyDescriptor(const std::string& ClassName, const UPropertyDescriptor& PropertyDescriptor);
+	bool RegisterPropertyDescriptors(const std::string& ClassName, const std::vector<UPropertyDescriptor>& PropertyDescriptors);
 	std::unique_ptr<UObject> SpawnObject(const std::string& ClassName) const;
 
 private:

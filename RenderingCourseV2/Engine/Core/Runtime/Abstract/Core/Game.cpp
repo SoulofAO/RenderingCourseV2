@@ -2,7 +2,9 @@
 #include "Engine/Core/Runtime/Abstract/Subsystems/InputDevice.h"
 #include "Engine/Core/Runtime/Abstract/Subsystems/Subsystem.h"
 #include "Engine/Core/Runtime/Abstract/Core/Actor.h"
+#include "Engine/Core/Runtime/Abstract/Core/World.h"
 #include "Engine/Core/Runtime/Abstract/Components/RenderingComponent.h"
+#include "Engine/Core/Runtime/Abstract/Components/UIRenderingComponent.h"
 #include "Engine/Core/Runtime/Abstract/Subsystems/SceneViewportSubsystem.h"
 #include "Engine/Core/Runtime/Abstract/Subsystems/PhysicsSubsystem.h"
 #include "Engine/Core/Runtime/Abstract/Subsystems/DisplayWin32.h"
@@ -13,18 +15,20 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Name(ApplicationName)
 	, ScreenWidth(ScreenWidth)
 	, ScreenHeight(ScreenHeight)
+	, EditorWorld(std::make_unique<World>("EditorWorld"))
+	, EditorViewportWorld(std::make_unique<World>("EditorViewportWorld"))
 	, TotalRunTimeSeconds(0.0f)
 	, FrameCount(0)
 	, IsExitRequested(false)
 {
+	EditorWorld->SetOwningGame(this);
+	EditorViewportWorld->SetOwningGame(this);
 }
 
 Game::~Game()
 {
-	for (std::unique_ptr<Actor>& ExistingActor : Actors)
-	{
-		ExistingActor->Shutdown();
-	}
+	EditorWorld->Shutdown();
+	EditorViewportWorld->Shutdown();
 
 	for (std::unique_ptr<Subsystem>& ExistingSubsystem : Subsystems)
 	{
@@ -53,10 +57,8 @@ void Game::Initialize()
 		ExistingSubsystem->Initialize();
 	}
 
-	for (std::unique_ptr<Actor>& ExistingActor : Actors)
-	{
-		ExistingActor->Initialize();
-	}
+	EditorViewportWorld->Initialize();
+	EditorWorld->Initialize();
 }
 
 void Game::Run()
@@ -110,15 +112,13 @@ void Game::Run()
 
 void Game::Update(float DeltaTime)
 {
-	for (std::unique_ptr<Actor>& ExistingActor : Actors)
-	{
-		ExistingActor->Update(DeltaTime);
-	}
-
 	for (std::unique_ptr<Subsystem>& ExistingSubsystem : Subsystems)
 	{
 		ExistingSubsystem->Update(DeltaTime);
 	}
+
+	EditorViewportWorld->Update(DeltaTime);
+	EditorWorld->Update(DeltaTime);
 }
 
 void Game::Draw()
@@ -130,34 +130,8 @@ void Game::Draw()
 	}
 
 	SceneViewport->BeginFrame(TotalRunTimeSeconds);
-
-	std::vector<RenderingComponent*> RenderingComponents;
-	for (std::unique_ptr<Actor>& ExistingActor : Actors)
-	{
-		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = ExistingActor->GetComponents();
-		for (const std::unique_ptr<ActorComponent>& ExistingComponent : ActorComponents)
-		{
-			RenderingComponent* Rendering = dynamic_cast<RenderingComponent*>(ExistingComponent.get());
-			if (Rendering != nullptr && Rendering->GetIsActive())
-			{
-				RenderingComponents.push_back(Rendering);
-			}
-		}
-	}
-
-	std::stable_sort(
-		RenderingComponents.begin(),
-		RenderingComponents.end(),
-		[](const RenderingComponent* LeftRenderingComponent, const RenderingComponent* RightRenderingComponent)
-		{
-			return LeftRenderingComponent->GetRenderOrder() < RightRenderingComponent->GetRenderOrder();
-		});
-
-	for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
-	{
-		ExistingRenderingComponent->Render(SceneViewport);
-	}
-
+	EditorViewportWorld->Draw(SceneViewport, TotalRunTimeSeconds);
+	EditorWorld->Draw(SceneViewport, TotalRunTimeSeconds);
 	SceneViewport->EndFrame();
 }
 
@@ -227,34 +201,56 @@ void Game::AddSubsystem(std::unique_ptr<Subsystem> NewSubsystem)
 
 void Game::AddActor(std::unique_ptr<Actor> NewActor)
 {
-	bool ShouldInitializeActor = true;
-	if (Subsystems.empty())
+	if (EditorViewportWorld == nullptr)
 	{
-		ShouldInitializeActor = false;
-	}
-	else
-	{
-		for (const std::unique_ptr<Subsystem>& ExistingSubsystem : Subsystems)
-		{
-			if (ExistingSubsystem->GetIsInitialized() == false)
-			{
-				ShouldInitializeActor = false;
-				break;
-			}
-		}
+		return;
 	}
 
-	NewActor->SetOwningGame(this);
-	Actors.push_back(std::move(NewActor));
+	EditorViewportWorld->AddActor(std::move(NewActor));
+}
 
-	if (ShouldInitializeActor)
-	{
-		Actors.back()->Initialize();
-	}
+World* Game::GetEditorWorld() const
+{
+	return EditorWorld.get();
+}
+
+World* Game::GetEditorViewportWorld() const
+{
+	return EditorViewportWorld.get();
 }
 
 LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
 {
+	auto ConsumeUIMessage = [WindowHandle, Message, WParam, LParam](const std::vector<std::unique_ptr<Actor>>& WorldActors) -> bool
+	{
+		for (const std::unique_ptr<Actor>& ExistingActor : WorldActors)
+		{
+			for (const std::unique_ptr<ActorComponent>& ExistingComponent : ExistingActor->GetComponents())
+			{
+				UIRenderingComponent* ExistingUIRenderingComponent = dynamic_cast<UIRenderingComponent*>(ExistingComponent.get());
+				if (ExistingUIRenderingComponent != nullptr)
+				{
+					if (ExistingUIRenderingComponent->HandleMessage(WindowHandle, Message, WParam, LParam))
+					{
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	};
+
+	if (ConsumeUIMessage(EditorWorld->GetActors()))
+	{
+		return 0;
+	}
+
+	if (ConsumeUIMessage(EditorViewportWorld->GetActors()))
+	{
+		return 0;
+	}
+
 	switch (Message)
 	{
 	case WM_KEYDOWN:

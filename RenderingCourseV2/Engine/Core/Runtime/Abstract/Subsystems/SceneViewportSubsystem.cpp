@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/Runtime/Abstract/Subsystems/SceneViewportSubsystem.h"
+#include "Engine/Core/Runtime/Abstract/Subsystems/SceneViewportSubsystem.h"
 #include "Engine/Core/Runtime/Abstract/Subsystems/DisplayWin32.h"
 #include "Engine/Core/Runtime/Abstract/Core/Game.h"
 #include <iostream>
@@ -91,34 +91,9 @@ void SceneViewportSubsystem::BeginFrame(float TotalTimeSeconds)
 		return;
 	}
 
-	if (bDisplayChangedColor)
-	{
-		float ColorCycle = TotalTimeSeconds;
-		while (ColorCycle > 1.0f)
-		{
-			ColorCycle -= 1.0f;
-		}
-
-		float ClearColor[] = { ColorCycle, 0.1f, 0.1f, 1.0f };
-		Context->ClearRenderTargetView(RenderView, ClearColor);
-	}
-	else
-	{
-		float ClearColor[] = { 0.0, 0.0f, 0.0f, 1.0f };
-		Context->ClearRenderTargetView(RenderView, ClearColor);
-	}
-
 	Context->ClearState();
-	RestoreTargets();
-
-	D3D11_VIEWPORT Viewport = {};
-	Viewport.Width = static_cast<float>(GetOwningGame()->GetScreenWidth());
-	Viewport.Height = static_cast<float>(GetOwningGame()->GetScreenHeight());
-	Viewport.TopLeftX = 0.0f;
-	Viewport.TopLeftY = 0.0f;
-	Viewport.MinDepth = 0.0f;
-	Viewport.MaxDepth = 1.0f;
-	Context->RSSetViewports(1, &Viewport);
+	ClearWindowTarget(TotalTimeSeconds);
+	RestoreWindowTargetsAndViewport();
 }
 
 void SceneViewportSubsystem::EndFrame()
@@ -132,6 +107,11 @@ void SceneViewportSubsystem::EndFrame()
 	{
 		SwapChain->Present(1, 0);
 	}
+}
+
+void SceneViewportSubsystem::ActivateWindowRenderTarget()
+{
+	RestoreWindowTargetsAndViewport();
 }
 
 ID3D11Device* SceneViewportSubsystem::GetDevice() const
@@ -187,7 +167,7 @@ void SceneViewportSubsystem::CreateBackBuffer()
 	Device->CreateRenderTargetView(BackBuffer, nullptr, &RenderView);
 }
 
-void SceneViewportSubsystem::RestoreTargets()
+void SceneViewportSubsystem::RestoreWindowTargetsAndViewport()
 {
 	if (Context == nullptr || RenderView == nullptr)
 	{
@@ -195,6 +175,49 @@ void SceneViewportSubsystem::RestoreTargets()
 	}
 
 	Context->OMSetRenderTargets(1, &RenderView, nullptr);
+	SetViewportSize(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()));
+}
+
+void SceneViewportSubsystem::SetViewportSize(float Width, float Height)
+{
+	if (Context == nullptr)
+	{
+		return;
+	}
+
+	D3D11_VIEWPORT Viewport = {};
+	Viewport.Width = Width;
+	Viewport.Height = Height;
+	Viewport.TopLeftX = 0.0f;
+	Viewport.TopLeftY = 0.0f;
+	Viewport.MinDepth = 0.0f;
+	Viewport.MaxDepth = 1.0f;
+	Context->RSSetViewports(1, &Viewport);
+}
+
+void SceneViewportSubsystem::ClearWindowTarget(float TotalTimeSeconds)
+{
+	if (Context == nullptr || RenderView == nullptr)
+	{
+		return;
+	}
+
+	if (bDisplayChangedColor)
+	{
+		float ColorCycle = TotalTimeSeconds;
+		while (ColorCycle > 1.0f)
+		{
+			ColorCycle -= 1.0f;
+		}
+
+		float ClearColor[] = { ColorCycle, 0.1f, 0.1f, 1.0f };
+		Context->ClearRenderTargetView(RenderView, ClearColor);
+	}
+	else
+	{
+		float ClearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		Context->ClearRenderTargetView(RenderView, ClearColor);
+	}
 }
 
 void SceneViewportSubsystem::DestroyResources()

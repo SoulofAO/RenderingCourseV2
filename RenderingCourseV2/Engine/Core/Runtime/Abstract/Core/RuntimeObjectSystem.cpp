@@ -63,6 +63,30 @@ bool RuntimeObjectSystem::SetClassDefaultObject(const std::string& ClassName, st
 	return true;
 }
 
+bool RuntimeObjectSystem::RegisterPropertyDescriptor(const std::string& ClassName, const UPropertyDescriptor& PropertyDescriptor)
+{
+	UClass* ExistingClass = FindClass(ClassName);
+	if (ExistingClass == nullptr)
+	{
+		return false;
+	}
+
+	ExistingClass->AddPropertyDescriptor(PropertyDescriptor);
+	return true;
+}
+
+bool RuntimeObjectSystem::RegisterPropertyDescriptors(const std::string& ClassName, const std::vector<UPropertyDescriptor>& PropertyDescriptors)
+{
+	UClass* ExistingClass = FindClass(ClassName);
+	if (ExistingClass == nullptr)
+	{
+		return false;
+	}
+
+	ExistingClass->SetPropertyDescriptors(PropertyDescriptors);
+	return true;
+}
+
 std::unique_ptr<UObject> RuntimeObjectSystem::SpawnObject(const std::string& ClassName) const
 {
 	UClass* ExistingClass = FindClass(ClassName);

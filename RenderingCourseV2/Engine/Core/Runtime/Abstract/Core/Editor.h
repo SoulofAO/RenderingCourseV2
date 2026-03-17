@@ -6,6 +6,7 @@
 #include <vector>
 
 class AssetManager;
+class SelectionStateService;
 
 class Editor
 {
@@ -22,6 +23,7 @@ public:
 
 	const std::wstring& GetEditorName() const;
 	const std::wstring& GetProjectDirectory() const;
+	SelectionStateService* GetSelectionStateService() const;
 
 	void AddSubsystem(std::unique_ptr<Subsystem> NewSubsystem);
 
@@ -47,5 +49,6 @@ private:
 	std::wstring EditorName;
 	std::wstring ProjectDirectory;
 	std::vector<std::unique_ptr<Subsystem>> Subsystems;
+	std::unique_ptr<SelectionStateService> SelectionState;
 	bool IsInitialized;
 };

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Engine/Core/Runtime/Abstract/Core/Object.h"
 #include "Engine/Core/Runtime/Abstract/Core/Transform.h"
@@ -7,6 +7,7 @@
 
 class Game;
 class ActorComponent;
+class RuntimeObjectSystem;
 
 class Actor : public Object
 {
@@ -29,6 +30,8 @@ public:
 
 	void SetPosition(const DirectX::XMFLOAT3& NewPosition);
 	const DirectX::XMFLOAT3& GetPosition() const;
+	const char* GetRuntimeClassName() const override;
+	static void RegisterActorClass(RuntimeObjectSystem& RuntimeSystem);
 
 private:
 	Game* OwningGame;

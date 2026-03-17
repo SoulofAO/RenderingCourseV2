@@ -12,6 +12,7 @@ public:
 	virtual void Update(float DeltaTime);
 	virtual void Shutdown();
 	virtual std::unique_ptr<UObject> Duplicate() const;
+	virtual const char* GetRuntimeClassName() const;
 
 	bool GetIsInitialized() const;
 

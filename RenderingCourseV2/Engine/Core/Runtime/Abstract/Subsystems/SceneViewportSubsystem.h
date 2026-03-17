@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Engine/Core/Runtime/Abstract/Subsystems/Subsystem.h"
 #include <windows.h>
@@ -19,6 +19,7 @@ public:
 
 	void BeginFrame(float TotalTimeSeconds);
 	void EndFrame();
+	void ActivateWindowRenderTarget();
 
 	ID3D11Device* GetDevice() const;
 	ID3D11DeviceContext* GetDeviceContext() const;
@@ -31,7 +32,9 @@ public:
 
 private:
 	void CreateBackBuffer();
-	void RestoreTargets();
+	void RestoreWindowTargetsAndViewport();
+	void SetViewportSize(float Width, float Height);
+	void ClearWindowTarget(float TotalTimeSeconds);
 	void DestroyResources();
 
 	std::unique_ptr<DisplayWin32> Display;

@@ -1,5 +1,7 @@
-﻿#include "Engine/Core/Runtime/Abstract/Core/Actor.h"
+#include "Engine/Core/Runtime/Abstract/Core/Actor.h"
+#include "Engine/Core/Runtime/Abstract/Core/RuntimeObjectSystem.h"
 #include "Engine/Core/Runtime/Abstract/Components/ActorComponent.h"
+#include <cstddef>
 
 Actor::Actor()
 	: OwningGame(nullptr)
@@ -96,3 +98,46 @@ const DirectX::XMFLOAT3& Actor::GetPosition() const
 	return WorldTransform.Position;
 }
 
+const char* Actor::GetRuntimeClassName() const
+{
+	return "Actor";
+}
+
+void Actor::RegisterActorClass(RuntimeObjectSystem& RuntimeSystem)
+{
+	RuntimeSystem.RegisterClassInternal(
+		"Actor",
+		[]() -> std::unique_ptr<UObject>
+		{
+			return std::make_unique<Actor>();
+		},
+		[](const UObject& ClassDefaultObject) -> std::unique_ptr<UObject>
+		{
+			const Actor* SourceActor = dynamic_cast<const Actor*>(&ClassDefaultObject);
+			if (SourceActor == nullptr)
+			{
+				return nullptr;
+			}
+
+			std::unique_ptr<Actor> ClonedActor = std::make_unique<Actor>();
+			ClonedActor->SetTransform(SourceActor->GetTransform());
+			return ClonedActor;
+		});
+	std::vector<UPropertyDescriptor> PropertyDescriptors;
+	PropertyDescriptors.push_back({
+		"Position",
+		UPropertyType::Float3,
+		static_cast<uint32_t>(offsetof(Actor, WorldTransform) + offsetof(Transform, Position)),
+		PropertyFlagEditableInDetails });
+	PropertyDescriptors.push_back({
+		"Rotation",
+		UPropertyType::Float3,
+		static_cast<uint32_t>(offsetof(Actor, WorldTransform) + offsetof(Transform, RotationEuler)),
+		PropertyFlagEditableInDetails });
+	PropertyDescriptors.push_back({
+		"Scale",
+		UPropertyType::Float3,
+		static_cast<uint32_t>(offsetof(Actor, WorldTransform) + offsetof(Transform, Scale)),
+		PropertyFlagEditableInDetails });
+	RuntimeSystem.RegisterPropertyDescriptors("Actor", PropertyDescriptors);
+}

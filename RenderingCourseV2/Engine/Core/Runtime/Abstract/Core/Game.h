@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Engine/Core/Runtime/Abstract/Subsystems/Subsystem.h"
 #include <windows.h>
@@ -9,6 +9,7 @@
 class InputDevice;
 class Actor;
 class SceneViewportSubsystem;
+class World;
 
 class Game
 {
@@ -30,6 +31,8 @@ public:
 
 	void AddSubsystem(std::unique_ptr<Subsystem> NewSubsystem);
 	void AddActor(std::unique_ptr<Actor> NewActor);
+	World* GetEditorWorld() const;
+	World* GetEditorViewportWorld() const;
 
 	template<typename TSubsystem>
 	TSubsystem* GetSubsystem() const
@@ -59,7 +62,8 @@ protected:
 
 	std::unique_ptr<InputDevice> Input;
 	std::vector<std::unique_ptr<Subsystem>> Subsystems;
-	std::vector<std::unique_ptr<Actor>> Actors;
+	std::unique_ptr<World> EditorWorld;
+	std::unique_ptr<World> EditorViewportWorld;
 
 	std::chrono::time_point<std::chrono::steady_clock> StartTime;
 	std::chrono::time_point<std::chrono::steady_clock> PreviousTime;

@@ -27,6 +27,11 @@ std::unique_ptr<UObject> UObject::Duplicate() const
 	return std::make_unique<UObject>(*this);
 }
 
+const char* UObject::GetRuntimeClassName() const
+{
+	return "UObject";
+}
+
 bool UObject::GetIsInitialized() const
 {
 	return IsInitialized;

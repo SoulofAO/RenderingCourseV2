@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\Runtime\Abstract\Components\ActorComponent.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Components\EditorUIRenderingComponent.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Components\GameComponent.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Components\MeshUniversalComponent.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Components\PhysicsComponent.cpp" />
@@ -142,13 +143,16 @@
     <ClCompile Include="Engine\Core\Runtime\Abstract\Core\Game.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Core\Object.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Core\RuntimeObjectSystem.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\SelectionStateService.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Core\UClass.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\World.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\AssetManager.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\DisplayWin32.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\InputDevice.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\PhysicsSubsystem.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\SceneViewportSubsystem.cpp" />
     <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\Subsystem.cpp" />
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\WorldRenderTargetSubsystem.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx10.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx12.cpp" />
@@ -164,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Core\Runtime\Abstract\Components\ActorComponent.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Components\EditorUIRenderingComponent.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Components\GameComponent.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Components\MeshUniversalComponent.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Components\PhysicsComponent.h" />
@@ -174,14 +179,17 @@
     <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Game.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Object.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Core\RuntimeObjectSystem.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\SelectionStateService.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Transform.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Core\UClass.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\World.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\AssetManager.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\DisplayWin32.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\InputDevice.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\PhysicsSubsystem.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\SceneViewportSubsystem.h" />
     <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\Subsystem.h" />
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\WorldRenderTargetSubsystem.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx10.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx12.h" />

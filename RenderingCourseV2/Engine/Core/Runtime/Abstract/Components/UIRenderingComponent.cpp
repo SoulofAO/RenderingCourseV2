@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/Runtime/Abstract/Components/UIRenderingComponent.h"
+#include "Engine/Core/Runtime/Abstract/Components/UIRenderingComponent.h"
 #include "Engine/Core/Runtime/Abstract/Core/Game.h"
 #include "Engine/Core/Runtime/Abstract/Subsystems/DisplayWin32.h"
 #include "Engine/Core/Runtime/Abstract/Subsystems/SceneViewportSubsystem.h"
@@ -50,6 +50,8 @@ void UIRenderingComponent::Initialize()
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImGuiIO& InputOutput = ImGui::GetIO();
+	InputOutput.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(Display->GetWindowHandle());
 	ImGui_ImplDX11_Init(SceneViewport->GetDevice(), SceneViewport->GetDeviceContext());

@@ -22,6 +22,9 @@
     <ClCompile Include="Engine\Core\Runtime\Abstract\Components\ActorComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Components\EditorUIRenderingComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="MySuper3DApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -37,7 +40,13 @@
     <ClCompile Include="Engine\Core\Runtime\Abstract\Core\RuntimeObjectSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\SelectionStateService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Core\Runtime\Abstract\Core\UClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Core\World.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Core\Runtime\Abstract\Components\GameComponent.cpp">
@@ -70,6 +79,9 @@
     <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\Subsystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Core\Runtime\Abstract\Subsystems\WorldRenderTargetSubsystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\Core\Runtime\Abstract\Core\Actor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -96,6 +108,9 @@
     <ClInclude Include="Engine\Core\Runtime\Abstract\Components\ActorComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Components\EditorUIRenderingComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Core\Runtime\Abstract\Components\GameComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -111,10 +126,16 @@
     <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\SelectionStateService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\Core\Runtime\Abstract\Core\Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Core\Runtime\Abstract\Core\UClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Core\World.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Core\Runtime\Abstract\Components\PhysicsComponent.h">
@@ -130,6 +151,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\Subsystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Core\Runtime\Abstract\Subsystems\WorldRenderTargetSubsystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

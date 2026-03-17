@@ -3,6 +3,13 @@
 #include "Engine/Core/Runtime/Abstract/Subsystems/Subsystem.h"
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+struct AssetRegistryEntry
+{
+	std::wstring AssetIdentifier;
+	std::wstring RelativePath;
+};
 
 class AssetManager : public Subsystem
 {
@@ -15,6 +22,7 @@ public:
 
 	void RegisterAsset(const std::wstring& AssetIdentifier, const std::wstring& RelativePath);
 	bool TryGetAssetPath(const std::wstring& AssetIdentifier, std::wstring& OutAssetPath) const;
+	std::vector<AssetRegistryEntry> GetRegisteredAssets() const;
 
 private:
 	std::wstring AssetRootDirectory;

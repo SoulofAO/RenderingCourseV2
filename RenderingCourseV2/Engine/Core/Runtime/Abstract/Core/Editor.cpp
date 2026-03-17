@@ -1,4 +1,5 @@
 #include "Engine/Core/Runtime/Abstract/Core/Editor.h"
+#include "Engine/Core/Runtime/Abstract/Core/SelectionStateService.h"
 #include "Engine/Core/Runtime/Abstract/Subsystems/AssetManager.h"
 #include <iostream>
 
@@ -11,6 +12,7 @@ Editor& Editor::Get()
 Editor::Editor()
 	: EditorName(L"Editor")
 	, ProjectDirectory(L"")
+	, SelectionState(std::make_unique<SelectionStateService>())
 	, IsInitialized(false)
 {
 }
@@ -83,6 +85,11 @@ const std::wstring& Editor::GetEditorName() const
 const std::wstring& Editor::GetProjectDirectory() const
 {
 	return ProjectDirectory;
+}
+
+SelectionStateService* Editor::GetSelectionStateService() const
+{
+	return SelectionState.get();
 }
 
 void Editor::AddSubsystem(std::unique_ptr<Subsystem> NewSubsystem)

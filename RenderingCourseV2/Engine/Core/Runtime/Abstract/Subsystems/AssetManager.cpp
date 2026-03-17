@@ -40,3 +40,15 @@ bool AssetManager::TryGetAssetPath(const std::wstring& AssetIdentifier, std::wst
 	OutAssetPath = AssetRootDirectory + L"/" + AssetIterator->second;
 	return true;
 }
+
+std::vector<AssetRegistryEntry> AssetManager::GetRegisteredAssets() const
+{
+	std::vector<AssetRegistryEntry> AssetEntries;
+	AssetEntries.reserve(RegisteredAssetPaths.size());
+	for (const auto& AssetPair : RegisteredAssetPaths)
+	{
+		AssetEntries.push_back({ AssetPair.first, AssetPair.second });
+	}
+
+	return AssetEntries;
+}

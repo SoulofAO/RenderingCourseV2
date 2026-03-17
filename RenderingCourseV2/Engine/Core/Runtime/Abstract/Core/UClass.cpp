@@ -46,3 +46,18 @@ std::unique_ptr<UObject> UClass::SpawnFromClassDefaultObject() const
 
 	return CopyFunction(*ClassDefaultObject);
 }
+
+void UClass::AddPropertyDescriptor(const UPropertyDescriptor& NewPropertyDescriptor)
+{
+	PropertyDescriptors.push_back(NewPropertyDescriptor);
+}
+
+void UClass::SetPropertyDescriptors(const std::vector<UPropertyDescriptor>& NewPropertyDescriptors)
+{
+	PropertyDescriptors = NewPropertyDescriptors;
+}
+
+const std::vector<UPropertyDescriptor>& UClass::GetPropertyDescriptors() const
+{
+	return PropertyDescriptors;
+}

@@ -4,11 +4,13 @@
 
 class Game;
 class Editor;
+class World;
 
 enum class SubsystemCategory
 {
 	Game,
 	Editor,
+	World,
 	Custom
 };
 
@@ -22,11 +24,14 @@ public:
 	Game* GetOwningGame() const;
 	void SetOwningEditor(Editor* EditorInstance);
 	Editor* GetOwningEditor() const;
+	void SetOwningWorld(World* WorldInstance);
+	World* GetOwningWorld() const;
 	SubsystemCategory GetCategory() const;
 
 protected:
 	SubsystemCategory Category;
 	Game* OwningGame;
 	Editor* OwningEditor;
+	World* OwningWorld;
 };
 
