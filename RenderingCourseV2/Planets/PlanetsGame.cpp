@@ -17,7 +17,7 @@ void PlanetsGame::BeginPlay()
 	MeshActor->SetTransform(MeshTransform);
 
 	std::unique_ptr<MeshUniversalComponent> MeshComponent = std::make_unique<MeshUniversalComponent>();
-	MeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx";
+	MeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/Test.fbx";
 	MeshComponent->BaseColor = DirectX::XMFLOAT4(0.8f, 0.85f, 1.0f, 1.0f);
 	MeshActor->AddComponent(std::move(MeshComponent));
 	AddActor(std::move(MeshActor));
