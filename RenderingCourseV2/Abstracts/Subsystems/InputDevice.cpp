@@ -55,6 +55,15 @@ void InputDevice::EndFrame()
 	MouseDeltaY = 0;
 }
 
+void InputDevice::ResetMouseTracking(int PositionX, int PositionY)
+{
+	MousePositionX = PositionX;
+	MousePositionY = PositionY;
+	MouseDeltaX = 0;
+	MouseDeltaY = 0;
+	HasMousePositionSample = true;
+}
+
 int InputDevice::GetMouseDeltaX() const
 {
 	return MouseDeltaX;

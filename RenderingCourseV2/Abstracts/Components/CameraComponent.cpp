@@ -18,6 +18,14 @@ CameraComponent::CameraComponent()
 
 CameraComponent::~CameraComponent() = default;
 
+void CameraComponent::Posses()
+{
+}
+
+void CameraComponent::Unposses()
+{
+}
+
 void CameraComponent::Initialize()
 {
 	ActorComponent::Initialize();

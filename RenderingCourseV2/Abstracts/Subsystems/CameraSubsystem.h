@@ -29,7 +29,10 @@ public:
 	DirectX::XMFLOAT3 GetActiveCameraPosition() const;
 
 private:
+	void UpdateCameraPossessionState();
+
 	std::vector<CameraComponent*> Cameras;
 	int ActiveCameraIndex;
 	CameraComponent* FallbackCamera;
+	CameraComponent* PossessedCamera;
 };

@@ -8,6 +8,8 @@
 #include "Abstracts/Components/RenderingComponent.h"
 #include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Components/CameraComponent.h"
+#include "Abstracts/Components/FPSSpectateCameraComponent.h"
+#include "Abstracts/Components/UIRenderingComponent.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
@@ -19,6 +21,28 @@
 #include <algorithm>
 #include <iostream>
 
+namespace
+{
+	void SetMouseCursorVisibleState(bool IsMouseCursorVisible)
+	{
+		int VisibilityCounter = ShowCursor(IsMouseCursorVisible ? TRUE : FALSE);
+		if (IsMouseCursorVisible)
+		{
+			while (VisibilityCounter < 0)
+			{
+				VisibilityCounter = ShowCursor(TRUE);
+			}
+		}
+		else
+		{
+			while (VisibilityCounter >= 0)
+			{
+				VisibilityCounter = ShowCursor(FALSE);
+			}
+		}
+	}
+}
+
 Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Name(ApplicationName)
 	, ScreenWidth(ScreenWidth)
@@ -27,7 +51,11 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, FrameCount(0)
 	, IsExitRequested(false)
 	, FallbackCameraActor(nullptr)
-	, FallbackCameraComponent(nullptr)
+	, FallbackCameraComponentInstance(nullptr)
+	, CurrentMouseInputMode(MouseInputMode::GameOnly)
+	, DefaultCameraMovementSpeedScale(1.0f)
+	, DefaultCameraBaseMovementSpeed(6.0f)
+	, DefaultCameraSettingsWindowVisible(false)
 {
 }
 
@@ -36,6 +64,9 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
  */
 Game::~Game()
 {
+	ClipCursor(nullptr);
+	SetMouseCursorVisibleState(true);
+
 	for (std::unique_ptr<Actor>& ExistingActor : Actors)
 	{
 		ExistingActor->Shutdown();
@@ -87,7 +118,6 @@ void Game::Initialize()
 		AddSubsystem(std::move(NewCameraSubsystem));
 	}
 
-	RegisterInputHandler(std::make_unique<EngineHotkeyInputHandler>());
 	RegisterInputHandler(std::make_unique<FreeCameraInputHandler>());
 
 	for (std::unique_ptr<Subsystem>& ExistingSubsystem : Subsystems)
@@ -99,6 +129,10 @@ void Game::Initialize()
 	{
 		ExistingActor->Initialize();
 	}
+
+	ApplyMouseInputMode();
+	UpdateInputHandlerActivationState();
+	ApplyDefaultCameraMovementSpeedScale();
 }
 
 void Game::Run()
@@ -158,10 +192,15 @@ void Game::Update(float DeltaTime)
 		{
 			if (ExistingInputHandler)
 			{
-				ExistingInputHandler->HandleInput(this, Input.get(), DeltaTime);
+				if (ExistingInputHandler->bEnable)
+				{
+					ExistingInputHandler->HandleInput(this, Input.get(), DeltaTime);
+				}
 			}
 		}
 	}
+
+	UpdateMouseInputModeState();
 
 	for (std::unique_ptr<Actor>& ExistingActor : Actors)
 	{
@@ -365,6 +404,33 @@ void Game::AddActor(std::unique_ptr<Actor> NewActor)
 
 LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
 {
+	if (Message == WM_KEYDOWN && static_cast<unsigned int>(WParam) == 27)
+	{
+		if (Input)
+		{
+			Input->OnKeyDown(static_cast<unsigned int>(WParam));
+		}
+
+		PostQuitMessage(0);
+		return 0;
+	}
+
+	for (std::unique_ptr<Actor>& ExistingActor : Actors)
+	{
+		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = ExistingActor->GetComponents();
+		for (const std::unique_ptr<ActorComponent>& ExistingActorComponent : ActorComponents)
+		{
+			UIRenderingComponent* ExistingUIRenderingComponent = dynamic_cast<UIRenderingComponent*>(ExistingActorComponent.get());
+			if (ExistingUIRenderingComponent != nullptr)
+			{
+				if (ExistingUIRenderingComponent->HandleMessage(WindowHandle, Message, WParam, LParam))
+				{
+					return 1;
+				}
+			}
+		}
+	}
+
 	switch (Message)
 	{
 	case WM_KEYDOWN:
@@ -418,17 +484,17 @@ void Game::BeginPlay()
 		Transform CameraTransform;
 		CameraTransform.Position = DirectX::XMFLOAT3(0.0f, 0.0f, -5.0f);
 		CameraActor->SetTransform(CameraTransform);
-		std::unique_ptr<CameraComponent> DefaultCameraComponent = std::make_unique<CameraComponent>();
-		DefaultCameraComponent->SetRegisterInCameraSubsystem(false);
-		FallbackCameraComponent = DefaultCameraComponent.get();
+		std::unique_ptr<FPSSpectateCameraComponent> NewFallbackCameraComponent = std::make_unique<FPSSpectateCameraComponent>();
+		NewFallbackCameraComponent->SetRegisterInCameraSubsystem(false);
+		FallbackCameraComponentInstance = NewFallbackCameraComponent.get();
 		FallbackCameraActor = CameraActor.get();
-		CameraActor->AddComponent(std::move(DefaultCameraComponent));
+		CameraActor->AddComponent(std::move(NewFallbackCameraComponent));
 		AddActor(std::move(CameraActor));
 	}
 
 	if (CameraSystem != nullptr)
 	{
-		CameraSystem->SetFallbackCamera(FallbackCameraComponent);
+		CameraSystem->SetFallbackCamera(FallbackCameraComponentInstance);
 	}
 }
 
@@ -440,6 +506,160 @@ void Game::RegisterInputHandler(std::unique_ptr<GameInputHandler> NewInputHandle
 	}
 
 	InputHandlers.push_back(std::move(NewInputHandler));
+	UpdateInputHandlerActivationState();
+	ApplyDefaultCameraMovementSpeedScale();
+}
+
+void Game::SetMouseInputMode(MouseInputMode NewMouseInputMode)
+{
+	if (CurrentMouseInputMode == NewMouseInputMode)
+	{
+		return;
+	}
+
+	CurrentMouseInputMode = NewMouseInputMode;
+	ApplyMouseInputMode();
+	UpdateInputHandlerActivationState();
+}
+
+void Game::ToggleMouseInputMode()
+{
+	if (CurrentMouseInputMode == MouseInputMode::GameOnly)
+	{
+		SetMouseInputMode(MouseInputMode::GameAndUI);
+		return;
+	}
+
+	if (CurrentMouseInputMode == MouseInputMode::GameAndUI)
+	{
+		SetMouseInputMode(MouseInputMode::UIOnly);
+		return;
+	}
+
+	SetMouseInputMode(MouseInputMode::GameOnly);
+}
+
+MouseInputMode Game::GetMouseInputMode() const
+{
+	return CurrentMouseInputMode;
+}
+
+void Game::SetDefaultCameraMovementSpeedScale(float NewDefaultCameraMovementSpeedScale)
+{
+	DefaultCameraMovementSpeedScale = (std::max)(0.05f, NewDefaultCameraMovementSpeedScale);
+	ApplyDefaultCameraMovementSpeedScale();
+}
+
+float Game::GetDefaultCameraMovementSpeedScale() const
+{
+	return DefaultCameraMovementSpeedScale;
+}
+
+void Game::SetDefaultCameraSettingsWindowVisible(bool NewDefaultCameraSettingsWindowVisible)
+{
+	DefaultCameraSettingsWindowVisible = NewDefaultCameraSettingsWindowVisible;
+}
+
+void Game::ToggleDefaultCameraSettingsWindowVisible()
+{
+	SetDefaultCameraSettingsWindowVisible(!DefaultCameraSettingsWindowVisible);
+}
+
+bool Game::GetDefaultCameraSettingsWindowVisible() const
+{
+	return DefaultCameraSettingsWindowVisible;
+}
+
+bool Game::GetIsFallbackCameraPossessed() const
+{
+	CameraSubsystem* CameraSystem = GetSubsystem<CameraSubsystem>();
+	if (CameraSystem == nullptr)
+	{
+		return false;
+	}
+
+	return CameraSystem->GetActiveCamera() == FallbackCameraComponentInstance;
+}
+
+void Game::ApplyMouseInputMode()
+{
+	SceneViewportSubsystem* SceneViewport = GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewport == nullptr)
+	{
+		return;
+	}
+
+	DisplayWin32* Display = SceneViewport->GetDisplay();
+	if (Display == nullptr)
+	{
+		return;
+	}
+
+	HWND WindowHandle = Display->GetWindowHandle();
+	if (WindowHandle == nullptr)
+	{
+		return;
+	}
+
+	if (CurrentMouseInputMode == MouseInputMode::GameOnly)
+	{
+		RECT ClientRectangle;
+		GetClientRect(WindowHandle, &ClientRectangle);
+		POINT TopLeftPoint = { ClientRectangle.left, ClientRectangle.top };
+		POINT BottomRightPoint = { ClientRectangle.right, ClientRectangle.bottom };
+		ClientToScreen(WindowHandle, &TopLeftPoint);
+		ClientToScreen(WindowHandle, &BottomRightPoint);
+		RECT ClipRectangle = { TopLeftPoint.x, TopLeftPoint.y, BottomRightPoint.x, BottomRightPoint.y };
+		ClipCursor(&ClipRectangle);
+		SetMouseCursorVisibleState(false);
+	}
+	else
+	{
+		ClipCursor(nullptr);
+		SetMouseCursorVisibleState(true);
+	}
+}
+
+void Game::UpdateMouseInputModeState()
+{
+	if (CurrentMouseInputMode != MouseInputMode::GameOnly)
+	{
+		return;
+	}
+
+	SceneViewportSubsystem* SceneViewport = GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewport == nullptr)
+	{
+		return;
+	}
+
+	DisplayWin32* Display = SceneViewport->GetDisplay();
+	if (Display == nullptr)
+	{
+		return;
+	}
+
+	HWND WindowHandle = Display->GetWindowHandle();
+	if (WindowHandle == nullptr)
+	{
+		return;
+	}
+
+	RECT ClientRectangle;
+	GetClientRect(WindowHandle, &ClientRectangle);
+	POINT MouseCenterPoint =
+	{
+		(ClientRectangle.left + ClientRectangle.right) / 2,
+		(ClientRectangle.top + ClientRectangle.bottom) / 2
+	};
+
+	if (Input != nullptr)
+	{
+		Input->ResetMouseTracking(MouseCenterPoint.x, MouseCenterPoint.y);
+	}
+
+	ClientToScreen(WindowHandle, &MouseCenterPoint);
+	SetCursorPos(MouseCenterPoint.x, MouseCenterPoint.y);
 }
 
 void Game::UnregisterInputHandler(GameInputHandler* ExistingInputHandler)
@@ -459,5 +679,46 @@ void Game::UnregisterInputHandler(GameInputHandler* ExistingInputHandler)
 	if (ExistingInputHandlerIterator != InputHandlers.end())
 	{
 		InputHandlers.erase(ExistingInputHandlerIterator, InputHandlers.end());
+		UpdateInputHandlerActivationState();
 	}
 }
+
+void Game::UpdateInputHandlerActivationState()
+{
+	for (std::unique_ptr<GameInputHandler>& ExistingInputHandler : InputHandlers)
+	{
+		if (ExistingInputHandler == nullptr)
+		{
+			continue;
+		}
+
+		EngineHotkeyInputHandler* EngineHotkeyInputHandlerInstance = dynamic_cast<EngineHotkeyInputHandler*>(ExistingInputHandler.get());
+		if (CurrentMouseInputMode == MouseInputMode::UIOnly)
+		{
+			ExistingInputHandler->bEnable = (EngineHotkeyInputHandlerInstance != nullptr);
+		}
+		else
+		{
+			ExistingInputHandler->bEnable = true;
+		}
+	}
+}
+
+void Game::ApplyDefaultCameraMovementSpeedScale()
+{
+	const float EffectiveMovementSpeed = DefaultCameraBaseMovementSpeed * DefaultCameraMovementSpeedScale;
+	for (std::unique_ptr<GameInputHandler>& ExistingInputHandler : InputHandlers)
+	{
+		if (ExistingInputHandler == nullptr)
+		{
+			continue;
+		}
+
+		FreeCameraInputHandler* FreeCameraInputHandlerInstance = dynamic_cast<FreeCameraInputHandler*>(ExistingInputHandler.get());
+		if (FreeCameraInputHandlerInstance != nullptr)
+		{
+			FreeCameraInputHandlerInstance->SetMovementSpeed(EffectiveMovementSpeed);
+		}
+	}
+}
+

@@ -9,53 +9,26 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/UIRenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/UIRenderingComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongUIRenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/PingPongTask/PingPongUIRenderingComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2.sln.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/CameraComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/CameraComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/CameraComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/CameraComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Input/EngineHotkeyInputHandler.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Input/EngineHotkeyInputHandler.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Input/GameInputHandler.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Input/GameInputHandler.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/CameraSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/CameraSubsystem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/CameraSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/CameraSubsystem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/InputDevice.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/InputDevice.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/InputDevice.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/InputDevice.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Planets/PlanetsGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Planets/PlanetsGame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Planets/PlanetsGame.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Planets/PlanetsGame.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/unsuccessfulbuild" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx10.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx10.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx11.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx11.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx12.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_dx12.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_win32.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/backends/imgui_impl_win32.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/BACKENDS.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/CHANGELOG.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/CONTRIBUTING.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/EXAMPLES.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/FAQ.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/FONTS.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/docs/TODO.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imconfig.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_demo.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_draw.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_internal.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_tables.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imgui_widgets.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imstb_rectpack.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imstb_textedit.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/imstb_truetype.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/README.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/cpp/README.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/cpp/imgui_stdlib.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/cpp/imgui_stdlib.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/Cousine-Regular.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/DroidSans.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/Karla-Regular.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/ProggyClean.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/ProggyTiny.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/fonts/Roboto-Medium.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui/misc/single_file/imgui_single_file.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,13 +39,13 @@
     <option name="firstShow" value="false" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="109" />
+    <option name="cachedIndexableFilesCount" value="85" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://14" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://1" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" root0="FORCE_HIGHLIGHTING" />
@@ -92,24 +65,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "C/C++ Project.RenderingCourseV2.executor": "Debug",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "Planets",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "configurable.group.build",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;C/C++ Project.RenderingCourseV2.executor&quot;: &quot;Debug&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Planets&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.build&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="RenderingCourseV2" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
@@ -147,6 +120,8 @@
       <workItem from="1772650338104" duration="2785000" />
       <workItem from="1773756439269" duration="102000" />
       <workItem from="1773772569915" duration="6000000" />
+      <workItem from="1773784390650" duration="2867000" />
+      <workItem from="1773837100160" duration="298000" />
     </task>
     <servers />
   </component>
@@ -172,11 +147,6 @@
           <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
           <option name="timeStamp" value="3" />
         </breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/CameraSubsystem.cpp</url>
-          <line>26</line>
-          <option name="timeStamp" value="7" />
-        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>

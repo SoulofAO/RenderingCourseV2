@@ -17,6 +17,8 @@ public:
 
 	void Initialize() override;
 	void Shutdown() override;
+	virtual void Posses();
+	virtual void Unposses();
 
 	DirectX::XMMATRIX GetViewMatrix() const;
 	DirectX::XMMATRIX GetProjectionMatrix(float AspectRatio) const;

@@ -16,6 +16,7 @@ public:
 	bool IsKeyDown(unsigned int KeyCode) const;
 	bool WasKeyPressedThisFrame(unsigned int KeyCode) const;
 	void EndFrame();
+	void ResetMouseTracking(int PositionX, int PositionY);
 	int GetMouseDeltaX() const;
 	int GetMouseDeltaY() const;
 	int GetMousePositionX() const;

@@ -6,6 +6,7 @@ CameraSubsystem::CameraSubsystem()
 	: Subsystem()
 	, ActiveCameraIndex(-1)
 	, FallbackCamera(nullptr)
+	, PossessedCamera(nullptr)
 {
 }
 
@@ -14,6 +15,7 @@ CameraSubsystem::~CameraSubsystem() = default;
 void CameraSubsystem::Update(float DeltaTime)
 {
 	Subsystem::Update(DeltaTime);
+	UpdateCameraPossessionState();
 }
 
 void CameraSubsystem::RegisterCamera(CameraComponent* NewCamera)
@@ -34,6 +36,8 @@ void CameraSubsystem::RegisterCamera(CameraComponent* NewCamera)
 	{
 		ActiveCameraIndex = 0;
 	}
+
+	UpdateCameraPossessionState();
 }
 
 void CameraSubsystem::UnregisterCamera(CameraComponent* ExistingCamera)
@@ -46,6 +50,12 @@ void CameraSubsystem::UnregisterCamera(CameraComponent* ExistingCamera)
 	if (FallbackCamera == ExistingCamera)
 	{
 		FallbackCamera = nullptr;
+	}
+
+	if (PossessedCamera == ExistingCamera)
+	{
+		PossessedCamera->Unposses();
+		PossessedCamera = nullptr;
 	}
 
 	auto ExistingCameraIterator = std::find(Cameras.begin(), Cameras.end(), ExistingCamera);
@@ -72,6 +82,8 @@ void CameraSubsystem::UnregisterCamera(CameraComponent* ExistingCamera)
 	{
 		ActiveCameraIndex = 0;
 	}
+
+	UpdateCameraPossessionState();
 }
 
 void CameraSubsystem::CycleActiveCamera()
@@ -85,10 +97,12 @@ void CameraSubsystem::CycleActiveCamera()
 	if (ActiveCameraIndex < 0)
 	{
 		ActiveCameraIndex = 0;
+		UpdateCameraPossessionState();
 		return;
 	}
 
 	ActiveCameraIndex = (ActiveCameraIndex + 1) % static_cast<int>(Cameras.size());
+	UpdateCameraPossessionState();
 }
 
 CameraComponent* CameraSubsystem::GetActiveCamera() const
@@ -114,6 +128,7 @@ int CameraSubsystem::GetActiveCameraIndex() const
 void CameraSubsystem::SetFallbackCamera(CameraComponent* NewFallbackCamera)
 {
 	FallbackCamera = NewFallbackCamera;
+	UpdateCameraPossessionState();
 }
 
 CameraComponent* CameraSubsystem::GetFallbackCamera() const
@@ -152,4 +167,24 @@ DirectX::XMFLOAT3 CameraSubsystem::GetActiveCameraPosition() const
 	}
 
 	return ActiveCamera->GetWorldPosition();
+}
+
+void CameraSubsystem::UpdateCameraPossessionState()
+{
+	CameraComponent* ActiveCamera = GetActiveCamera();
+	if (PossessedCamera == ActiveCamera)
+	{
+		return;
+	}
+
+	if (PossessedCamera != nullptr)
+	{
+		PossessedCamera->Unposses();
+	}
+
+	PossessedCamera = ActiveCamera;
+	if (PossessedCamera != nullptr)
+	{
+		PossessedCamera->Posses();
+	}
 }

@@ -133,6 +133,8 @@
   <ItemGroup>
     <ClCompile Include="Abstracts\Components\ActorComponent.cpp" />
     <ClCompile Include="Abstracts\Components\CameraComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\DefaultCameraSettingsUIRenderingComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\FPSSpectateCameraComponent.cpp" />
     <ClCompile Include="Abstracts\Components\GameComponent.cpp" />
     <ClCompile Include="Abstracts\Components\LightComponent.cpp" />
     <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp" />
@@ -158,6 +160,7 @@
     <ClCompile Include="FirstTask\TriangleComponent.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
     <ClCompile Include="Planets\PlanetsGame.cpp" />
+    <ClCompile Include="Planets\PlanetsUIRenderingComponent.cpp" />
     <ClCompile Include="PingPongTask\PingPongGame.cpp" />
     <ClCompile Include="PingPongTask\PingPongPlane.cpp" />
     <ClCompile Include="PingPongTask\PingPongSphere.cpp" />
@@ -167,6 +170,8 @@
   <ItemGroup>
     <ClInclude Include="Abstracts\Components\ActorComponent.h" />
     <ClInclude Include="Abstracts\Components\CameraComponent.h" />
+    <ClInclude Include="Abstracts\Components\DefaultCameraSettingsUIRenderingComponent.h" />
+    <ClInclude Include="Abstracts\Components\FPSSpectateCameraComponent.h" />
     <ClInclude Include="Abstracts\Components\GameComponent.h" />
     <ClInclude Include="Abstracts\Components\LightComponent.h" />
     <ClInclude Include="Abstracts\Components\MeshUniversalComponent.h" />
@@ -197,6 +202,7 @@
     <ClInclude Include="FirstTask\TriangleComponent.h" />
     <ClInclude Include="PingPongTask\PingPongGame.h" />
     <ClInclude Include="Planets\PlanetsGame.h" />
+    <ClInclude Include="Planets\PlanetsUIRenderingComponent.h" />
     <ClInclude Include="PingPongTask\PingPongPlane.h" />
     <ClInclude Include="PingPongTask\PingPongSphere.h" />
     <ClInclude Include="PingPongTask\PingPongUIRenderingComponent.h" />

@@ -13,6 +13,13 @@ class ResourceManager;
 class GameInputHandler;
 class CameraComponent;
 
+enum class MouseInputMode
+{
+	GameOnly,
+	GameAndUI,
+	UIOnly
+};
+
 class Game
 {
 public:
@@ -36,6 +43,15 @@ public:
 	void AddActor(std::unique_ptr<Actor> NewActor);
 	void RegisterInputHandler(std::unique_ptr<GameInputHandler> NewInputHandler);
 	void UnregisterInputHandler(GameInputHandler* ExistingInputHandler);
+	void SetMouseInputMode(MouseInputMode NewMouseInputMode);
+	void ToggleMouseInputMode();
+	MouseInputMode GetMouseInputMode() const;
+	void SetDefaultCameraMovementSpeedScale(float NewDefaultCameraMovementSpeedScale);
+	float GetDefaultCameraMovementSpeedScale() const;
+	void SetDefaultCameraSettingsWindowVisible(bool NewDefaultCameraSettingsWindowVisible);
+	void ToggleDefaultCameraSettingsWindowVisible();
+	bool GetDefaultCameraSettingsWindowVisible() const;
+	bool GetIsFallbackCameraPossessed() const;
 
 	template<typename TSubsystem>
 	TSubsystem* GetSubsystem() const
@@ -58,6 +74,10 @@ protected:
 	virtual void BeginPlay();
 	virtual void Update(float DeltaTime);
 	virtual void Draw();
+	void ApplyMouseInputMode();
+	void UpdateMouseInputModeState();
+	void UpdateInputHandlerActivationState();
+	void ApplyDefaultCameraMovementSpeedScale();
 
 	LPCWSTR Name;
 	int ScreenWidth;
@@ -69,11 +89,15 @@ protected:
 	std::vector<std::unique_ptr<Actor>> Actors;
 	std::vector<std::unique_ptr<GameInputHandler>> InputHandlers;
 	Actor* FallbackCameraActor;
-	CameraComponent* FallbackCameraComponent;
+	CameraComponent* FallbackCameraComponentInstance;
 
 	std::chrono::time_point<std::chrono::steady_clock> StartTime;
 	std::chrono::time_point<std::chrono::steady_clock> PreviousTime;
 	float TotalRunTimeSeconds;
 	unsigned int FrameCount;
 	bool IsExitRequested;
+	MouseInputMode CurrentMouseInputMode;
+	float DefaultCameraMovementSpeedScale;
+	float DefaultCameraBaseMovementSpeed;
+	bool DefaultCameraSettingsWindowVisible;
 };

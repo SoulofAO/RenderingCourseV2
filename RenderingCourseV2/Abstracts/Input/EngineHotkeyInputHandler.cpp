@@ -31,4 +31,14 @@ void EngineHotkeyInputHandler::HandleInput(Game* OwningGame, InputDevice* Input,
 	{
 		CameraSystem->CycleActiveCamera();
 	}
+
+	if (Input->WasKeyPressedThisFrame('M'))
+	{
+		OwningGame->ToggleMouseInputMode();
+	}
+
+	if (Input->WasKeyPressedThisFrame('K') && OwningGame->GetIsFallbackCameraPossessed())
+	{
+		OwningGame->ToggleDefaultCameraSettingsWindowVisible();
+	}
 }
