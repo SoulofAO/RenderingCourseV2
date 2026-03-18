@@ -46,10 +46,9 @@ void FPSSpectateCameraComponentSettingsUI::RenderUI()
 		DisplaySize.x - DefaultCameraWindowSize.x - 20.0f,
 		DisplaySize.y - DefaultCameraWindowSize.y - 20.0f);
 
-	bool IsDefaultCameraSettingsWindowVisible = OwningGame->GetDefaultCameraSettingsWindowVisible();
 	ImGui::SetNextWindowPos(DefaultCameraWindowPosition, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(DefaultCameraWindowSize, ImGuiCond_Always);
-	ImGui::Begin("Default Camera", &IsDefaultCameraSettingsWindowVisible, ImGuiWindowFlags_NoResize);
+	ImGui::Begin("Default Camera", nullptr, ImGuiWindowFlags_NoResize);
 
 	float DefaultCameraMovementSpeedScale = TargetFPSSpectateCameraComponent->GetMovementSpeedScale();
 	if (ImGui::SliderFloat("Movement Speed Scale", &DefaultCameraMovementSpeedScale, 0.1f, 5.0f))
@@ -87,10 +86,6 @@ void FPSSpectateCameraComponentSettingsUI::RenderUI()
 
 	ImGui::End();
 
-	if (OwningGame->GetDefaultCameraSettingsWindowVisible() != IsDefaultCameraSettingsWindowVisible)
-	{
-		OwningGame->SetDefaultCameraSettingsWindowVisible(IsDefaultCameraSettingsWindowVisible);
-	}
 }
 
 PlanetsGame* FPSSpectateCameraComponentSettingsUI::GetOwningPlanetsGame() const

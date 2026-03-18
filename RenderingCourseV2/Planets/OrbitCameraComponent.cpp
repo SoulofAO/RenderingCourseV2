@@ -4,13 +4,14 @@
 #include "Abstracts/Subsystems/InputDevice.h"
 #include <algorithm>
 #include <cmath>
+#include "Abstracts/Others/MainMathLibrary.h"
 
 OrbitCameraComponent::OrbitCameraComponent()
 	: CameraComponent()
 	, OrbitTargetActor(nullptr)
-	, OrbitYawRadians(0.0f)
+	, OrbitYawRadians(3.14159265358979323846f)
 	, OrbitPitchRadians(0.25f)
-	, OrbitDistance(8.0f)
+	, OrbitDistance(14.0f)
 	, RotationSensitivity(0.0025f)
 	, ZoomStep(1.0f)
 {
@@ -22,18 +23,18 @@ void OrbitCameraComponent::SetOrbitTargetActor(Actor* NewOrbitTargetActor)
 {
 	OrbitTargetActor = NewOrbitTargetActor;
 
-	Actor* OwningActor = GetOwningActor();
-	if (OwningActor != nullptr)
-	{
-		OwningActor->AttachToActor(OrbitTargetActor);
-	}
-
 	ApplyOrbitTransform();
 }
 
 Actor* OrbitCameraComponent::GetOrbitTargetActor() const
 {
 	return OrbitTargetActor;
+}
+
+void OrbitCameraComponent::Update(float DeltaTime)
+{
+	CameraComponent::Update(DeltaTime);
+	ApplyOrbitTransform();
 }
 
 void OrbitCameraComponent::HandleOrbitInput(InputDevice* Input, float DeltaTime)
@@ -73,30 +74,9 @@ void OrbitCameraComponent::ApplyOrbitTransform()
 		return;
 	}
 
-	Transform OrbitTransform = OwningActor->GetLocalTransform();
-	const float CosinePitch = std::cos(OrbitPitchRadians);
-	const float SinePitch = std::sin(OrbitPitchRadians);
-	const float SineYaw = std::sin(OrbitYawRadians);
-	const float CosineYaw = std::cos(OrbitYawRadians);
-
-	OrbitTransform.Position.x = SineYaw * CosinePitch * OrbitDistance;
-	OrbitTransform.Position.y = SinePitch * OrbitDistance;
-	OrbitTransform.Position.z = -CosineYaw * CosinePitch * OrbitDistance;
-
-	const float ForwardX = -OrbitTransform.Position.x;
-	const float ForwardY = -OrbitTransform.Position.y;
-	const float ForwardZ = -OrbitTransform.Position.z;
-	const float ForwardLength = std::sqrt((ForwardX * ForwardX) + (ForwardY * ForwardY) + (ForwardZ * ForwardZ));
-	if (ForwardLength > 0.00001f)
-	{
-		const float InverseForwardLength = 1.0f / ForwardLength;
-		const float NormalizedForwardX = ForwardX * InverseForwardLength;
-		const float NormalizedForwardY = ForwardY * InverseForwardLength;
-		const float NormalizedForwardZ = ForwardZ * InverseForwardLength;
-		OrbitTransform.RotationEuler.x = std::asin((std::clamp)(NormalizedForwardY, -1.0f, 1.0f));
-		OrbitTransform.RotationEuler.y = std::atan2(NormalizedForwardX, NormalizedForwardZ);
-		OrbitTransform.RotationEuler.z = 0.0f;
-	}
-
-	OwningActor->SetTransform(OrbitTransform);
+	
+	DirectX::XMFLOAT3 StartPosition = OrbitTargetActor->GetTransform().Position;
+	StartPosition.z = OrbitTargetActor->GetTransform().Position.z + OrbitDistance;
+	OwningActor->SetPosition(StartPosition);
+	OwningActor->SetRotation(MainMathLibrary::DirectionToRotationEuler(DirectX::XMFLOAT3(0,0,-1)));
 }

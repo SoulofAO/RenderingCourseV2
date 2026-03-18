@@ -36,6 +36,10 @@ public:
 
 	void SetPosition(const DirectX::XMFLOAT3& NewPosition);
 	const DirectX::XMFLOAT3& GetPosition() const;
+	void SetRotation(const DirectX::XMFLOAT3& NewRotation);
+	const DirectX::XMFLOAT3& GetRotation() const;
+	void SetScale(const DirectX::XMFLOAT3& NewScale);
+	const DirectX::XMFLOAT3& GetScale() const;
 
 private:
 	void RemoveChildActorReference(Actor* ExistingChildActor);

@@ -13,6 +13,7 @@ public:
 
 	void SetOrbitTargetActor(Actor* NewOrbitTargetActor);
 	Actor* GetOrbitTargetActor() const;
+	virtual void Update(float DeltaTime) override;
 	void HandleOrbitInput(InputDevice* Input, float DeltaTime);
 
 private:

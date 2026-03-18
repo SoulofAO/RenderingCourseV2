@@ -145,6 +145,7 @@
     <ClCompile Include="Abstracts\Core\Actor.cpp" />
     <ClCompile Include="Abstracts\Core\Game.cpp" />
     <ClCompile Include="Abstracts\Core\Object.cpp" />
+    <ClCompile Include="Abstracts\Others\MainMathLibrary.cpp" />
     <ClCompile Include="Abstracts\Input\EngineHotkeyInputHandler.cpp" />
     <ClCompile Include="Abstracts\Input\FreeCameraInputHandler.cpp" />
     <ClCompile Include="Abstracts\Subsystems\DisplayWin32.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="Abstracts\Core\Game.h" />
     <ClInclude Include="Abstracts\Core\Object.h" />
     <ClInclude Include="Abstracts\Core\Transform.h" />
+    <ClInclude Include="Abstracts\Others\MainMathLibrary.h" />
     <ClInclude Include="Abstracts\Input\EngineHotkeyInputHandler.h" />
     <ClInclude Include="Abstracts\Input\FreeCameraInputHandler.h" />
     <ClInclude Include="Abstracts\Input\GameInputHandler.h" />

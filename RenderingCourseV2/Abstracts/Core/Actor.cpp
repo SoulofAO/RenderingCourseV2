@@ -185,3 +185,23 @@ const DirectX::XMFLOAT3& Actor::GetPosition() const
 {
 	return LocalTransform.Position;
 }
+
+void Actor::SetRotation(const DirectX::XMFLOAT3& NewRotation)
+{
+	LocalTransform.RotationEuler = NewRotation;
+}
+
+const DirectX::XMFLOAT3& Actor::GetRotation() const
+{
+	return LocalTransform.RotationEuler;
+}
+
+void Actor::SetScale(const DirectX::XMFLOAT3& NewScale)
+{
+	LocalTransform.Scale = NewScale;
+}
+
+const DirectX::XMFLOAT3& Actor::GetScale() const
+{
+	return LocalTransform.Scale;
+}
