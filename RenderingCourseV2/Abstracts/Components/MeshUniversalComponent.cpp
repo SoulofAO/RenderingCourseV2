@@ -33,10 +33,6 @@ MeshUniversalComponent::MeshUniversalComponent()
 	, OrthographicProjectionWidth(4.5f)
 	, OrthographicProjectionHeight(2.6f)
 {
-	Transform NewLocalTransform;
-	NewLocalTransform.Position = DirectX::XMFLOAT3(0.0f, 0.0f, 2.0f);
-	SetLocalTransform(NewLocalTransform);
-
 	Vertices = {
 		MeshUniversalVertex{
 			DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),

@@ -2,6 +2,8 @@
 
 #include "Tests/TestsBaseGame.h"
 
+class PhysicsComponent;
+
 class PhysicsTestGame : public TestsBaseGame
 {
 public:
@@ -10,4 +12,9 @@ public:
 
 protected:
 	void BuildTestScene() override;
+	void Update(float DeltaTime) override;
+
+private:
+	PhysicsComponent* RotatingSpherePhysicsComponent;
+	DirectX::XMFLOAT3 RotatingSphereAngularImpulsePerSecond;
 };

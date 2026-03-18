@@ -17,7 +17,7 @@ PhysicsComponent::PhysicsComponent()
 	, AngularDamping(0.1f)
 	, UseGravity(true)
 	, IsStatic(false)
-	, ColliderKind(PhysicsColliderKind::Sphere)
+	, ColliderKind(PhysicsColliderKind::ConvexMeshAuto)
 	, CollisionMode(PhysicsCollisionMode::Simulation)
 	, SphereRadius(0.5f)
 	, HalfExtents(0.5f, 0.5f, 0.5f)
@@ -307,6 +307,19 @@ void PhysicsComponent::ApplyImpulse(const DirectX::XMFLOAT3& ImpulseValue)
 
 	PhysicsDynamicActor->addForce(
 		PhysXTypeConversion::ToPxVector(ImpulseValue),
+		physx::PxForceMode::eIMPULSE,
+		true);
+}
+
+void PhysicsComponent::ApplyAngularImpulse(const DirectX::XMFLOAT3& AngularImpulseValue)
+{
+	if (PhysicsDynamicActor == nullptr)
+	{
+		return;
+	}
+
+	PhysicsDynamicActor->addTorque(
+		PhysXTypeConversion::ToPxVector(AngularImpulseValue),
 		physx::PxForceMode::eIMPULSE,
 		true);
 }

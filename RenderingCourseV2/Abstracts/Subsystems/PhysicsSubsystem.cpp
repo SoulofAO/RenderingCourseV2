@@ -347,7 +347,7 @@ physx::PxConvexMesh* PhysicsSubsystem::AcquireConvexMesh(const std::string& Mode
 	ConvexDescription.points.count = static_cast<physx::PxU32>(ConvexPoints.size());
 	ConvexDescription.points.stride = sizeof(physx::PxVec3);
 	ConvexDescription.points.data = ConvexPoints.data();
-	ConvexDescription.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX | physx::PxConvexFlag::eSHIFT_VERTICES;
+	ConvexDescription.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX;
 
 	physx::PxConvexMeshCookingResult::Enum CookingResult = physx::PxConvexMeshCookingResult::eFAILURE;
 	physx::PxCookingParams CookingParameters(Physics->getTolerancesScale());

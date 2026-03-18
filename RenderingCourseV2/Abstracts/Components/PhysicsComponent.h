@@ -69,6 +69,7 @@ public:
 
 	void Integrate(float DeltaTime);
 	void ApplyImpulse(const DirectX::XMFLOAT3& ImpulseValue);
+	void ApplyAngularImpulse(const DirectX::XMFLOAT3& AngularImpulseValue);
 	void ApplyPositionCorrection(const DirectX::XMFLOAT3& CorrectionValue);
 
 	bool WeldWithComponent(PhysicsComponent* TargetComponent, bool PreserveRelativePose);

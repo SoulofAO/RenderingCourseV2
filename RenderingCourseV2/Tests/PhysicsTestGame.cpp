@@ -8,6 +8,8 @@
 
 PhysicsTestGame::PhysicsTestGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: TestsBaseGame(ApplicationName, ScreenWidth, ScreenHeight)
+	, RotatingSpherePhysicsComponent(nullptr)
+	, RotatingSphereAngularImpulsePerSecond(0.0f, 8.0f, 0.0f)
 {
 }
 
@@ -24,7 +26,7 @@ void PhysicsTestGame::BuildTestScene()
 
 	std::unique_ptr<Actor> FloorActor = std::make_unique<Actor>();
 	Transform FloorTransform;
-	FloorTransform.Position = DirectX::XMFLOAT3(0.0, -2.0f, -26.0f);
+	FloorTransform.Position = DirectX::XMFLOAT3(0.0, -2.0f, -13.0f);
 	FloorTransform.Scale = DirectX::XMFLOAT3(26.0f, 1.0f, 26.0f);
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
@@ -33,7 +35,7 @@ void PhysicsTestGame::BuildTestScene()
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
 	FloorPhysicsComponent->SetIsStatic(true);
 	FloorPhysicsComponent->SetUseGravity(false);
-	FloorPhysicsComponent->SetAabbCollider(DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f));
+	FloorPhysicsComponent->EnableAutoConvexColliderFromMesh(true);
 	FloorActor->AddComponent(std::move(FloorMeshComponent));
 	FloorActor->AddComponent(std::move(FloorPhysicsComponent));
 	AddActor(std::move(FloorActor));
@@ -49,7 +51,7 @@ void PhysicsTestGame::BuildTestScene()
 	std::unique_ptr<PhysicsComponent> SpherePhysicsComponent = std::make_unique<PhysicsComponent>();
 	SpherePhysicsComponent->SetMass(1.0f);
 	SpherePhysicsComponent->SetUseGravity(true);
-	SpherePhysicsComponent->SetSphereCollider(0.5f);
+	SpherePhysicsComponent->EnableAutoConvexColliderFromMesh(true);
 	SpherePhysicsComponent->SetRestitution(0.2f);
 	SphereActor->AddComponent(std::move(SphereMeshComponent));
 	SphereActor->AddComponent(std::move(SpherePhysicsComponent));
@@ -66,7 +68,7 @@ void PhysicsTestGame::BuildTestScene()
 	std::unique_ptr<PhysicsComponent> CubePhysicsComponent = std::make_unique<PhysicsComponent>();
 	CubePhysicsComponent->SetMass(1.1f);
 	CubePhysicsComponent->SetUseGravity(true);
-	CubePhysicsComponent->SetAabbCollider(DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f));
+	CubePhysicsComponent->EnableAutoConvexColliderFromMesh(true);
 	CubePhysicsComponent->SetRestitution(0.15f);
 	CubeActor->AddComponent(std::move(CubeMeshComponent));
 	CubeActor->AddComponent(std::move(CubePhysicsComponent));
@@ -88,4 +90,37 @@ void PhysicsTestGame::BuildTestScene()
 	TriangleActor->AddComponent(std::move(TriangleMeshComponent));
 	TriangleActor->AddComponent(std::move(TrianglePhysicsComponent));
 	AddActor(std::move(TriangleActor));
+
+	std::unique_ptr<Actor> RotatingSphereActor = std::make_unique<Actor>();
+	Transform RotatingSphereTransform;
+	RotatingSphereTransform.Position = DirectX::XMFLOAT3(3.5f, 3.0f, 0.0f);
+	RotatingSphereTransform.Scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
+	RotatingSphereActor->SetTransform(RotatingSphereTransform);
+	std::unique_ptr<MeshUniversalComponent> RotatingSphereMeshComponent = std::make_unique<MeshUniversalComponent>();
+	RotatingSphereMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx";
+	RotatingSphereMeshComponent->BaseColor = DirectX::XMFLOAT4(0.98f, 0.84f, 0.24f, 1.0f);
+	std::unique_ptr<PhysicsComponent> RotatingSpherePhysicsComponentInstance = std::make_unique<PhysicsComponent>();
+	RotatingSpherePhysicsComponentInstance->SetMass(1.0f);
+	RotatingSpherePhysicsComponentInstance->SetUseGravity(false);
+	RotatingSpherePhysicsComponentInstance->EnableAutoConvexColliderFromMesh(true);
+	RotatingSpherePhysicsComponentInstance->SetLinearDamping(0.0f);
+	RotatingSpherePhysicsComponentInstance->SetAngularDamping(0.05f);
+	RotatingSpherePhysicsComponent = RotatingSpherePhysicsComponentInstance.get();
+	RotatingSphereActor->AddComponent(std::move(RotatingSphereMeshComponent));
+	RotatingSphereActor->AddComponent(std::move(RotatingSpherePhysicsComponentInstance));
+	AddActor(std::move(RotatingSphereActor));
+}
+
+void PhysicsTestGame::Update(float DeltaTime)
+{
+	if (RotatingSpherePhysicsComponent != nullptr && DeltaTime > 0.0f)
+	{
+		const DirectX::XMFLOAT3 AngularImpulsePerFrame(
+			RotatingSphereAngularImpulsePerSecond.x * DeltaTime,
+			RotatingSphereAngularImpulsePerSecond.y * DeltaTime,
+			RotatingSphereAngularImpulsePerSecond.z * DeltaTime);
+		RotatingSpherePhysicsComponent->ApplyAngularImpulse(AngularImpulsePerFrame);
+	}
+
+	TestsBaseGame::Update(DeltaTime);
 }
