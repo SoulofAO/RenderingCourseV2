@@ -20,7 +20,4 @@ public:
 
 protected:
 	virtual void RenderUI() = 0;
-
-private:
-	bool IsDearImGuiInitialized;
 };

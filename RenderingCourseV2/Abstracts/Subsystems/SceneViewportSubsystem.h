@@ -50,6 +50,10 @@ public:
 	void BeginGeometryPass();
 	void EndGeometryPass();
 	void ExecuteDeferredLightingPass();
+	void BeginDearImGuiFrame();
+	void EndDearImGuiFrame();
+	bool HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
+	bool GetIsDearImGuiInitialized() const;
 
 	bool bDisplayChangedColor = false;
 
@@ -57,6 +61,8 @@ private:
 	void CreateBackBuffer();
 	void RestoreTargets();
 	void DestroyResources();
+	void InitializeDearImGui();
+	void ShutdownDearImGui();
 
 	std::unique_ptr<DisplayWin32> Display;
 	Microsoft::WRL::ComPtr<ID3D11Device> Device;
@@ -75,4 +81,5 @@ private:
 	float UseFullBrightnessWithoutLighting;
 	RenderPipelineType CurrentRenderPipelineType;
 	std::unique_ptr<DeferredRenderer> DeferredRendererInstance;
+	bool IsDearImGuiInitialized;
 };

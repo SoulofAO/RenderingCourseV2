@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Abstracts/Core/MulticastDelegate.h"
 #include "Abstracts/Core/Game.h"
 #include <directxmath.h>
 #include <string>
@@ -9,6 +10,7 @@ class Actor;
 class CameraComponent;
 class FPSSpectateCameraComponent;
 class OrbitCameraComponent;
+class PhysicsComponent;
 class PlanetsUIRenderingComponent;
 
 class PlanetsGame : public Game
@@ -30,6 +32,8 @@ public:
 	void SetMoonOrbitRadiusScale(float NewMoonOrbitRadiusScale);
 	bool GetUseOrbitCamera() const;
 	void SetUseOrbitCamera(bool NewUseOrbitCamera);
+	bool GetTeleportFPSSpectateCameraToOrbitCameraOnSwitch() const;
+	void SetTeleportFPSSpectateCameraToOrbitCameraOnSwitch(bool NewTeleportFPSSpectateCameraToOrbitCameraOnSwitch);
 
 protected:
 	void BeginPlay() override;
@@ -61,15 +65,23 @@ private:
 	void UpdateCameraProjectionTypes();
 	void SetOrbitSpeedScaleValues(float NewPlanetOrbitSpeedScale, float NewMoonOrbitSpeedScale);
 	void SetOrbitRadiusScaleValues(float NewPlanetOrbitRadiusScale, float NewMoonOrbitRadiusScale);
+	void HandlePhysicsCollisionDetected(
+		PhysicsComponent* FirstPhysicsComponent,
+		PhysicsComponent* SecondPhysicsComponent,
+		const DirectX::XMFLOAT3& CollisionNormal,
+		float CollisionPenetrationDepth);
 
 	Actor* SunActor;
 	OrbitCameraComponent* OrbitCameraForPlanets;
 	FPSSpectateCameraComponent* FPSCameraComponentForPlanets;
 	PlanetsUIRenderingComponent* PlanetsUIRenderingComponentInstance;
 	std::vector<PlanetMoonOrbitData> PlanetMoonOrbitDataList;
+	DelegateHandle PhysicsCollisionDetectedDelegateHandle;
+	int PhysicsCollisionDetectedEventCount;
 
 	bool UseOrthographicProjectionForActiveCamera;
 	bool UseOrbitCamera;
+	bool TeleportFPSSpectateCameraToOrbitCameraOnSwitch;
 	float PlanetOrbitSpeedScale;
 	float MoonOrbitSpeedScale;
 	float PlanetOrbitRadiusScale;

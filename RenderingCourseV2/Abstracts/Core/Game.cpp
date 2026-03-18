@@ -245,6 +245,7 @@ void Game::Draw()
 	SceneViewport->SetFrameCameraData(ViewMatrix, ProjectionMatrix, CameraWorldPosition);
 
 	SceneViewport->BeginFrame(TotalRunTimeSeconds);
+	SceneViewport->BeginDearImGuiFrame();
 
 	std::vector<RenderingComponent*> RenderingComponents;
 	std::vector<LightComponent*> LightComponents;
@@ -310,6 +311,7 @@ void Game::Draw()
 	{
 		SceneViewport->ExecuteDeferredLightingPass();
 	}
+	SceneViewport->EndDearImGuiFrame();
 
 	SceneViewport->EndFrame();
 }

@@ -1,11 +1,16 @@
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include "Abstracts/Subsystems/DisplayWin32.h"
 #include "Abstracts/Core/Game.h"
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
 #include <iostream>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 
 SceneViewportSubsystem::SceneViewportSubsystem()
 	: Context(nullptr)
@@ -20,6 +25,7 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, DirectionalLightIntensity(1.0f)
 	, UseFullBrightnessWithoutLighting(0.0f)
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
+	, IsDearImGuiInitialized(false)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, DirectX::XMMatrixIdentity());
 	DirectX::XMStoreFloat4x4(&ProjectionMatrixStorage, DirectX::XMMatrixIdentity());
@@ -90,10 +96,13 @@ void SceneViewportSubsystem::Initialize()
 	DeferredRendererInstance = std::make_unique<DeferredRenderer>();
 	DeferredRendererInstance->Initialize(Device.Get());
 	DeferredRendererInstance->EnsureTargets(Device.Get(), GetScreenWidth(), GetScreenHeight());
+
+	InitializeDearImGui();
 }
 
 void SceneViewportSubsystem::Shutdown()
 {
+	ShutdownDearImGui();
 	DestroyResources();
 	Subsystem::Shutdown();
 }
@@ -310,6 +319,44 @@ void SceneViewportSubsystem::ExecuteDeferredLightingPass()
 		UseFullBrightnessWithoutLighting);
 }
 
+void SceneViewportSubsystem::BeginDearImGuiFrame()
+{
+	if (IsDearImGuiInitialized == false)
+	{
+		return;
+	}
+
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+}
+
+void SceneViewportSubsystem::EndDearImGuiFrame()
+{
+	if (IsDearImGuiInitialized == false)
+	{
+		return;
+	}
+
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+bool SceneViewportSubsystem::HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
+{
+	if (IsDearImGuiInitialized == false)
+	{
+		return false;
+	}
+
+	return ImGui_ImplWin32_WndProcHandler(WindowHandle, Message, WParam, LParam);
+}
+
+bool SceneViewportSubsystem::GetIsDearImGuiInitialized() const
+{
+	return IsDearImGuiInitialized;
+}
+
 void SceneViewportSubsystem::CreateBackBuffer()
 {
 	if (SwapChain == nullptr || Device.Get() == nullptr)
@@ -388,4 +435,37 @@ void SceneViewportSubsystem::DestroyResources()
 		DeferredRendererInstance->Shutdown();
 		DeferredRendererInstance.reset();
 	}
+}
+
+void SceneViewportSubsystem::InitializeDearImGui()
+{
+	if (IsDearImGuiInitialized)
+	{
+		return;
+	}
+
+	if (Display == nullptr || Display->GetWindowHandle() == nullptr || Device.Get() == nullptr || Context == nullptr)
+	{
+		return;
+	}
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	ImGui_ImplWin32_Init(Display->GetWindowHandle());
+	ImGui_ImplDX11_Init(Device.Get(), Context);
+	IsDearImGuiInitialized = true;
+}
+
+void SceneViewportSubsystem::ShutdownDearImGui()
+{
+	if (IsDearImGuiInitialized == false)
+	{
+		return;
+	}
+
+	ImGui_ImplWin32_Shutdown();
+	ImGui_ImplDX11_Shutdown();
+	ImGui::DestroyContext();
+	IsDearImGuiInitialized = false;
 }

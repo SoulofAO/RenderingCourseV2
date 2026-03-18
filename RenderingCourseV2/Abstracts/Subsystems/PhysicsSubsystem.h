@@ -1,10 +1,17 @@
 #pragma once
 
+#include "Abstracts/Core/MulticastDelegate.h"
 #include "Abstracts/Subsystems/Subsystem.h"
 #include <directxmath.h>
 #include <vector>
 
 class PhysicsComponent;
+DECLARE_MULTICAST_DELEGATE_FourParams(
+	PhysicsCollisionDetectedDelegate,
+	PhysicsComponent*,
+	PhysicsComponent*,
+	const DirectX::XMFLOAT3&,
+	float);
 
 class PhysicsSubsystem : public Subsystem
 {
@@ -19,6 +26,7 @@ public:
 
 	void SetFixedDeltaTime(float NewFixedDeltaTime);
 	float GetFixedDeltaTime() const;
+	PhysicsCollisionDetectedDelegate& GetOnCollisionDetectedDelegate();
 
 private:
 	struct CollisionManifold
@@ -37,4 +45,5 @@ private:
 	std::vector<PhysicsComponent*> PhysicsComponents;
 	float FixedDeltaTime;
 	float AccumulatedTime;
+	PhysicsCollisionDetectedDelegate OnCollisionDetectedDelegate;
 };

@@ -56,6 +56,11 @@ float PhysicsSubsystem::GetFixedDeltaTime() const
 	return FixedDeltaTime;
 }
 
+PhysicsCollisionDetectedDelegate& PhysicsSubsystem::GetOnCollisionDetectedDelegate()
+{
+	return OnCollisionDetectedDelegate;
+}
+
 void PhysicsSubsystem::StepSimulation(float DeltaTime)
 {
 	for (PhysicsComponent* Component : PhysicsComponents)
@@ -88,6 +93,11 @@ void PhysicsSubsystem::DetectAndResolveCollisions()
 			if (TryBuildCollisionManifold(FirstComponent, SecondComponent, Collision))
 			{
 				ResolveCollision(Collision);
+				OnCollisionDetectedDelegate.Broadcast(
+					Collision.FirstComponent,
+					Collision.SecondComponent,
+					Collision.Normal,
+					Collision.PenetrationDepth);
 			}
 		}
 	}

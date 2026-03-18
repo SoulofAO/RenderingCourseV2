@@ -8,6 +8,8 @@
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Transform.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
+#include "Abstracts/Subsystems/PhysicsSubsystem.h"
+#include <iostream>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -19,8 +21,10 @@ PlanetsGame::PlanetsGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHei
 	, OrbitCameraForPlanets(nullptr)
 	, FPSCameraComponentForPlanets(nullptr)
 	, PlanetsUIRenderingComponentInstance(nullptr)
+	, PhysicsCollisionDetectedEventCount(0)
 	, UseOrthographicProjectionForActiveCamera(false)
 	, UseOrbitCamera(true)
+	, TeleportFPSSpectateCameraToOrbitCameraOnSwitch(true)
 	, PlanetOrbitSpeedScale(1.0f)
 	, MoonOrbitSpeedScale(1.0f)
 	, PlanetOrbitRadiusScale(1.0f)
@@ -29,7 +33,17 @@ PlanetsGame::PlanetsGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHei
 {
 }
 
-PlanetsGame::~PlanetsGame() = default;
+PlanetsGame::~PlanetsGame()
+{
+	PhysicsSubsystem* PhysicsSubsystemInstance = GetSubsystem<PhysicsSubsystem>();
+	if (
+		PhysicsSubsystemInstance != nullptr &&
+		PhysicsCollisionDetectedDelegateHandle.IsValid())
+	{
+		PhysicsSubsystemInstance->GetOnCollisionDetectedDelegate().Remove(PhysicsCollisionDetectedDelegateHandle);
+		PhysicsCollisionDetectedDelegateHandle.Reset();
+	}
+}
 
 bool PlanetsGame::GetUseOrthographicProjectionForActiveCamera() const
 {
@@ -86,8 +100,33 @@ bool PlanetsGame::GetUseOrbitCamera() const
 	return UseOrbitCamera;
 }
 
+bool PlanetsGame::GetTeleportFPSSpectateCameraToOrbitCameraOnSwitch() const
+{
+	return TeleportFPSSpectateCameraToOrbitCameraOnSwitch;
+}
+
+void PlanetsGame::SetTeleportFPSSpectateCameraToOrbitCameraOnSwitch(bool NewTeleportFPSSpectateCameraToOrbitCameraOnSwitch)
+{
+	TeleportFPSSpectateCameraToOrbitCameraOnSwitch = NewTeleportFPSSpectateCameraToOrbitCameraOnSwitch;
+}
+
 void PlanetsGame::SetUseOrbitCamera(bool NewUseOrbitCamera)
 {
+	if (
+		NewUseOrbitCamera == false &&
+		TeleportFPSSpectateCameraToOrbitCameraOnSwitch &&
+		OrbitCameraForPlanets != nullptr &&
+		FPSCameraComponentForPlanets != nullptr)
+	{
+		Actor* OrbitCameraActor = OrbitCameraForPlanets->GetOwningActor();
+		Actor* FPSSpectateCameraActor = FPSCameraComponentForPlanets->GetOwningActor();
+		if (OrbitCameraActor != nullptr && FPSSpectateCameraActor != nullptr)
+		{
+			const Transform OrbitCameraWorldTransform = OrbitCameraActor->GetTransform();
+			FPSSpectateCameraActor->SetTransform(OrbitCameraWorldTransform);
+		}
+	}
+
 	UseOrbitCamera = NewUseOrbitCamera;
 
 	CameraSubsystem* CameraSystem = GetSubsystem<CameraSubsystem>();
@@ -122,6 +161,16 @@ void PlanetsGame::SetUseOrbitCamera(bool NewUseOrbitCamera)
 
 void PlanetsGame::BeginPlay()
 {
+	PhysicsSubsystem* PhysicsSubsystemInstance = GetSubsystem<PhysicsSubsystem>();
+	if (
+		PhysicsSubsystemInstance != nullptr &&
+		PhysicsCollisionDetectedDelegateHandle.IsValid() == false)
+	{
+		PhysicsCollisionDetectedDelegateHandle = PhysicsSubsystemInstance->GetOnCollisionDetectedDelegate().AddRaw(
+			this,
+			&PlanetsGame::HandlePhysicsCollisionDetected);
+	}
+
 	SunActor = CreateCelestialActor(
 		"G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx",
 		DirectX::XMFLOAT3(2.2f, 2.2f, 2.2f),
@@ -345,4 +394,20 @@ void PlanetsGame::SetOrbitRadiusScaleValues(float NewPlanetOrbitRadiusScale, flo
 {
 	PlanetOrbitRadiusScale = (std::max)(0.15f, NewPlanetOrbitRadiusScale);
 	MoonOrbitRadiusScale = (std::max)(0.15f, NewMoonOrbitRadiusScale);
+}
+
+void PlanetsGame::HandlePhysicsCollisionDetected(
+	PhysicsComponent* FirstPhysicsComponent,
+	PhysicsComponent* SecondPhysicsComponent,
+	const DirectX::XMFLOAT3& CollisionNormal,
+	float CollisionPenetrationDepth)
+{
+	PhysicsCollisionDetectedEventCount += 1;
+	std::cout
+		<< "Collision Event #" << PhysicsCollisionDetectedEventCount
+		<< " FirstComponent: " << FirstPhysicsComponent
+		<< " SecondComponent: " << SecondPhysicsComponent
+		<< " Normal(" << CollisionNormal.x << ", " << CollisionNormal.y << ", " << CollisionNormal.z << ")"
+		<< " PenetrationDepth: " << CollisionPenetrationDepth
+		<< std::endl;
 }
