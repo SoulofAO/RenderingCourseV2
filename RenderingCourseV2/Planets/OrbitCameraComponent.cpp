@@ -74,9 +74,18 @@ void OrbitCameraComponent::ApplyOrbitTransform()
 		return;
 	}
 
-	
-	DirectX::XMFLOAT3 StartPosition = OrbitTargetActor->GetTransform().Position;
-	StartPosition.z = OrbitTargetActor->GetTransform().Position.z + OrbitDistance;
-	OwningActor->SetPosition(StartPosition);
-	OwningActor->SetRotation(MainMathLibrary::DirectionToRotationEuler(DirectX::XMFLOAT3(0,0,-1)));
+	const DirectX::XMFLOAT3 OrbitTargetPosition = OrbitTargetActor->GetTransform().Position;
+	const DirectX::XMFLOAT3 OrbitRotationEuler = DirectX::XMFLOAT3(
+		OrbitPitchRadians,
+		OrbitYawRadians,
+		0.0f);
+	const DirectX::XMFLOAT3 OrbitLookDirection = MainMathLibrary::RotationEulerToForwardVector(OrbitRotationEuler);
+
+	DirectX::XMFLOAT3 CameraPosition = OrbitTargetPosition;
+	CameraPosition.x -= OrbitLookDirection.x * OrbitDistance;
+	CameraPosition.y -= OrbitLookDirection.y * OrbitDistance;
+	CameraPosition.z -= OrbitLookDirection.z * OrbitDistance;
+
+	OwningActor->SetPosition(CameraPosition);
+	OwningActor->SetRotation(MainMathLibrary::DirectionToRotationEuler(OrbitLookDirection));
 }
