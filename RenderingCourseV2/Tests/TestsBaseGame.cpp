@@ -8,21 +8,30 @@
 TestsBaseGame::TestsBaseGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Game(ApplicationName, ScreenWidth, ScreenHeight)
 {
+	bSpawnDirectionalLightActor  = false;
+	bSpawnFPSSpectateCameraActor = true;
 }
 
 TestsBaseGame::~TestsBaseGame() = default;
 
 void TestsBaseGame::BeginPlay()
 {
-	SpawnDirectionalLightActor(
+	if (bSpawnDirectionalLightActor)
+	{
+		SpawnDirectionalLightActor(
 		DirectX::XMFLOAT3(-0.65f, 0.3f, 0.0f),
 		DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
 		2.3f);
-	SpawnFPSSpectateCameraActor(
-		DirectX::XMFLOAT3(0.0f, 2.0f, -10.0f),
-		DirectX::XMFLOAT3(0.05f, 0.0f, 0.0f),
-		1.0f);
-
+	}
+	
+	if (bSpawnFPSSpectateCameraActor)
+	{
+		SpawnFPSSpectateCameraActor(
+			DirectX::XMFLOAT3(0.0f, 2.0f, -10.0f),
+			DirectX::XMFLOAT3(0.05f, 0.0f, 0.0f),
+			1.0f);
+	}
+	
 	BuildTestScene();
 	Game::BeginPlay();
 }

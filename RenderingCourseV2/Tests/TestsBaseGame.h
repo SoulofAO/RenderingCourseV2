@@ -14,6 +14,9 @@ public:
 protected:
 	void BeginPlay() override;
 	virtual void BuildTestScene() = 0;
+	
+	bool bSpawnDirectionalLightActor ;
+	bool bSpawnFPSSpectateCameraActor ;
 
 	Actor* SpawnDirectionalLightActor(
 		const DirectX::XMFLOAT3& RotationEuler,
