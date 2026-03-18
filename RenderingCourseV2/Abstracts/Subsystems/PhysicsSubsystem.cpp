@@ -1,20 +1,187 @@
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include "Abstracts/Components/PhysicsComponent.h"
+#include "Abstracts/Core/Game.h"
+#include "Abstracts/Physics/PhysXTypeConversion.h"
+#include "Abstracts/Resources/ModelResource.h"
+#include "Abstracts/Resources/ResourceManager.h"
 #include <algorithm>
 #include <cmath>
+#include <vector>
+
+class PhysicsSimulationEventCallback : public physx::PxSimulationEventCallback
+{
+public:
+	explicit PhysicsSimulationEventCallback(PhysicsSubsystem* NewPhysicsSubsystem)
+		: PhysicsSubsystemInstance(NewPhysicsSubsystem)
+	{
+	}
+
+	void onConstraintBreak(physx::PxConstraintInfo* Constraints, physx::PxU32 Count) override
+	{
+		(void)Constraints;
+		(void)Count;
+	}
+
+	void onWake(physx::PxActor** Actors, physx::PxU32 Count) override
+	{
+		(void)Actors;
+		(void)Count;
+	}
+
+	void onSleep(physx::PxActor** Actors, physx::PxU32 Count) override
+	{
+		(void)Actors;
+		(void)Count;
+	}
+
+	void onAdvance(const physx::PxRigidBody* const* BodyBuffer, const physx::PxTransform* PoseBuffer, const physx::PxU32 Count) override
+	{
+		(void)BodyBuffer;
+		(void)PoseBuffer;
+		(void)Count;
+	}
+
+	void onTrigger(physx::PxTriggerPair* TriggerPairs, physx::PxU32 PairCount) override
+	{
+		if (PhysicsSubsystemInstance == nullptr || TriggerPairs == nullptr)
+		{
+			return;
+		}
+
+		for (physx::PxU32 PairIndex = 0; PairIndex < PairCount; ++PairIndex)
+		{
+			const physx::PxTriggerPair& TriggerPair = TriggerPairs[PairIndex];
+			if ((TriggerPair.flags & physx::PxTriggerPairFlag::eREMOVED_SHAPE_TRIGGER) != 0 ||
+				(TriggerPair.flags & physx::PxTriggerPairFlag::eREMOVED_SHAPE_OTHER) != 0)
+			{
+				continue;
+			}
+
+			physx::PxRigidActor* TriggerActor = static_cast<physx::PxRigidActor*>(TriggerPair.triggerActor);
+			physx::PxRigidActor* OtherActor = static_cast<physx::PxRigidActor*>(TriggerPair.otherActor);
+			if ((TriggerPair.status & physx::PxPairFlag::eNOTIFY_TOUCH_FOUND) != 0)
+			{
+				PhysicsSubsystemInstance->NotifyOverlapBeginEvent(TriggerActor, OtherActor);
+			}
+			if ((TriggerPair.status & physx::PxPairFlag::eNOTIFY_TOUCH_LOST) != 0)
+			{
+				PhysicsSubsystemInstance->NotifyOverlapEndEvent(TriggerActor, OtherActor);
+			}
+		}
+	}
+
+	void onContact(const physx::PxContactPairHeader& PairHeader, const physx::PxContactPair* ContactPairs, physx::PxU32 PairCount) override
+	{
+		if (PhysicsSubsystemInstance == nullptr || ContactPairs == nullptr)
+		{
+			return;
+		}
+
+		physx::PxRigidActor* FirstActor = static_cast<physx::PxRigidActor*>(PairHeader.actors[0]);
+		physx::PxRigidActor* SecondActor = static_cast<physx::PxRigidActor*>(PairHeader.actors[1]);
+		if (FirstActor == nullptr || SecondActor == nullptr)
+		{
+			return;
+		}
+
+		for (physx::PxU32 PairIndex = 0; PairIndex < PairCount; ++PairIndex)
+		{
+			const physx::PxContactPair& ContactPair = ContactPairs[PairIndex];
+			if (
+				ContactPair.events.isSet(physx::PxPairFlag::eNOTIFY_TOUCH_FOUND) == false &&
+				ContactPair.events.isSet(physx::PxPairFlag::eNOTIFY_TOUCH_PERSISTS) == false)
+			{
+				continue;
+			}
+
+			physx::PxContactPairPoint ContactPoints[8];
+			const physx::PxU32 ContactPointCount = ContactPair.extractContacts(ContactPoints, 8);
+			if (ContactPointCount == 0)
+			{
+				continue;
+			}
+
+			const physx::PxVec3 ContactNormal = ContactPoints[0].normal;
+			const float PenetrationDepth = (std::max)(0.0f, -ContactPoints[0].separation);
+			PhysicsSubsystemInstance->NotifyContactEvent(
+				FirstActor,
+				SecondActor,
+				ContactNormal,
+				PenetrationDepth);
+		}
+	}
+
+private:
+	PhysicsSubsystem* PhysicsSubsystemInstance;
+};
 
 PhysicsSubsystem::PhysicsSubsystem()
 	: FixedDeltaTime(1.0f / 60.0f)
 	, AccumulatedTime(0.0f)
+	, HasWorldBoundarySphere(false)
+	, WorldBoundaryCenter(0.0f, 0.0f, 0.0f)
+	, WorldBoundaryRadius(100.0f)
+	, PhysicsFoundation(nullptr)
+	, Physics(nullptr)
+	, PhysicsScene(nullptr)
+	, CpuDispatcher(nullptr)
+	, DefaultMaterial(nullptr)
+	, SimulationEventCallback(nullptr)
 {
 }
 
-PhysicsSubsystem::~PhysicsSubsystem() = default;
+PhysicsSubsystem::~PhysicsSubsystem()
+{
+	Shutdown();
+}
+
+void PhysicsSubsystem::Initialize()
+{
+	if (GetIsInitialized())
+	{
+		return;
+	}
+
+	Subsystem::Initialize();
+	InitializePhysXContext();
+	for (PhysicsComponent* ExistingComponent : PhysicsComponents)
+	{
+		if (ExistingComponent != nullptr)
+		{
+			ExistingComponent->CreatePhysicsActor(this);
+		}
+	}
+}
+
+void PhysicsSubsystem::Shutdown()
+{
+	if (GetIsInitialized() == false)
+	{
+		return;
+	}
+
+	for (PhysicsComponent* ExistingComponent : PhysicsComponents)
+	{
+		if (ExistingComponent != nullptr)
+		{
+			ExistingComponent->DestroyPhysicsActor();
+		}
+	}
+	PhysicsActorToComponentMap.clear();
+	ReleaseCachedConvexMeshes();
+	ShutdownPhysXContext();
+	AccumulatedTime = 0.0f;
+	Subsystem::Shutdown();
+}
 
 void PhysicsSubsystem::Update(float DeltaTime)
 {
-	AccumulatedTime += DeltaTime;
+	if (PhysicsScene == nullptr || Physics == nullptr)
+	{
+		return;
+	}
 
+	AccumulatedTime += DeltaTime;
 	while (AccumulatedTime >= FixedDeltaTime)
 	{
 		StepSimulation(FixedDeltaTime);
@@ -29,18 +196,50 @@ void PhysicsSubsystem::RegisterPhysicsComponent(PhysicsComponent* Component)
 		return;
 	}
 
-	auto Position = std::find(PhysicsComponents.begin(), PhysicsComponents.end(), Component);
-	if (Position == PhysicsComponents.end())
+	const auto ExistingPosition = std::find(PhysicsComponents.begin(), PhysicsComponents.end(), Component);
+	if (ExistingPosition != PhysicsComponents.end())
 	{
-		PhysicsComponents.push_back(Component);
+		return;
+	}
+
+	PhysicsComponents.push_back(Component);
+	if (GetIsInitialized())
+	{
+		Component->CreatePhysicsActor(this);
 	}
 }
 
 void PhysicsSubsystem::UnregisterPhysicsComponent(PhysicsComponent* Component)
 {
+	if (Component == nullptr)
+	{
+		return;
+	}
+
+	Component->DestroyPhysicsActor();
 	PhysicsComponents.erase(
 		std::remove(PhysicsComponents.begin(), PhysicsComponents.end(), Component),
 		PhysicsComponents.end());
+}
+
+void PhysicsSubsystem::RegisterPhysicsActor(PhysicsComponent* Component, physx::PxRigidActor* PhysicsActor)
+{
+	if (Component == nullptr || PhysicsActor == nullptr)
+	{
+		return;
+	}
+
+	PhysicsActorToComponentMap[PhysicsActor] = Component;
+}
+
+void PhysicsSubsystem::UnregisterPhysicsActor(physx::PxRigidActor* PhysicsActor)
+{
+	if (PhysicsActor == nullptr)
+	{
+		return;
+	}
+
+	PhysicsActorToComponentMap.erase(PhysicsActor);
 }
 
 void PhysicsSubsystem::SetFixedDeltaTime(float NewFixedDeltaTime)
@@ -56,167 +255,330 @@ float PhysicsSubsystem::GetFixedDeltaTime() const
 	return FixedDeltaTime;
 }
 
+void PhysicsSubsystem::SetWorldBoundarySphere(const DirectX::XMFLOAT3& NewBoundaryCenter, float NewBoundaryRadius)
+{
+	if (NewBoundaryRadius <= 0.0f)
+	{
+		return;
+	}
+
+	HasWorldBoundarySphere = true;
+	WorldBoundaryCenter = NewBoundaryCenter;
+	WorldBoundaryRadius = NewBoundaryRadius;
+}
+
+void PhysicsSubsystem::DisableWorldBoundarySphere()
+{
+	HasWorldBoundarySphere = false;
+}
+
+bool PhysicsSubsystem::GetHasWorldBoundarySphere() const
+{
+	return HasWorldBoundarySphere;
+}
+
+const DirectX::XMFLOAT3& PhysicsSubsystem::GetWorldBoundaryCenter() const
+{
+	return WorldBoundaryCenter;
+}
+
+float PhysicsSubsystem::GetWorldBoundaryRadius() const
+{
+	return WorldBoundaryRadius;
+}
+
+physx::PxPhysics* PhysicsSubsystem::GetPhysics() const
+{
+	return Physics;
+}
+
+physx::PxScene* PhysicsSubsystem::GetScene() const
+{
+	return PhysicsScene;
+}
+
+physx::PxMaterial* PhysicsSubsystem::GetDefaultMaterial() const
+{
+	return DefaultMaterial;
+}
+
+physx::PxConvexMesh* PhysicsSubsystem::AcquireConvexMesh(const std::string& ModelMeshPath)
+{
+	if (ModelMeshPath.empty() || Physics == nullptr)
+	{
+		return nullptr;
+	}
+
+	const auto CachedPosition = ConvexMeshCache.find(ModelMeshPath);
+	if (CachedPosition != ConvexMeshCache.end())
+	{
+		return CachedPosition->second;
+	}
+
+	Game* OwningGameInstance = GetOwningGame();
+	if (OwningGameInstance == nullptr)
+	{
+		return nullptr;
+	}
+
+	ResourceManager* ResourceManagerInstance = OwningGameInstance->GetResourceManager();
+	if (ResourceManagerInstance == nullptr)
+	{
+		return nullptr;
+	}
+
+	const std::shared_ptr<ModelResource> ModelResourceInstance = ResourceManagerInstance->LoadModelResource(ModelMeshPath);
+	if (ModelResourceInstance == nullptr || ModelResourceInstance->Vertices.size() < 4)
+	{
+		return nullptr;
+	}
+
+	std::vector<physx::PxVec3> ConvexPoints;
+	ConvexPoints.reserve(ModelResourceInstance->Vertices.size());
+	for (const ModelResourceVertex& ExistingVertex : ModelResourceInstance->Vertices)
+	{
+		ConvexPoints.push_back(physx::PxVec3(
+			ExistingVertex.Position.x,
+			ExistingVertex.Position.y,
+			ExistingVertex.Position.z));
+	}
+
+	physx::PxConvexMeshDesc ConvexDescription = {};
+	ConvexDescription.points.count = static_cast<physx::PxU32>(ConvexPoints.size());
+	ConvexDescription.points.stride = sizeof(physx::PxVec3);
+	ConvexDescription.points.data = ConvexPoints.data();
+	ConvexDescription.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX | physx::PxConvexFlag::eSHIFT_VERTICES;
+
+	physx::PxConvexMeshCookingResult::Enum CookingResult = physx::PxConvexMeshCookingResult::eFAILURE;
+	physx::PxCookingParams CookingParameters(Physics->getTolerancesScale());
+	physx::PxConvexMesh* NewConvexMesh = PxCreateConvexMesh(
+		CookingParameters,
+		ConvexDescription,
+		Physics->getPhysicsInsertionCallback(),
+		&CookingResult);
+	if (NewConvexMesh == nullptr)
+	{
+		return nullptr;
+	}
+
+	ConvexMeshCache.insert({ ModelMeshPath, NewConvexMesh });
+	return NewConvexMesh;
+}
+
 PhysicsCollisionDetectedDelegate& PhysicsSubsystem::GetOnCollisionDetectedDelegate()
 {
 	return OnCollisionDetectedDelegate;
 }
 
-void PhysicsSubsystem::StepSimulation(float DeltaTime)
+PhysicsOverlapDetectedDelegate& PhysicsSubsystem::GetOnOverlapBeginDelegate()
 {
-	for (PhysicsComponent* Component : PhysicsComponents)
-	{
-		if (Component->GetIsStatic() == false)
-		{
-			Component->AddForce(DirectX::XMFLOAT3(0.0f, -9.81f * Component->GetMass(), 0.0f));
-		}
-	}
-
-	for (PhysicsComponent* Component : PhysicsComponents)
-	{
-		Component->Integrate(DeltaTime);
-	}
-
-	DetectAndResolveCollisions();
+	return OnOverlapBeginDelegate;
 }
 
-void PhysicsSubsystem::DetectAndResolveCollisions()
+PhysicsOverlapDetectedDelegate& PhysicsSubsystem::GetOnOverlapEndDelegate()
 {
-	const size_t ComponentCount = PhysicsComponents.size();
-	for (size_t FirstIndex = 0; FirstIndex < ComponentCount; ++FirstIndex)
-	{
-		for (size_t SecondIndex = FirstIndex + 1; SecondIndex < ComponentCount; ++SecondIndex)
-		{
-			PhysicsComponent* FirstComponent = PhysicsComponents[FirstIndex];
-			PhysicsComponent* SecondComponent = PhysicsComponents[SecondIndex];
-
-			CollisionManifold Collision = {};
-			if (TryBuildCollisionManifold(FirstComponent, SecondComponent, Collision))
-			{
-				ResolveCollision(Collision);
-				OnCollisionDetectedDelegate.Broadcast(
-					Collision.FirstComponent,
-					Collision.SecondComponent,
-					Collision.Normal,
-					Collision.PenetrationDepth);
-			}
-		}
-	}
+	return OnOverlapEndDelegate;
 }
 
-bool PhysicsSubsystem::TryBuildCollisionManifold(PhysicsComponent* FirstComponent, PhysicsComponent* SecondComponent, CollisionManifold& OutCollision) const
+void PhysicsSubsystem::NotifyContactEvent(
+	physx::PxRigidActor* FirstPhysicsActor,
+	physx::PxRigidActor* SecondPhysicsActor,
+	const physx::PxVec3& ContactNormal,
+	float PenetrationDepth)
 {
-	OutCollision.FirstComponent = FirstComponent;
-	OutCollision.SecondComponent = SecondComponent;
-	OutCollision.Normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);
-	OutCollision.PenetrationDepth = 0.0f;
-
-	const bool FirstIsSphere = FirstComponent->GetUsesSphereCollider();
-	const bool SecondIsSphere = SecondComponent->GetUsesSphereCollider();
-
-	if (FirstIsSphere && SecondIsSphere)
-	{
-		DirectX::BoundingSphere FirstSphere = FirstComponent->GetBoundingSphere();
-		DirectX::BoundingSphere SecondSphere = SecondComponent->GetBoundingSphere();
-		if (FirstSphere.Intersects(SecondSphere) == false)
-		{
-			return false;
-		}
-
-		DirectX::XMFLOAT3 Delta(
-			SecondSphere.Center.x - FirstSphere.Center.x,
-			SecondSphere.Center.y - FirstSphere.Center.y,
-			SecondSphere.Center.z - FirstSphere.Center.z);
-		float DistanceSquared = Delta.x * Delta.x + Delta.y * Delta.y + Delta.z * Delta.z;
-		float Distance = std::sqrt((std::max)(DistanceSquared, 0.000001f));
-		float RadiiSum = FirstSphere.Radius + SecondSphere.Radius;
-
-		OutCollision.Normal = DirectX::XMFLOAT3(Delta.x / Distance, Delta.y / Distance, Delta.z / Distance);
-		OutCollision.PenetrationDepth = (std::max)(RadiiSum - Distance, 0.0f);
-		return true;
-	}
-
-	DirectX::BoundingBox FirstBox = FirstComponent->GetBoundingBox();
-	DirectX::BoundingBox SecondBox = SecondComponent->GetBoundingBox();
-	if (FirstBox.Intersects(SecondBox) == false)
-	{
-		return false;
-	}
-
-	DirectX::XMFLOAT3 Delta(
-		SecondBox.Center.x - FirstBox.Center.x,
-		SecondBox.Center.y - FirstBox.Center.y,
-		SecondBox.Center.z - FirstBox.Center.z);
-
-	float OverlapX = (FirstBox.Extents.x + SecondBox.Extents.x) - std::fabs(Delta.x);
-	float OverlapY = (FirstBox.Extents.y + SecondBox.Extents.y) - std::fabs(Delta.y);
-	float OverlapZ = (FirstBox.Extents.z + SecondBox.Extents.z) - std::fabs(Delta.z);
-
-	OutCollision.PenetrationDepth = OverlapX;
-	OutCollision.Normal = DirectX::XMFLOAT3((Delta.x >= 0.0f) ? 1.0f : -1.0f, 0.0f, 0.0f);
-
-	if (OverlapY < OutCollision.PenetrationDepth)
-	{
-		OutCollision.PenetrationDepth = OverlapY;
-		OutCollision.Normal = DirectX::XMFLOAT3(0.0f, (Delta.y >= 0.0f) ? 1.0f : -1.0f, 0.0f);
-	}
-
-	if (OverlapZ < OutCollision.PenetrationDepth)
-	{
-		OutCollision.PenetrationDepth = OverlapZ;
-		OutCollision.Normal = DirectX::XMFLOAT3(0.0f, 0.0f, (Delta.z >= 0.0f) ? 1.0f : -1.0f);
-	}
-
-	return OutCollision.PenetrationDepth > 0.0f;
-}
-
-void PhysicsSubsystem::ResolveCollision(const CollisionManifold& Collision) const
-{
-	PhysicsComponent* FirstComponent = Collision.FirstComponent;
-	PhysicsComponent* SecondComponent = Collision.SecondComponent;
-
-	float FirstInverseMass = FirstComponent->GetInverseMass();
-	float SecondInverseMass = SecondComponent->GetInverseMass();
-	float TotalInverseMass = FirstInverseMass + SecondInverseMass;
-
-	if (TotalInverseMass <= 0.0f)
+	PhysicsComponent* FirstComponent = FindPhysicsComponent(FirstPhysicsActor);
+	PhysicsComponent* SecondComponent = FindPhysicsComponent(SecondPhysicsActor);
+	if (FirstComponent == nullptr || SecondComponent == nullptr)
 	{
 		return;
 	}
 
-	DirectX::XMFLOAT3 FirstVelocity = FirstComponent->GetVelocity();
-	DirectX::XMFLOAT3 SecondVelocity = SecondComponent->GetVelocity();
-	DirectX::XMFLOAT3 RelativeVelocity(
-		SecondVelocity.x - FirstVelocity.x,
-		SecondVelocity.y - FirstVelocity.y,
-		SecondVelocity.z - FirstVelocity.z);
+	const DirectX::XMFLOAT3 ContactNormalDirectX = PhysXTypeConversion::ToDirectXVector(ContactNormal);
+	OnCollisionDetectedDelegate.Broadcast(
+		FirstComponent,
+		SecondComponent,
+		ContactNormalDirectX,
+		PenetrationDepth);
+}
 
-	float VelocityAlongNormal =
-		RelativeVelocity.x * Collision.Normal.x +
-		RelativeVelocity.y * Collision.Normal.y +
-		RelativeVelocity.z * Collision.Normal.z;
-
-	if (VelocityAlongNormal < 0.0f)
+void PhysicsSubsystem::NotifyOverlapBeginEvent(
+	physx::PxRigidActor* FirstPhysicsActor,
+	physx::PxRigidActor* SecondPhysicsActor)
+{
+	PhysicsComponent* FirstComponent = FindPhysicsComponent(FirstPhysicsActor);
+	PhysicsComponent* SecondComponent = FindPhysicsComponent(SecondPhysicsActor);
+	if (FirstComponent == nullptr || SecondComponent == nullptr)
 	{
-		float Restitution = (std::min)(FirstComponent->GetRestitution(), SecondComponent->GetRestitution());
-		float ImpulseScalar = -(1.0f + Restitution) * VelocityAlongNormal / TotalInverseMass;
-		DirectX::XMFLOAT3 Impulse(
-			Collision.Normal.x * ImpulseScalar,
-			Collision.Normal.y * ImpulseScalar,
-			Collision.Normal.z * ImpulseScalar);
-
-		FirstComponent->ApplyImpulse(DirectX::XMFLOAT3(-Impulse.x, -Impulse.y, -Impulse.z));
-		SecondComponent->ApplyImpulse(Impulse);
+		return;
 	}
 
-	const float PositionCorrectionPercent = 0.8f;
-	const float PositionCorrectionSlop = 0.001f;
-	float CorrectedPenetration = (std::max)(Collision.PenetrationDepth - PositionCorrectionSlop, 0.0f);
-	float CorrectionScalar = CorrectedPenetration / TotalInverseMass * PositionCorrectionPercent;
-	DirectX::XMFLOAT3 Correction(
-		Collision.Normal.x * CorrectionScalar,
-		Collision.Normal.y * CorrectionScalar,
-		Collision.Normal.z * CorrectionScalar);
+	OnOverlapBeginDelegate.Broadcast(FirstComponent, SecondComponent);
+}
 
-	FirstComponent->ApplyPositionCorrection(DirectX::XMFLOAT3(-Correction.x * FirstInverseMass, -Correction.y * FirstInverseMass, -Correction.z * FirstInverseMass));
-	SecondComponent->ApplyPositionCorrection(DirectX::XMFLOAT3(Correction.x * SecondInverseMass, Correction.y * SecondInverseMass, Correction.z * SecondInverseMass));
+void PhysicsSubsystem::NotifyOverlapEndEvent(
+	physx::PxRigidActor* FirstPhysicsActor,
+	physx::PxRigidActor* SecondPhysicsActor)
+{
+	PhysicsComponent* FirstComponent = FindPhysicsComponent(FirstPhysicsActor);
+	PhysicsComponent* SecondComponent = FindPhysicsComponent(SecondPhysicsActor);
+	if (FirstComponent == nullptr || SecondComponent == nullptr)
+	{
+		return;
+	}
+
+	OnOverlapEndDelegate.Broadcast(FirstComponent, SecondComponent);
+}
+
+PhysicsComponent* PhysicsSubsystem::FindPhysicsComponent(physx::PxRigidActor* PhysicsActor) const
+{
+	if (PhysicsActor == nullptr)
+	{
+		return nullptr;
+	}
+
+	const auto ExistingPosition = PhysicsActorToComponentMap.find(PhysicsActor);
+	if (ExistingPosition == PhysicsActorToComponentMap.end())
+	{
+		return nullptr;
+	}
+	return ExistingPosition->second;
+}
+
+void PhysicsSubsystem::StepSimulation(float DeltaTime)
+{
+	PushStaticTransformsToPhysics();
+	PhysicsScene->simulate(DeltaTime);
+	PhysicsScene->fetchResults(true);
+	EnforceWorldBoundarySphere();
+	PullDynamicTransformsFromPhysics();
+}
+
+void PhysicsSubsystem::PushStaticTransformsToPhysics()
+{
+	for (PhysicsComponent* ExistingComponent : PhysicsComponents)
+	{
+		if (ExistingComponent != nullptr)
+		{
+			ExistingComponent->SyncPhysicsTransformFromActor();
+		}
+	}
+}
+
+void PhysicsSubsystem::PullDynamicTransformsFromPhysics()
+{
+	for (PhysicsComponent* ExistingComponent : PhysicsComponents)
+	{
+		if (ExistingComponent != nullptr)
+		{
+			ExistingComponent->SyncActorTransformFromPhysics();
+		}
+	}
+}
+
+void PhysicsSubsystem::EnforceWorldBoundarySphere()
+{
+	if (HasWorldBoundarySphere == false)
+	{
+		return;
+	}
+
+	for (PhysicsComponent* ExistingComponent : PhysicsComponents)
+	{
+		if (ExistingComponent != nullptr)
+		{
+			ExistingComponent->ApplyBoundarySphereConstraint(WorldBoundaryCenter, WorldBoundaryRadius);
+		}
+	}
+}
+
+void PhysicsSubsystem::InitializePhysXContext()
+{
+	PhysicsFoundation = PxCreateFoundation(
+		PX_PHYSICS_VERSION,
+		AllocatorCallback,
+		ErrorCallback);
+	if (PhysicsFoundation == nullptr)
+	{
+		return;
+	}
+
+	const physx::PxTolerancesScale ToleranceScale;
+	Physics = PxCreatePhysics(
+		PX_PHYSICS_VERSION,
+		*PhysicsFoundation,
+		ToleranceScale,
+		true,
+		nullptr);
+	if (Physics == nullptr)
+	{
+		return;
+	}
+
+	CpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
+	if (CpuDispatcher == nullptr)
+	{
+		return;
+	}
+
+	SimulationEventCallback = new PhysicsSimulationEventCallback(this);
+
+	physx::PxSceneDesc SceneDescription(ToleranceScale);
+	SceneDescription.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+	SceneDescription.cpuDispatcher = CpuDispatcher;
+	SceneDescription.filterShader = physx::PxDefaultSimulationFilterShader;
+	SceneDescription.simulationEventCallback = SimulationEventCallback;
+	PhysicsScene = Physics->createScene(SceneDescription);
+	if (PhysicsScene == nullptr)
+	{
+		return;
+	}
+
+	DefaultMaterial = Physics->createMaterial(0.5f, 0.5f, 0.5f);
+}
+
+void PhysicsSubsystem::ShutdownPhysXContext()
+{
+	if (DefaultMaterial != nullptr)
+	{
+		DefaultMaterial->release();
+		DefaultMaterial = nullptr;
+	}
+	if (PhysicsScene != nullptr)
+	{
+		PhysicsScene->release();
+		PhysicsScene = nullptr;
+	}
+	if (CpuDispatcher != nullptr)
+	{
+		CpuDispatcher->release();
+		CpuDispatcher = nullptr;
+	}
+	if (Physics != nullptr)
+	{
+		Physics->release();
+		Physics = nullptr;
+	}
+	if (PhysicsFoundation != nullptr)
+	{
+		PhysicsFoundation->release();
+		PhysicsFoundation = nullptr;
+	}
+	if (SimulationEventCallback != nullptr)
+	{
+		delete SimulationEventCallback;
+		SimulationEventCallback = nullptr;
+	}
+}
+
+void PhysicsSubsystem::ReleaseCachedConvexMeshes()
+{
+	for (auto& ExistingPair : ConvexMeshCache)
+	{
+		if (ExistingPair.second != nullptr)
+		{
+			ExistingPair.second->release();
+			ExistingPair.second = nullptr;
+		}
+	}
+	ConvexMeshCache.clear();
 }

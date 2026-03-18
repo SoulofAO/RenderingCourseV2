@@ -75,7 +75,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -91,7 +91,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -105,7 +105,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -121,7 +121,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -139,6 +139,7 @@
     <ClCompile Include="Abstracts\Components\LightComponent.cpp" />
     <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp" />
     <ClCompile Include="Abstracts\Components\PhysicsComponent.cpp" />
+    <ClCompile Include="Abstracts\Physics\PhysXTypeConversion.cpp" />
     <ClCompile Include="Abstracts\Components\RenderingComponent.cpp" />
     <ClCompile Include="Abstracts\Components\UIRenderingComponent.cpp" />
     <ClCompile Include="Abstracts\Core\Actor.cpp" />
@@ -163,6 +164,11 @@
     <ClCompile Include="Planets\OrbitCameraComponent.cpp" />
     <ClCompile Include="Planets\OrbitCameraInputHandler.cpp" />
     <ClCompile Include="Planets\PlanetsUIRenderingComponent.cpp" />
+    <ClCompile Include="Tests\LightingTestGame.cpp" />
+    <ClCompile Include="Tests\MeshTestGame.cpp" />
+    <ClCompile Include="Tests\PhysicsTestGame.cpp" />
+    <ClCompile Include="Tests\TestsBaseGame.cpp" />
+    <ClCompile Include="Tests\TexturingTestGame.cpp" />
     <ClCompile Include="PingPongTask\PingPongGame.cpp" />
     <ClCompile Include="PingPongTask\PingPongPlane.cpp" />
     <ClCompile Include="PingPongTask\PingPongSphere.cpp" />
@@ -185,6 +191,7 @@
     <ClInclude Include="Abstracts\Resources\ResourceManager.h" />
     <ClInclude Include="Abstracts\Resources\TextureResource.h" />
     <ClInclude Include="Abstracts\Components\PhysicsComponent.h" />
+    <ClInclude Include="Abstracts\Physics\PhysXTypeConversion.h" />
     <ClInclude Include="Abstracts\Components\RenderingComponent.h" />
     <ClInclude Include="Abstracts\Components\UIRenderingComponent.h" />
     <ClInclude Include="Abstracts\Core\Actor.h" />
@@ -207,6 +214,11 @@
     <ClInclude Include="Planets\OrbitCameraComponent.h" />
     <ClInclude Include="Planets\OrbitCameraInputHandler.h" />
     <ClInclude Include="Planets\PlanetsUIRenderingComponent.h" />
+    <ClInclude Include="Tests\LightingTestGame.h" />
+    <ClInclude Include="Tests\MeshTestGame.h" />
+    <ClInclude Include="Tests\PhysicsTestGame.h" />
+    <ClInclude Include="Tests\TestsBaseGame.h" />
+    <ClInclude Include="Tests\TexturingTestGame.h" />
     <ClInclude Include="PingPongTask\PingPongPlane.h" />
     <ClInclude Include="PingPongTask\PingPongSphere.h" />
     <ClInclude Include="PingPongTask\PingPongUIRenderingComponent.h" />

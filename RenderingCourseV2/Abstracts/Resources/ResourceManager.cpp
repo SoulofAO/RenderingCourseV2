@@ -2,22 +2,10 @@
 #include <d3d11.h>
 #include <filesystem>
 
-#if __has_include(<DirectXTex.h>) && __has_include(<DirectXTexD3D11.h>)
 #include <DirectXTex.h>
-#include <DirectXTexD3D11.h>
-#define HAS_DIRECTX_TEX_RUNTIME 1
-#else
-#define HAS_DIRECTX_TEX_RUNTIME 0
-#endif
-
-#if __has_include(<assimp/Importer.hpp>)
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#define HAS_ASSIMP_RUNTIME 1
-#else
-#define HAS_ASSIMP_RUNTIME 0
-#endif
 
 ResourceManager::ResourceManager()
 	: Cooker()
@@ -46,7 +34,6 @@ std::shared_ptr<TextureResource> ResourceManager::LoadTextureResource(const std:
 
 	std::shared_ptr<TextureResource> NewTextureResource = std::make_shared<TextureResource>(NormalizedSourcePath, CookedTexturePath);
 
-#if HAS_DIRECTX_TEX_RUNTIME
 	if (Device != nullptr)
 	{
 		std::wstring CookedTextureWidePath(CookedTexturePath.begin(), CookedTexturePath.end());
@@ -66,9 +53,6 @@ std::shared_ptr<TextureResource> ResourceManager::LoadTextureResource(const std:
 			}
 		}
 	}
-#else
-	(void)Device;
-#endif
 
 	TextureResourceCache.insert({ NormalizedSourcePath, NewTextureResource });
 	return NewTextureResource;
@@ -87,7 +71,6 @@ std::shared_ptr<ModelResource> ResourceManager::LoadModelResource(const std::str
 	Cooker.EnsureCookedModel(NormalizedSourcePath, CookedModelPath);
 	std::shared_ptr<ModelResource> NewModelResource = std::make_shared<ModelResource>(NormalizedSourcePath, CookedModelPath);
 
-#if HAS_ASSIMP_RUNTIME
 	Assimp::Importer Importer;
 	const aiScene* ImportedScene = Importer.ReadFile(
 		CookedModelPath,
@@ -156,7 +139,6 @@ std::shared_ptr<ModelResource> ResourceManager::LoadModelResource(const std::str
 			}
 		}
 	}
-#endif
 
 	ModelResourceCache.insert({ NormalizedSourcePath, NewModelResource });
 	return NewModelResource;

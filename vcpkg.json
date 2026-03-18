@@ -4,6 +4,13 @@
   "dependencies": [
     "assimp",
     {
+      "name": "directxtex",
+      "features": [
+        "dx11"
+      ]
+    },
+    "physx",
+    {
       "name": "imgui",
       "features": [
         "dx11-binding",

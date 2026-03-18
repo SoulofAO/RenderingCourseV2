@@ -2,12 +2,7 @@
 #include <d3d11.h>
 #include <filesystem>
 
-#if __has_include(<DirectXTex.h>)
 #include <DirectXTex.h>
-#define HAS_DIRECTX_TEX 1
-#else
-#define HAS_DIRECTX_TEX 0
-#endif
 
 ResourceCooker::ResourceCooker()
 	: ProjectRootPath()
@@ -67,7 +62,7 @@ std::string ResourceCooker::ResolveCookedPath(const std::string& SourcePath, con
 	return CookedFilePath.string();
 }
 
-bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const std::string& CookedPath, ID3D11Device* Device) const
+bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const std::string& CookedPath, ID3D11Device*) const
 {
 	namespace FileSystem = std::filesystem;
 
@@ -78,8 +73,6 @@ bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const st
 
 	FileSystem::create_directories(FileSystem::path(CookedPath).parent_path());
 
-#if HAS_DIRECTX_TEX
-	(void)Device;
 	DirectX::ScratchImage LoadedImage;
 	std::wstring SourceWidePath(SourcePath.begin(), SourcePath.end());
 	HRESULT LoadResult = DirectX::LoadFromWICFile(SourceWidePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, LoadedImage);
@@ -111,12 +104,6 @@ bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const st
 		DirectX::DDS_FLAGS_NONE,
 		CookedWidePath.c_str());
 	return SUCCEEDED(SaveResult);
-#else
-	(void)SourcePath;
-	(void)CookedPath;
-	(void)Device;
-	return false;
-#endif
 }
 
 bool ResourceCooker::EnsureCookedModel(const std::string& SourcePath, const std::string& CookedPath) const

@@ -1,10 +1,25 @@
 #pragma once
 
 #include "Abstracts/Components/ActorComponent.h"
-#include <DirectXCollision.h>
+#include <physx/PxPhysicsAPI.h>
 #include <directxmath.h>
+#include <string>
+#include <vector>
 
 class PhysicsSubsystem;
+
+enum class PhysicsColliderKind
+{
+	Sphere,
+	Box,
+	ConvexMeshAuto
+};
+
+enum class PhysicsCollisionMode
+{
+	Simulation,
+	Trigger
+};
 
 class PhysicsComponent : public ActorComponent
 {
@@ -22,9 +37,20 @@ public:
 	void SetRestitution(float NewRestitution);
 	float GetRestitution() const;
 
+	void SetLinearDamping(float NewLinearDamping);
+	float GetLinearDamping() const;
+	void SetAngularDamping(float NewAngularDamping);
+	float GetAngularDamping() const;
+
+	void SetUseGravity(bool NewUseGravity);
+	bool GetUseGravity() const;
+
 	void SetVelocity(const DirectX::XMFLOAT3& NewVelocity);
-	const DirectX::XMFLOAT3& GetVelocity() const;
-	void AddForce(const DirectX::XMFLOAT3& Force);
+	DirectX::XMFLOAT3 GetVelocity() const;
+	void SetAngularVelocity(const DirectX::XMFLOAT3& NewAngularVelocity);
+	DirectX::XMFLOAT3 GetAngularVelocity() const;
+	void AddForce(const DirectX::XMFLOAT3& ForceValue);
+	void AddTorque(const DirectX::XMFLOAT3& TorqueValue);
 	void ClearForces();
 
 	void SetIsStatic(bool NewIsStatic);
@@ -32,29 +58,54 @@ public:
 
 	void SetSphereCollider(float NewRadius);
 	void SetAabbCollider(const DirectX::XMFLOAT3& NewHalfExtents);
+	void EnableAutoConvexColliderFromMesh(bool NewAutoConvexEnabled);
+	bool GetAutoConvexColliderFromMeshEnabled() const;
 	bool GetUsesSphereCollider() const;
-
-	DirectX::BoundingSphere GetBoundingSphere() const;
-	DirectX::BoundingBox GetBoundingBox() const;
 	const DirectX::XMFLOAT3& GetHalfExtents() const;
 	float GetSphereRadius() const;
 
+	void SetCollisionMode(PhysicsCollisionMode NewCollisionMode);
+	PhysicsCollisionMode GetCollisionMode() const;
+
 	void Integrate(float DeltaTime);
-	void ApplyImpulse(const DirectX::XMFLOAT3& Impulse);
-	void ApplyPositionCorrection(const DirectX::XMFLOAT3& Correction);
+	void ApplyImpulse(const DirectX::XMFLOAT3& ImpulseValue);
+	void ApplyPositionCorrection(const DirectX::XMFLOAT3& CorrectionValue);
+
+	bool WeldWithComponent(PhysicsComponent* TargetComponent, bool PreserveRelativePose);
+	void UnweldAllComponents();
+
+	void CreatePhysicsActor(PhysicsSubsystem* NewPhysicsSubsystem);
+	void DestroyPhysicsActor();
+	void SyncPhysicsTransformFromActor();
+	void SyncActorTransformFromPhysics();
+	void ApplyBoundarySphereConstraint(const DirectX::XMFLOAT3& BoundaryCenter, float BoundaryRadius);
+
+	physx::PxRigidActor* GetPhysicsActor() const;
+	physx::PxRigidDynamic* GetPhysicsDynamicActor() const;
 
 private:
 	void RecalculateInverseMass();
+	void RebuildPhysicsActor();
+	void ApplyCollisionModeToAllShapes();
+	void ReleaseAllWeldJoints();
 
 	float Mass;
 	float InverseMass;
 	float Restitution;
+	float LinearDamping;
+	float AngularDamping;
+	bool UseGravity;
 	bool IsStatic;
-
-	bool UsesSphereCollider;
+	PhysicsColliderKind ColliderKind;
+	PhysicsCollisionMode CollisionMode;
 	float SphereRadius;
 	DirectX::XMFLOAT3 HalfExtents;
+	DirectX::XMFLOAT3 CachedVelocity;
+	DirectX::XMFLOAT3 CachedAngularVelocity;
 
-	DirectX::XMFLOAT3 Velocity;
-	DirectX::XMFLOAT3 AccumulatedForce;
+	PhysicsSubsystem* PhysicsSubsystemInstance;
+	physx::PxMaterial* PhysicsMaterial;
+	physx::PxRigidActor* PhysicsActor;
+	physx::PxRigidDynamic* PhysicsDynamicActor;
+	std::vector<physx::PxJoint*> WeldJoints;
 };
