@@ -3,6 +3,7 @@
 #include "Abstracts/Components/UIRenderingComponent.h"
 
 class FPSSpectateCameraComponent;
+class PlanetsGame;
 
 class FPSSpectateCameraComponentSettingsUI : public UIRenderingComponent
 {
@@ -15,5 +16,11 @@ protected:
 	void RenderUI() override;
 
 private:
+	PlanetsGame* GetOwningPlanetsGame() const;
+
 	FPSSpectateCameraComponent* TargetFPSSpectateCameraComponent;
+	bool UseOrthographicProjection;
+	float OrthographicWidth;
+	float OrthographicHeight;
+	float FieldOfViewDegrees;
 };

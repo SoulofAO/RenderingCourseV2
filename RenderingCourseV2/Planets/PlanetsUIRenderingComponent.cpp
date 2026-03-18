@@ -23,12 +23,6 @@ void PlanetsUIRenderingComponent::RenderUI()
 	ImGui::SetNextWindowSize(ImVec2(360.0f, 280.0f), ImGuiCond_Once);
 	ImGui::Begin("Planets Controls");
 
-	bool UseOrthographicProjectionForActiveCamera = OwningPlanetsGame->GetUseOrthographicProjectionForActiveCamera();
-	if (ImGui::Checkbox("Use Orthographic Projection", &UseOrthographicProjectionForActiveCamera))
-	{
-		OwningPlanetsGame->SetUseOrthographicProjectionForActiveCamera(UseOrthographicProjectionForActiveCamera);
-	}
-
 	bool UseOrbitCamera = OwningPlanetsGame->GetUseOrbitCamera();
 	if (ImGui::Checkbox("Use Orbit Camera", &UseOrbitCamera))
 	{

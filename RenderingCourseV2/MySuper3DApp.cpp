@@ -68,6 +68,6 @@ int RunLightingTest()
 
 int main()
 {
-	RunTexturingTest();
+	PlanetsTask();
 }
 

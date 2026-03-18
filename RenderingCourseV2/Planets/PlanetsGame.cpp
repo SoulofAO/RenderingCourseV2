@@ -301,8 +301,8 @@ void PlanetsGame::SpawnPlanetsAndMoons()
 		NewPlanetMoonOrbitData.MoonOrbitSpeed = 0.65f + (static_cast<float>(PlanetIndex) * 0.14f);
 		NewPlanetMoonOrbitData.PlanetSelfRotationSpeed = 0.45f + (static_cast<float>(PlanetIndex) * 0.10f);
 		NewPlanetMoonOrbitData.MoonSelfRotationSpeed = 0.90f + (static_cast<float>(PlanetIndex) * 0.14f);
-		NewPlanetMoonOrbitData.PlanetOrbitRadiusMultiplier = 3.0f + (static_cast<float>(PlanetIndex) * 1.25f);
-		NewPlanetMoonOrbitData.MoonOrbitRadiusMultiplier = 0.7f + (static_cast<float>(PlanetIndex) * 0.12f);
+		NewPlanetMoonOrbitData.PlanetOrbitRadiusMultiplier = 6.0f + (static_cast<float>(PlanetIndex) * 4.0f);
+		NewPlanetMoonOrbitData.MoonOrbitRadiusMultiplier = 2.0f + (static_cast<float>(PlanetIndex) * 1.0f);
 		PlanetMoonOrbitDataList.push_back(NewPlanetMoonOrbitData);
 	}
 }

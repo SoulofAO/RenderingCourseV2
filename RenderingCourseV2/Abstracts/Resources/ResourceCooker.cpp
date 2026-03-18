@@ -5,6 +5,7 @@
 #include <comdef.h>
 #include <iostream>
 #include <iomanip>
+#include <utility>
 
 #include <DirectXTex.h>
 
@@ -95,7 +96,7 @@ bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const st
 
 	DirectX::ScratchImage LoadedImage;
 	std::wstring SourceWidePath(SourcePath.begin(), SourcePath.end());
-	HRESULT LoadResult = DirectX::LoadFromWICFile(SourceWidePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, LoadedImage);
+	HRESULT LoadResult = DirectX::LoadFromWICFile(SourceWidePath.c_str(), DirectX::WIC_FLAGS_FORCE_RGB, nullptr, LoadedImage);
 	if (FAILED(LoadResult))
 	{
 		return false;
@@ -124,23 +125,30 @@ bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const st
 	}
 	else
 	{
-		HRESULT ConvertResult = DirectX::Convert(
-			LoadedImage.GetImages(),
-			LoadedImage.GetImageCount(),
-			Metadata,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			DirectX::TEX_FILTER_DEFAULT,
-			DirectX::TEX_THRESHOLD_DEFAULT,
-			CompressedImage);
-		if (FAILED(ConvertResult))
+		if (Metadata.format == DXGI_FORMAT_R8G8B8A8_UNORM)
 		{
-			_com_error Error(ConvertResult);
-			std::wcerr
-				<< L"DirectX::Convert failed: 0x"
-				<< std::hex << std::uppercase
-				<< static_cast<unsigned long>(ConvertResult)
-				<< L" (" << Error.ErrorMessage() << L")\n";
-			return false;
+			CompressedImage = std::move(LoadedImage);
+		}
+		else
+		{
+			HRESULT ConvertResult = DirectX::Convert(
+				LoadedImage.GetImages(),
+				LoadedImage.GetImageCount(),
+				Metadata,
+				DXGI_FORMAT_R8G8B8A8_UNORM,
+				DirectX::TEX_FILTER_DEFAULT,
+				DirectX::TEX_THRESHOLD_DEFAULT,
+				CompressedImage);
+			if (FAILED(ConvertResult))
+			{
+				_com_error Error(ConvertResult);
+				std::wcerr
+					<< L"DirectX::Convert failed: 0x"
+					<< std::hex << std::uppercase
+					<< static_cast<unsigned long>(ConvertResult)
+					<< L" (" << Error.ErrorMessage() << L")\n";
+				return false;
+			}
 		}
 	}
 
