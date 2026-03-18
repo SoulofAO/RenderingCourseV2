@@ -52,10 +52,8 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, IsExitRequested(false)
 	, FallbackCameraActor(nullptr)
 	, FallbackCameraComponentInstance(nullptr)
-	, CurrentMouseInputMode(MouseInputMode::GameOnly)
-	, DefaultCameraMovementSpeedScale(1.0f)
-	, DefaultCameraBaseMovementSpeed(6.0f)
-	, DefaultCameraSettingsWindowVisible(false)
+	, CurrentMouseInputMode(MouseInputMode::GameAndUI)
+	, DefaultCameraSettingsWindowVisible(true)
 {
 }
 
@@ -118,6 +116,7 @@ void Game::Initialize()
 		AddSubsystem(std::move(NewCameraSubsystem));
 	}
 
+	RegisterInputHandler(std::make_unique<EngineHotkeyInputHandler>());
 	RegisterInputHandler(std::make_unique<FreeCameraInputHandler>());
 
 	for (std::unique_ptr<Subsystem>& ExistingSubsystem : Subsystems)
@@ -132,7 +131,6 @@ void Game::Initialize()
 
 	ApplyMouseInputMode();
 	UpdateInputHandlerActivationState();
-	ApplyDefaultCameraMovementSpeedScale();
 }
 
 void Game::Run()
@@ -411,6 +409,7 @@ LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPA
 			Input->OnKeyDown(static_cast<unsigned int>(WParam));
 		}
 
+		IsExitRequested = true;
 		PostQuitMessage(0);
 		return 0;
 	}
@@ -433,6 +432,13 @@ LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPA
 
 	switch (Message)
 	{
+	case WM_CLOSE:
+	case WM_DESTROY:
+	{
+		IsExitRequested = true;
+		PostQuitMessage(0);
+		return 0;
+	}
 	case WM_KEYDOWN:
 	{
 		unsigned int KeyCode = static_cast<unsigned int>(WParam);
@@ -445,6 +451,7 @@ LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPA
 
 		if (KeyCode == 27)
 		{
+			IsExitRequested = true;
 			PostQuitMessage(0);
 		}
 
@@ -465,6 +472,15 @@ LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPA
 			int PositionX = LOWORD(LParam);
 			int PositionY = HIWORD(LParam);
 			Input->OnMouseMove(PositionX, PositionY);
+		}
+		return 0;
+	}
+	case WM_MOUSEWHEEL:
+	{
+		if (Input)
+		{
+			const int MouseWheelDelta = GET_WHEEL_DELTA_WPARAM(WParam);
+			Input->OnMouseWheel(MouseWheelDelta);
 		}
 		return 0;
 	}
@@ -507,7 +523,6 @@ void Game::RegisterInputHandler(std::unique_ptr<GameInputHandler> NewInputHandle
 
 	InputHandlers.push_back(std::move(NewInputHandler));
 	UpdateInputHandlerActivationState();
-	ApplyDefaultCameraMovementSpeedScale();
 }
 
 void Game::SetMouseInputMode(MouseInputMode NewMouseInputMode)
@@ -542,17 +557,6 @@ void Game::ToggleMouseInputMode()
 MouseInputMode Game::GetMouseInputMode() const
 {
 	return CurrentMouseInputMode;
-}
-
-void Game::SetDefaultCameraMovementSpeedScale(float NewDefaultCameraMovementSpeedScale)
-{
-	DefaultCameraMovementSpeedScale = (std::max)(0.05f, NewDefaultCameraMovementSpeedScale);
-	ApplyDefaultCameraMovementSpeedScale();
-}
-
-float Game::GetDefaultCameraMovementSpeedScale() const
-{
-	return DefaultCameraMovementSpeedScale;
 }
 
 void Game::SetDefaultCameraSettingsWindowVisible(bool NewDefaultCameraSettingsWindowVisible)
@@ -704,21 +708,4 @@ void Game::UpdateInputHandlerActivationState()
 	}
 }
 
-void Game::ApplyDefaultCameraMovementSpeedScale()
-{
-	const float EffectiveMovementSpeed = DefaultCameraBaseMovementSpeed * DefaultCameraMovementSpeedScale;
-	for (std::unique_ptr<GameInputHandler>& ExistingInputHandler : InputHandlers)
-	{
-		if (ExistingInputHandler == nullptr)
-		{
-			continue;
-		}
-
-		FreeCameraInputHandler* FreeCameraInputHandlerInstance = dynamic_cast<FreeCameraInputHandler*>(ExistingInputHandler.get());
-		if (FreeCameraInputHandlerInstance != nullptr)
-		{
-			FreeCameraInputHandlerInstance->SetMovementSpeed(EffectiveMovementSpeed);
-		}
-	}
-}
 

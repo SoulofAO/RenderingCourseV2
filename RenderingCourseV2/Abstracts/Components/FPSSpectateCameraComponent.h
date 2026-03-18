@@ -2,8 +2,7 @@
 
 #include "Abstracts/Components/CameraComponent.h"
 
-class EngineHotkeyInputHandler;
-class DefaultCameraSettingsUIRenderingComponent;
+class FPSSpectateCameraComponentSettingsUI;
 
 class FPSSpectateCameraComponent : public CameraComponent
 {
@@ -15,9 +14,12 @@ public:
 	void Shutdown() override;
 	void Posses() override;
 	void Unposses() override;
+	void SetMovementSpeedScale(float NewMovementSpeedScale);
+	float GetMovementSpeedScale() const;
+	bool GetIsPossessed() const;
 
 private:
-	EngineHotkeyInputHandler* EngineHotkeyInputHandlerInstance;
-	DefaultCameraSettingsUIRenderingComponent* DefaultCameraSettingsUIRenderingComponentInstance;
+	FPSSpectateCameraComponentSettingsUI* FPSSpectateCameraComponentSettingsUIInstance;
+	float MovementSpeedScale;
 	bool IsPossessed;
 };

@@ -1,14 +1,14 @@
 #include "Abstracts/Components/FPSSpectateCameraComponent.h"
-#include "Abstracts/Components/DefaultCameraSettingsUIRenderingComponent.h"
+#include "Abstracts/Components/FPSSpectateCameraComponentSettingsUI.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Game.h"
-#include "Abstracts/Input/EngineHotkeyInputHandler.h"
+#include <algorithm>
 #include <memory>
 
 FPSSpectateCameraComponent::FPSSpectateCameraComponent()
 	: CameraComponent()
-	, EngineHotkeyInputHandlerInstance(nullptr)
-	, DefaultCameraSettingsUIRenderingComponentInstance(nullptr)
+	, FPSSpectateCameraComponentSettingsUIInstance(nullptr)
+	, MovementSpeedScale(1.0f)
 	, IsPossessed(false)
 {
 }
@@ -43,20 +43,18 @@ void FPSSpectateCameraComponent::Posses()
 		return;
 	}
 
-	if (EngineHotkeyInputHandlerInstance == nullptr)
-	{
-		std::unique_ptr<EngineHotkeyInputHandler> NewEngineHotkeyInputHandler = std::make_unique<EngineHotkeyInputHandler>();
-		EngineHotkeyInputHandlerInstance = NewEngineHotkeyInputHandler.get();
-		OwningGame->RegisterInputHandler(std::move(NewEngineHotkeyInputHandler));
-	}
-
-	if (DefaultCameraSettingsUIRenderingComponentInstance == nullptr)
+	if (FPSSpectateCameraComponentSettingsUIInstance == nullptr)
 	{
 		std::unique_ptr<Actor> DefaultCameraUIActor = std::make_unique<Actor>();
-		std::unique_ptr<DefaultCameraSettingsUIRenderingComponent> NewDefaultCameraSettingsUIRenderingComponent = std::make_unique<DefaultCameraSettingsUIRenderingComponent>();
-		DefaultCameraSettingsUIRenderingComponentInstance = NewDefaultCameraSettingsUIRenderingComponent.get();
-		DefaultCameraUIActor->AddComponent(std::move(NewDefaultCameraSettingsUIRenderingComponent));
+		std::unique_ptr<FPSSpectateCameraComponentSettingsUI> NewFPSSpectateCameraComponentSettingsUI = std::make_unique<FPSSpectateCameraComponentSettingsUI>();
+		NewFPSSpectateCameraComponentSettingsUI->SetTargetFPSSpectateCameraComponent(this);
+		FPSSpectateCameraComponentSettingsUIInstance = NewFPSSpectateCameraComponentSettingsUI.get();
+		DefaultCameraUIActor->AddComponent(std::move(NewFPSSpectateCameraComponentSettingsUI));
 		OwningGame->AddActor(std::move(DefaultCameraUIActor));
+	}
+	else
+	{
+		FPSSpectateCameraComponentSettingsUIInstance->SetTargetFPSSpectateCameraComponent(this);
 	}
 
 	IsPossessed = true;
@@ -72,14 +70,26 @@ void FPSSpectateCameraComponent::Unposses()
 	Game* OwningGame = GetOwningGame();
 	if (OwningGame != nullptr)
 	{
-		if (EngineHotkeyInputHandlerInstance != nullptr)
+		if (FPSSpectateCameraComponentSettingsUIInstance != nullptr)
 		{
-			OwningGame->UnregisterInputHandler(EngineHotkeyInputHandlerInstance);
-			EngineHotkeyInputHandlerInstance = nullptr;
+			FPSSpectateCameraComponentSettingsUIInstance->SetTargetFPSSpectateCameraComponent(nullptr);
 		}
-
-		OwningGame->SetDefaultCameraSettingsWindowVisible(false);
 	}
 
 	IsPossessed = false;
+}
+
+void FPSSpectateCameraComponent::SetMovementSpeedScale(float NewMovementSpeedScale)
+{
+	MovementSpeedScale = (std::clamp)(NewMovementSpeedScale, 0.05f, 5.0f);
+}
+
+float FPSSpectateCameraComponent::GetMovementSpeedScale() const
+{
+	return MovementSpeedScale;
+}
+
+bool FPSSpectateCameraComponent::GetIsPossessed() const
+{
+	return IsPossessed;
 }

@@ -6,6 +6,7 @@ InputDevice::InputDevice(Game* GameInstance)
 	, MousePositionY(0)
 	, MouseDeltaX(0)
 	, MouseDeltaY(0)
+	, MouseWheelDelta(0)
 	, HasMousePositionSample(false)
 {
 }
@@ -38,6 +39,11 @@ void InputDevice::OnMouseMove(int PositionX, int PositionY)
 	HasMousePositionSample = true;
 }
 
+void InputDevice::OnMouseWheel(int NewMouseWheelDelta)
+{
+	MouseWheelDelta += NewMouseWheelDelta;
+}
+
 bool InputDevice::IsKeyDown(unsigned int KeyCode) const
 {
 	return PressedKeys.count(KeyCode) > 0;
@@ -53,6 +59,7 @@ void InputDevice::EndFrame()
 	PressedKeysThisFrame.clear();
 	MouseDeltaX = 0;
 	MouseDeltaY = 0;
+	MouseWheelDelta = 0;
 }
 
 void InputDevice::ResetMouseTracking(int PositionX, int PositionY)
@@ -72,6 +79,11 @@ int InputDevice::GetMouseDeltaX() const
 int InputDevice::GetMouseDeltaY() const
 {
 	return MouseDeltaY;
+}
+
+int InputDevice::GetMouseWheelDelta() const
+{
+	return MouseWheelDelta;
 }
 
 int InputDevice::GetMousePositionX() const

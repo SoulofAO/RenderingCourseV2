@@ -1,6 +1,9 @@
 #include "Planets/PlanetsGame.h"
+#include "Planets/OrbitCameraComponent.h"
+#include "Planets/OrbitCameraInputHandler.h"
 #include "Planets/PlanetsUIRenderingComponent.h"
 #include "Abstracts/Components/CameraComponent.h"
+#include "Abstracts/Components/FPSSpectateCameraComponent.h"
 #include "Abstracts/Components/MeshUniversalComponent.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Transform.h"
@@ -13,16 +16,15 @@
 PlanetsGame::PlanetsGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Game(ApplicationName, ScreenWidth, ScreenHeight)
 	, SunActor(nullptr)
-	, OrbitCameraPivotActor(nullptr)
-	, OrbitCameraComponent(nullptr)
-	, FallbackCameraComponentForPlanets(nullptr)
+	, OrbitCameraForPlanets(nullptr)
+	, FPSCameraComponentForPlanets(nullptr)
 	, PlanetsUIRenderingComponentInstance(nullptr)
 	, UseOrthographicProjectionForActiveCamera(false)
+	, UseOrbitCamera(true)
 	, PlanetOrbitSpeedScale(1.0f)
 	, MoonOrbitSpeedScale(1.0f)
 	, PlanetOrbitRadiusScale(1.0f)
 	, MoonOrbitRadiusScale(1.0f)
-	, OrbitCameraYawSpeed(0.25f)
 	, SunSelfRotationSpeed(0.2f)
 {
 }
@@ -79,6 +81,45 @@ void PlanetsGame::SetMoonOrbitRadiusScale(float NewMoonOrbitRadiusScale)
 	SetOrbitRadiusScaleValues(PlanetOrbitRadiusScale, NewMoonOrbitRadiusScale);
 }
 
+bool PlanetsGame::GetUseOrbitCamera() const
+{
+	return UseOrbitCamera;
+}
+
+void PlanetsGame::SetUseOrbitCamera(bool NewUseOrbitCamera)
+{
+	UseOrbitCamera = NewUseOrbitCamera;
+
+	CameraSubsystem* CameraSystem = GetSubsystem<CameraSubsystem>();
+	if (CameraSystem == nullptr)
+	{
+		return;
+	}
+
+	CameraComponent* TargetCameraComponent = UseOrbitCamera
+		? static_cast<CameraComponent*>(OrbitCameraForPlanets)
+		: static_cast<CameraComponent*>(FPSCameraComponentForPlanets);
+	if (TargetCameraComponent == nullptr)
+	{
+		return;
+	}
+
+	if (CameraSystem->GetActiveCamera() == TargetCameraComponent)
+	{
+		return;
+	}
+
+	const int MaximumSwitchAttempts = CameraSystem->GetCameraCount() + 1;
+	for (int SwitchAttemptIndex = 0; SwitchAttemptIndex < MaximumSwitchAttempts; ++SwitchAttemptIndex)
+	{
+		CameraSystem->CycleActiveCamera();
+		if (CameraSystem->GetActiveCamera() == TargetCameraComponent)
+		{
+			return;
+		}
+	}
+}
+
 void PlanetsGame::BeginPlay()
 {
 	SunActor = CreateCelestialActor(
@@ -88,49 +129,33 @@ void PlanetsGame::BeginPlay()
 
 	SpawnPlanetsAndMoons();
 
-	OrbitCameraPivotActor = CreateCelestialActor(
-		"G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx",
-		DirectX::XMFLOAT3(0.001f, 0.001f, 0.001f),
-		DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f));
-	if (OrbitCameraPivotActor != nullptr && SunActor != nullptr)
-	{
-		OrbitCameraPivotActor->AttachToActor(SunActor);
-	}
-
 	std::unique_ptr<Actor> OrbitCameraActor = std::make_unique<Actor>();
-	Transform OrbitCameraTransform;
-	OrbitCameraTransform.Position = DirectX::XMFLOAT3(0.0f, 8.0f, -24.0f);
-	OrbitCameraTransform.RotationEuler = DirectX::XMFLOAT3(0.25f, 0.0f, 0.0f);
-	OrbitCameraActor->SetTransform(OrbitCameraTransform);
-	std::unique_ptr<CameraComponent> NewOrbitCameraComponent = std::make_unique<CameraComponent>();
-	OrbitCameraComponent = NewOrbitCameraComponent.get();
+	std::unique_ptr<OrbitCameraComponent> NewOrbitCameraComponent = std::make_unique<OrbitCameraComponent>();
+	OrbitCameraForPlanets = NewOrbitCameraComponent.get();
+	Actor* OrbitCameraTargetActor = GetDefaultOrbitCameraTargetActor();
 	OrbitCameraActor->AddComponent(std::move(NewOrbitCameraComponent));
-	if (OrbitCameraPivotActor != nullptr)
-	{
-		OrbitCameraActor->AttachToActor(OrbitCameraPivotActor);
-	}
+	OrbitCameraForPlanets->SetOrbitTargetActor(OrbitCameraTargetActor);
 	AddActor(std::move(OrbitCameraActor));
+
+	std::unique_ptr<Actor> FPSCameraActor = std::make_unique<Actor>();
+	Transform FPSCameraTransform;
+	FPSCameraTransform.Position = DirectX::XMFLOAT3(0.0f, 3.5f, -20.0f);
+	FPSCameraTransform.RotationEuler = DirectX::XMFLOAT3(0.1f, 0.0f, 0.0f);
+	FPSCameraActor->SetTransform(FPSCameraTransform);
+	std::unique_ptr<FPSSpectateCameraComponent> NewFPSCameraComponent = std::make_unique<FPSSpectateCameraComponent>();
+	FPSCameraComponentForPlanets = NewFPSCameraComponent.get();
+	FPSCameraActor->AddComponent(std::move(NewFPSCameraComponent));
+	AddActor(std::move(FPSCameraActor));
 
 	std::unique_ptr<Actor> PlanetsUIActor = std::make_unique<Actor>();
 	std::unique_ptr<PlanetsUIRenderingComponent> NewPlanetsUIRenderingComponent = std::make_unique<PlanetsUIRenderingComponent>();
 	PlanetsUIRenderingComponentInstance = NewPlanetsUIRenderingComponent.get();
 	PlanetsUIActor->AddComponent(std::move(NewPlanetsUIRenderingComponent));
 	AddActor(std::move(PlanetsUIActor));
+	RegisterInputHandler(std::make_unique<OrbitCameraInputHandler>());
 
 	Game::BeginPlay();
-
-	FallbackCameraComponentForPlanets = FallbackCameraComponentInstance;
-	if (FallbackCameraComponentForPlanets != nullptr)
-	{
-		Actor* FallbackCameraActorInstance = FallbackCameraComponentForPlanets->GetOwningActor();
-		if (FallbackCameraActorInstance != nullptr)
-		{
-			Transform FallbackCameraTransform = FallbackCameraActorInstance->GetLocalTransform();
-			FallbackCameraTransform.Position = DirectX::XMFLOAT3(0.0f, 3.5f, -20.0f);
-			FallbackCameraTransform.RotationEuler = DirectX::XMFLOAT3(0.1f, 0.0f, 0.0f);
-			FallbackCameraActorInstance->SetTransform(FallbackCameraTransform);
-		}
-	}
+	SetUseOrbitCamera(UseOrbitCamera);
 
 	UpdateCameraProjectionTypes();
 }
@@ -144,14 +169,6 @@ void PlanetsGame::Update(float DeltaTime)
 
 LRESULT PlanetsGame::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
 {
-	if (PlanetsUIRenderingComponentInstance != nullptr)
-	{
-		if (PlanetsUIRenderingComponentInstance->HandleMessage(WindowHandle, Message, WParam, LParam))
-		{
-			return 1;
-		}
-	}
-
 	return Game::MessageHandler(WindowHandle, Message, WParam, LParam);
 }
 
@@ -241,6 +258,27 @@ void PlanetsGame::SpawnPlanetsAndMoons()
 	}
 }
 
+Actor* PlanetsGame::GetDefaultOrbitCameraTargetActor() const
+{
+	for (const PlanetMoonOrbitData& ExistingPlanetMoonOrbitData : PlanetMoonOrbitDataList)
+	{
+		if (ExistingPlanetMoonOrbitData.MoonActor != nullptr)
+		{
+			return ExistingPlanetMoonOrbitData.MoonActor;
+		}
+	}
+
+	for (const PlanetMoonOrbitData& ExistingPlanetMoonOrbitData : PlanetMoonOrbitDataList)
+	{
+		if (ExistingPlanetMoonOrbitData.PlanetActor != nullptr)
+		{
+			return ExistingPlanetMoonOrbitData.PlanetActor;
+		}
+	}
+
+	return SunActor;
+}
+
 void PlanetsGame::UpdatePlanetaryOrbits(float DeltaTime)
 {
 	if (SunActor != nullptr)
@@ -248,13 +286,6 @@ void PlanetsGame::UpdatePlanetaryOrbits(float DeltaTime)
 		Transform SunLocalTransform = SunActor->GetLocalTransform();
 		SunLocalTransform.RotationEuler.y += SunSelfRotationSpeed * DeltaTime;
 		SunActor->SetTransform(SunLocalTransform);
-	}
-
-	if (OrbitCameraPivotActor != nullptr)
-	{
-		Transform OrbitCameraPivotLocalTransform = OrbitCameraPivotActor->GetLocalTransform();
-		OrbitCameraPivotLocalTransform.RotationEuler.y += OrbitCameraYawSpeed * DeltaTime;
-		OrbitCameraPivotActor->SetTransform(OrbitCameraPivotLocalTransform);
 	}
 
 	for (PlanetMoonOrbitData& ExistingPlanetMoonOrbitData : PlanetMoonOrbitDataList)
@@ -293,14 +324,14 @@ void PlanetsGame::UpdateCameraProjectionTypes()
 		? CameraProjectionType::Orthographic
 		: CameraProjectionType::Perspective;
 
-	if (FallbackCameraComponentForPlanets != nullptr)
+	if (FPSCameraComponentForPlanets != nullptr)
 	{
-		FallbackCameraComponentForPlanets->SetProjectionType(NewProjectionType);
+		FPSCameraComponentForPlanets->SetProjectionType(NewProjectionType);
 	}
 
-	if (OrbitCameraComponent != nullptr)
+	if (OrbitCameraForPlanets != nullptr)
 	{
-		OrbitCameraComponent->SetProjectionType(NewProjectionType);
+		OrbitCameraForPlanets->SetProjectionType(NewProjectionType);
 	}
 }
 

@@ -29,6 +29,12 @@ void PlanetsUIRenderingComponent::RenderUI()
 		OwningPlanetsGame->SetUseOrthographicProjectionForActiveCamera(UseOrthographicProjectionForActiveCamera);
 	}
 
+	bool UseOrbitCamera = OwningPlanetsGame->GetUseOrbitCamera();
+	if (ImGui::Checkbox("Use Orbit Camera", &UseOrbitCamera))
+	{
+		OwningPlanetsGame->SetUseOrbitCamera(UseOrbitCamera);
+	}
+
 	float PlanetOrbitSpeedScale = OwningPlanetsGame->GetPlanetOrbitSpeedScale();
 	if (ImGui::SliderFloat("Planet Orbit Speed", &PlanetOrbitSpeedScale, 0.0f, 4.0f))
 	{
@@ -55,8 +61,7 @@ void PlanetsUIRenderingComponent::RenderUI()
 
 	ImGui::Spacing();
 	ImGui::Text("Hotkeys:");
-	ImGui::BulletText("C - Switch camera (FPS / Orbit)");
-	ImGui::BulletText("K - Toggle fallback camera settings");
+	ImGui::BulletText("K - Toggle FPS camera settings");
 	ImGui::BulletText("WASD + Mouse - Move FPS camera");
 	ImGui::BulletText("Q/E - Vertical move for FPS camera");
 

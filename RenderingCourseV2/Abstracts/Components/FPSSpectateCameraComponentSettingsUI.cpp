@@ -1,16 +1,23 @@
-#include "Abstracts/Components/DefaultCameraSettingsUIRenderingComponent.h"
+#include "Abstracts/Components/FPSSpectateCameraComponentSettingsUI.h"
+#include "Abstracts/Components/FPSSpectateCameraComponent.h"
 #include "Abstracts/Core/Game.h"
 
 #include <imgui.h>
 
-DefaultCameraSettingsUIRenderingComponent::DefaultCameraSettingsUIRenderingComponent()
+FPSSpectateCameraComponentSettingsUI::FPSSpectateCameraComponentSettingsUI()
 	: UIRenderingComponent()
+	, TargetFPSSpectateCameraComponent(nullptr)
 {
 }
 
-DefaultCameraSettingsUIRenderingComponent::~DefaultCameraSettingsUIRenderingComponent() = default;
+FPSSpectateCameraComponentSettingsUI::~FPSSpectateCameraComponentSettingsUI() = default;
 
-void DefaultCameraSettingsUIRenderingComponent::RenderUI()
+void FPSSpectateCameraComponentSettingsUI::SetTargetFPSSpectateCameraComponent(FPSSpectateCameraComponent* NewTargetFPSSpectateCameraComponent)
+{
+	TargetFPSSpectateCameraComponent = NewTargetFPSSpectateCameraComponent;
+}
+
+void FPSSpectateCameraComponentSettingsUI::RenderUI()
 {
 	Game* OwningGame = GetOwningGame();
 	if (OwningGame == nullptr)
@@ -18,7 +25,7 @@ void DefaultCameraSettingsUIRenderingComponent::RenderUI()
 		return;
 	}
 
-	if (OwningGame->GetIsFallbackCameraPossessed() == false)
+	if (TargetFPSSpectateCameraComponent == nullptr || TargetFPSSpectateCameraComponent->GetIsPossessed() == false)
 	{
 		return;
 	}
@@ -39,10 +46,10 @@ void DefaultCameraSettingsUIRenderingComponent::RenderUI()
 	ImGui::SetNextWindowSize(DefaultCameraWindowSize, ImGuiCond_Always);
 	ImGui::Begin("Default Camera", &IsDefaultCameraSettingsWindowVisible, ImGuiWindowFlags_NoResize);
 
-	float DefaultCameraMovementSpeedScale = OwningGame->GetDefaultCameraMovementSpeedScale();
+	float DefaultCameraMovementSpeedScale = TargetFPSSpectateCameraComponent->GetMovementSpeedScale();
 	if (ImGui::SliderFloat("Movement Speed Scale", &DefaultCameraMovementSpeedScale, 0.1f, 5.0f))
 	{
-		OwningGame->SetDefaultCameraMovementSpeedScale(DefaultCameraMovementSpeedScale);
+		TargetFPSSpectateCameraComponent->SetMovementSpeedScale(DefaultCameraMovementSpeedScale);
 	}
 
 	ImGui::End();

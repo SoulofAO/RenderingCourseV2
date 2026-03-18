@@ -1,5 +1,6 @@
 #include "Abstracts/Input/FreeCameraInputHandler.h"
 #include "Abstracts/Components/CameraComponent.h"
+#include "Abstracts/Components/FPSSpectateCameraComponent.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Game.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
@@ -99,6 +100,12 @@ void FreeCameraInputHandler::HandleInput(Game* OwningGame, InputDevice* Input, f
 	}
 
 	float EffectiveMovementSpeed = MovementSpeed;
+	FPSSpectateCameraComponent* ActiveFPSSpectateCameraComponent = dynamic_cast<FPSSpectateCameraComponent*>(ActiveCamera);
+	if (ActiveFPSSpectateCameraComponent != nullptr)
+	{
+		EffectiveMovementSpeed *= ActiveFPSSpectateCameraComponent->GetMovementSpeedScale();
+	}
+
 	if (Input->IsKeyDown(VK_SHIFT))
 	{
 		EffectiveMovementSpeed *= 2.0f;

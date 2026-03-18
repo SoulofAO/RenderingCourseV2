@@ -12,6 +12,7 @@ public:
 	void OnKeyDown(unsigned int KeyCode);
 	void OnKeyUp(unsigned int KeyCode);
 	void OnMouseMove(int PositionX, int PositionY);
+	void OnMouseWheel(int MouseWheelDelta);
 
 	bool IsKeyDown(unsigned int KeyCode) const;
 	bool WasKeyPressedThisFrame(unsigned int KeyCode) const;
@@ -19,6 +20,7 @@ public:
 	void ResetMouseTracking(int PositionX, int PositionY);
 	int GetMouseDeltaX() const;
 	int GetMouseDeltaY() const;
+	int GetMouseWheelDelta() const;
 	int GetMousePositionX() const;
 	int GetMousePositionY() const;
 
@@ -30,5 +32,6 @@ private:
 	int MousePositionY;
 	int MouseDeltaX;
 	int MouseDeltaY;
+	int MouseWheelDelta;
 	bool HasMousePositionSample;
 };

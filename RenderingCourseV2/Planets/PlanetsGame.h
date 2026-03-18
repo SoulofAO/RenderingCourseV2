@@ -7,6 +7,8 @@
 
 class Actor;
 class CameraComponent;
+class FPSSpectateCameraComponent;
+class OrbitCameraComponent;
 class PlanetsUIRenderingComponent;
 
 class PlanetsGame : public Game
@@ -26,6 +28,8 @@ public:
 	void SetPlanetOrbitRadiusScale(float NewPlanetOrbitRadiusScale);
 	float GetMoonOrbitRadiusScale() const;
 	void SetMoonOrbitRadiusScale(float NewMoonOrbitRadiusScale);
+	bool GetUseOrbitCamera() const;
+	void SetUseOrbitCamera(bool NewUseOrbitCamera);
 
 protected:
 	void BeginPlay() override;
@@ -52,23 +56,23 @@ private:
 		const DirectX::XMFLOAT3& ActorScale,
 		const DirectX::XMFLOAT4& ActorColor);
 	void SpawnPlanetsAndMoons();
+	Actor* GetDefaultOrbitCameraTargetActor() const;
 	void UpdatePlanetaryOrbits(float DeltaTime);
 	void UpdateCameraProjectionTypes();
 	void SetOrbitSpeedScaleValues(float NewPlanetOrbitSpeedScale, float NewMoonOrbitSpeedScale);
 	void SetOrbitRadiusScaleValues(float NewPlanetOrbitRadiusScale, float NewMoonOrbitRadiusScale);
 
 	Actor* SunActor;
-	Actor* OrbitCameraPivotActor;
-	CameraComponent* OrbitCameraComponent;
-	CameraComponent* FallbackCameraComponentForPlanets;
+	OrbitCameraComponent* OrbitCameraForPlanets;
+	FPSSpectateCameraComponent* FPSCameraComponentForPlanets;
 	PlanetsUIRenderingComponent* PlanetsUIRenderingComponentInstance;
 	std::vector<PlanetMoonOrbitData> PlanetMoonOrbitDataList;
 
 	bool UseOrthographicProjectionForActiveCamera;
+	bool UseOrbitCamera;
 	float PlanetOrbitSpeedScale;
 	float MoonOrbitSpeedScale;
 	float PlanetOrbitRadiusScale;
 	float MoonOrbitRadiusScale;
-	float OrbitCameraYawSpeed;
 	float SunSelfRotationSpeed;
 };

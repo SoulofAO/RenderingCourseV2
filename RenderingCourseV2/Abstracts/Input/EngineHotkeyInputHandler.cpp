@@ -6,8 +6,6 @@
 
 void EngineHotkeyInputHandler::HandleInput(Game* OwningGame, InputDevice* Input, float DeltaTime)
 {
-	(void)DeltaTime;
-
 	if (OwningGame == nullptr || Input == nullptr)
 	{
 		return;
@@ -37,7 +35,7 @@ void EngineHotkeyInputHandler::HandleInput(Game* OwningGame, InputDevice* Input,
 		OwningGame->ToggleMouseInputMode();
 	}
 
-	if (Input->WasKeyPressedThisFrame('K') && OwningGame->GetIsFallbackCameraPossessed())
+	if (Input->WasKeyPressedThisFrame('K'))
 	{
 		OwningGame->ToggleDefaultCameraSettingsWindowVisible();
 	}

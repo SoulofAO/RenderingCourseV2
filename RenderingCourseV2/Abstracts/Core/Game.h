@@ -46,8 +46,6 @@ public:
 	void SetMouseInputMode(MouseInputMode NewMouseInputMode);
 	void ToggleMouseInputMode();
 	MouseInputMode GetMouseInputMode() const;
-	void SetDefaultCameraMovementSpeedScale(float NewDefaultCameraMovementSpeedScale);
-	float GetDefaultCameraMovementSpeedScale() const;
 	void SetDefaultCameraSettingsWindowVisible(bool NewDefaultCameraSettingsWindowVisible);
 	void ToggleDefaultCameraSettingsWindowVisible();
 	bool GetDefaultCameraSettingsWindowVisible() const;
@@ -77,7 +75,6 @@ protected:
 	void ApplyMouseInputMode();
 	void UpdateMouseInputModeState();
 	void UpdateInputHandlerActivationState();
-	void ApplyDefaultCameraMovementSpeedScale();
 
 	LPCWSTR Name;
 	int ScreenWidth;
@@ -97,7 +94,5 @@ protected:
 	unsigned int FrameCount;
 	bool IsExitRequested;
 	MouseInputMode CurrentMouseInputMode;
-	float DefaultCameraMovementSpeedScale;
-	float DefaultCameraBaseMovementSpeed;
 	bool DefaultCameraSettingsWindowVisible;
 };
