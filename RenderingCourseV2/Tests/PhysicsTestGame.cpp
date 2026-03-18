@@ -9,7 +9,7 @@
 PhysicsTestGame::PhysicsTestGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: TestsBaseGame(ApplicationName, ScreenWidth, ScreenHeight)
 	, RotatingSpherePhysicsComponent(nullptr)
-	, RotatingSphereAngularImpulsePerSecond(0.0f, 8.0f, 0.0f)
+	, RotatingSphereAngularImpulsePerSecond(2.0f, 2.0f, 2.0f)
 {
 }
 
@@ -101,7 +101,7 @@ void PhysicsTestGame::BuildTestScene()
 	RotatingSphereMeshComponent->BaseColor = DirectX::XMFLOAT4(0.98f, 0.84f, 0.24f, 1.0f);
 	std::unique_ptr<PhysicsComponent> RotatingSpherePhysicsComponentInstance = std::make_unique<PhysicsComponent>();
 	RotatingSpherePhysicsComponentInstance->SetMass(1.0f);
-	RotatingSpherePhysicsComponentInstance->SetUseGravity(false);
+	RotatingSpherePhysicsComponentInstance->SetUseGravity(true);
 	RotatingSpherePhysicsComponentInstance->EnableAutoConvexColliderFromMesh(true);
 	RotatingSpherePhysicsComponentInstance->SetLinearDamping(0.0f);
 	RotatingSpherePhysicsComponentInstance->SetAngularDamping(0.05f);
