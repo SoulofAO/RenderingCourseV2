@@ -2,6 +2,45 @@
 #include "Abstracts/Components/ActorComponent.h"
 #include <algorithm>
 
+static Transform ApplyPivotToTransform(const Transform& SourceTransform, const Transform& PivotTransform)
+{
+	Transform PivotedTransform = SourceTransform;
+	PivotedTransform.Position.x += PivotTransform.Position.x;
+	PivotedTransform.Position.y += PivotTransform.Position.y;
+	PivotedTransform.Position.z += PivotTransform.Position.z;
+	PivotedTransform.RotationEuler.x += PivotTransform.RotationEuler.x;
+	PivotedTransform.RotationEuler.y += PivotTransform.RotationEuler.y;
+	PivotedTransform.RotationEuler.z += PivotTransform.RotationEuler.z;
+	PivotedTransform.Scale.x *= PivotTransform.Scale.x;
+	PivotedTransform.Scale.y *= PivotTransform.Scale.y;
+	PivotedTransform.Scale.z *= PivotTransform.Scale.z;
+	return PivotedTransform;
+}
+
+static Transform RemovePivotFromTransform(const Transform& PivotedTransform, const Transform& PivotTransform)
+{
+	Transform SourceTransform = PivotedTransform;
+	SourceTransform.Position.x -= PivotTransform.Position.x;
+	SourceTransform.Position.y -= PivotTransform.Position.y;
+	SourceTransform.Position.z -= PivotTransform.Position.z;
+	SourceTransform.RotationEuler.x -= PivotTransform.RotationEuler.x;
+	SourceTransform.RotationEuler.y -= PivotTransform.RotationEuler.y;
+	SourceTransform.RotationEuler.z -= PivotTransform.RotationEuler.z;
+	if (PivotTransform.Scale.x != 0.0f)
+	{
+		SourceTransform.Scale.x /= PivotTransform.Scale.x;
+	}
+	if (PivotTransform.Scale.y != 0.0f)
+	{
+		SourceTransform.Scale.y /= PivotTransform.Scale.y;
+	}
+	if (PivotTransform.Scale.z != 0.0f)
+	{
+		SourceTransform.Scale.z /= PivotTransform.Scale.z;
+	}
+	return SourceTransform;
+}
+
 Actor::Actor()
 	: OwningGame(nullptr)
 	, LocalTransform()
@@ -89,36 +128,41 @@ const std::vector<std::unique_ptr<ActorComponent>>& Actor::GetComponents() const
 	return Components;
 }
 
-void Actor::SetTransform(const Transform& NewTransform)
+void Actor::SetTransform(const Transform& NewTransform, ETransformSpace TransformSpace)
 {
-	LocalTransform = NewTransform;
+	if (TransformSpace == ETransformSpace::Local)
+	{
+		LocalTransform = NewTransform;
+		return;
+	}
+
+	if (ParentActor == nullptr)
+	{
+		LocalTransform = RemovePivotFromTransform(NewTransform, PivotTransform);
+		return;
+	}
+
+	const Transform ParentWorldTransform = ParentActor->GetTransform(ETransformSpace::World);
+	const Transform PivotedLocalTransform = Transform::MakeRelative(ParentWorldTransform, NewTransform);
+	LocalTransform = RemovePivotFromTransform(PivotedLocalTransform, PivotTransform);
 }
 
-Transform Actor::GetTransform() const
+Transform Actor::GetTransform(ETransformSpace TransformSpace) const
 {
-	Transform PivotedLocalTransform = LocalTransform;
-	PivotedLocalTransform.Position.x += PivotTransform.Position.x;
-	PivotedLocalTransform.Position.y += PivotTransform.Position.y;
-	PivotedLocalTransform.Position.z += PivotTransform.Position.z;
-	PivotedLocalTransform.RotationEuler.x += PivotTransform.RotationEuler.x;
-	PivotedLocalTransform.RotationEuler.y += PivotTransform.RotationEuler.y;
-	PivotedLocalTransform.RotationEuler.z += PivotTransform.RotationEuler.z;
-	PivotedLocalTransform.Scale.x *= PivotTransform.Scale.x;
-	PivotedLocalTransform.Scale.y *= PivotTransform.Scale.y;
-	PivotedLocalTransform.Scale.z *= PivotTransform.Scale.z;
+	if (TransformSpace == ETransformSpace::Local)
+	{
+		return LocalTransform;
+	}
+
+	const Transform PivotedLocalTransform = ApplyPivotToTransform(LocalTransform, PivotTransform);
 
 	if (ParentActor == nullptr)
 	{
 		return PivotedLocalTransform;
 	}
 
-	const Transform ParentWorldTransform = ParentActor->GetTransform();
+	const Transform ParentWorldTransform = ParentActor->GetTransform(ETransformSpace::World);
 	return Transform::Combine(ParentWorldTransform, PivotedLocalTransform);
-}
-
-const Transform& Actor::GetLocalTransform() const
-{
-	return LocalTransform;
 }
 
 void Actor::SetPivotTransform(const Transform& NewPivotTransform)
@@ -176,32 +220,71 @@ void Actor::RemoveChildActorReference(Actor* ExistingChildActor)
 	}
 }
 
-void Actor::SetPosition(const DirectX::XMFLOAT3& NewPosition)
+void Actor::SetLocation(const DirectX::XMFLOAT3& NewLocation, ETransformSpace TransformSpace)
 {
-	LocalTransform.Position = NewPosition;
+	if (TransformSpace == ETransformSpace::Local)
+	{
+		LocalTransform.Position = NewLocation;
+		return;
+	}
+
+	Transform WorldTransform = GetTransform(ETransformSpace::World);
+	WorldTransform.Position = NewLocation;
+	SetTransform(WorldTransform, ETransformSpace::World);
 }
 
-const DirectX::XMFLOAT3& Actor::GetPosition() const
+DirectX::XMFLOAT3 Actor::GetLocation(ETransformSpace TransformSpace) const
 {
-	return LocalTransform.Position;
+	if (TransformSpace == ETransformSpace::Local)
+	{
+		return LocalTransform.Position;
+	}
+
+	return GetTransform(ETransformSpace::World).Position;
 }
 
-void Actor::SetRotation(const DirectX::XMFLOAT3& NewRotation)
+void Actor::SetRotation(const DirectX::XMFLOAT3& NewRotation, ETransformSpace TransformSpace)
 {
-	LocalTransform.RotationEuler = NewRotation;
+	if (TransformSpace == ETransformSpace::Local)
+	{
+		LocalTransform.RotationEuler = NewRotation;
+		return;
+	}
+
+	Transform WorldTransform = GetTransform(ETransformSpace::World);
+	WorldTransform.RotationEuler = NewRotation;
+	SetTransform(WorldTransform, ETransformSpace::World);
 }
 
-const DirectX::XMFLOAT3& Actor::GetRotation() const
+DirectX::XMFLOAT3 Actor::GetRotation(ETransformSpace TransformSpace) const
 {
-	return LocalTransform.RotationEuler;
+	if (TransformSpace == ETransformSpace::Local)
+	{
+		return LocalTransform.RotationEuler;
+	}
+
+	return GetTransform(ETransformSpace::World).RotationEuler;
 }
 
-void Actor::SetScale(const DirectX::XMFLOAT3& NewScale)
+void Actor::SetScale(const DirectX::XMFLOAT3& NewScale, ETransformSpace TransformSpace)
 {
-	LocalTransform.Scale = NewScale;
+	if (TransformSpace == ETransformSpace::Local)
+	{
+		LocalTransform.Scale = NewScale;
+		return;
+	}
+
+	Transform WorldTransform = GetTransform(ETransformSpace::World);
+	WorldTransform.Scale = NewScale;
+	SetTransform(WorldTransform, ETransformSpace::World);
 }
 
-const DirectX::XMFLOAT3& Actor::GetScale() const
+DirectX::XMFLOAT3 Actor::GetScale(ETransformSpace TransformSpace) const
 {
-	return LocalTransform.Scale;
+	if (TransformSpace == ETransformSpace::Local)
+	{
+		return LocalTransform.Scale;
+	}
+
+	return GetTransform(ETransformSpace::World).Scale;
 }

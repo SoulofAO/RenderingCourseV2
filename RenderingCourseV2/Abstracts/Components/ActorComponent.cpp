@@ -47,7 +47,7 @@ Transform ActorComponent::GetWorldTransform() const
 		return LocalTransform;
 	}
 
-	return Transform::Combine(OwningActor->GetTransform(), LocalTransform);
+	return Transform::Combine(OwningActor->GetTransform(ETransformSpace::World), LocalTransform);
 }
 
 void ActorComponent::SetIsActive(bool NewIsActive)

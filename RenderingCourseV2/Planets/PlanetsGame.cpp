@@ -122,8 +122,8 @@ void PlanetsGame::SetUseOrbitCamera(bool NewUseOrbitCamera)
 		Actor* FPSSpectateCameraActor = FPSCameraComponentForPlanets->GetOwningActor();
 		if (OrbitCameraActor != nullptr && FPSSpectateCameraActor != nullptr)
 		{
-			const Transform OrbitCameraWorldTransform = OrbitCameraActor->GetTransform();
-			FPSSpectateCameraActor->SetTransform(OrbitCameraWorldTransform);
+			const Transform OrbitCameraWorldTransform = OrbitCameraActor->GetTransform(ETransformSpace::World);
+			FPSSpectateCameraActor->SetTransform(OrbitCameraWorldTransform, ETransformSpace::World);
 		}
 	}
 
@@ -332,9 +332,9 @@ void PlanetsGame::UpdatePlanetaryOrbits(float DeltaTime)
 {
 	if (SunActor != nullptr)
 	{
-		Transform SunLocalTransform = SunActor->GetLocalTransform();
-		SunLocalTransform.RotationEuler.y += SunSelfRotationSpeed * DeltaTime;
-		SunActor->SetTransform(SunLocalTransform);
+		Transform SunWorldTransform = SunActor->GetTransform();
+		SunWorldTransform.RotationEuler.y += SunSelfRotationSpeed * DeltaTime;
+		SunActor->SetTransform(SunWorldTransform);
 	}
 
 	for (PlanetMoonOrbitData& ExistingPlanetMoonOrbitData : PlanetMoonOrbitDataList)
@@ -346,10 +346,10 @@ void PlanetsGame::UpdatePlanetaryOrbits(float DeltaTime)
 			const float PlanetPositionX = std::cos(ExistingPlanetMoonOrbitData.PlanetOrbitAngle) * PlanetOrbitRadius;
 			const float PlanetPositionZ = std::sin(ExistingPlanetMoonOrbitData.PlanetOrbitAngle) * PlanetOrbitRadius;
 
-			Transform PlanetLocalTransform = ExistingPlanetMoonOrbitData.PlanetActor->GetLocalTransform();
+			Transform PlanetLocalTransform = ExistingPlanetMoonOrbitData.PlanetActor->GetTransform(ETransformSpace::Local);
 			PlanetLocalTransform.Position = DirectX::XMFLOAT3(PlanetPositionX, 0.0f, PlanetPositionZ);
 			PlanetLocalTransform.RotationEuler.y += ExistingPlanetMoonOrbitData.PlanetSelfRotationSpeed * DeltaTime;
-			ExistingPlanetMoonOrbitData.PlanetActor->SetTransform(PlanetLocalTransform);
+			ExistingPlanetMoonOrbitData.PlanetActor->SetTransform(PlanetLocalTransform, ETransformSpace::Local);
 		}
 
 		if (ExistingPlanetMoonOrbitData.MoonActor != nullptr)
@@ -359,10 +359,10 @@ void PlanetsGame::UpdatePlanetaryOrbits(float DeltaTime)
 			const float MoonPositionX = std::cos(ExistingPlanetMoonOrbitData.MoonOrbitAngle) * MoonOrbitRadius;
 			const float MoonPositionZ = std::sin(ExistingPlanetMoonOrbitData.MoonOrbitAngle) * MoonOrbitRadius;
 
-			Transform MoonLocalTransform = ExistingPlanetMoonOrbitData.MoonActor->GetLocalTransform();
+			Transform MoonLocalTransform = ExistingPlanetMoonOrbitData.MoonActor->GetTransform(ETransformSpace::Local);
 			MoonLocalTransform.Position = DirectX::XMFLOAT3(MoonPositionX, 0.0f, MoonPositionZ);
 			MoonLocalTransform.RotationEuler.y += ExistingPlanetMoonOrbitData.MoonSelfRotationSpeed * DeltaTime;
-			ExistingPlanetMoonOrbitData.MoonActor->SetTransform(MoonLocalTransform);
+			ExistingPlanetMoonOrbitData.MoonActor->SetTransform(MoonLocalTransform, ETransformSpace::Local);
 		}
 	}
 }

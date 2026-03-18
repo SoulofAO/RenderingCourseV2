@@ -1,6 +1,13 @@
 #pragma once
 
 #include <directxmath.h>
+#include <cmath>
+
+enum class ETransformSpace
+{
+	Local,
+	World
+};
 
 struct Transform
 {
@@ -17,20 +24,19 @@ struct Transform
 
 	static Transform Combine(const Transform& ParentTransform, const Transform& LocalTransform)
 	{
-		Transform CombinedTransform;
-		CombinedTransform.Position = DirectX::XMFLOAT3(
-			ParentTransform.Position.x + LocalTransform.Position.x,
-			ParentTransform.Position.y + LocalTransform.Position.y,
-			ParentTransform.Position.z + LocalTransform.Position.z);
-		CombinedTransform.RotationEuler = DirectX::XMFLOAT3(
-			ParentTransform.RotationEuler.x + LocalTransform.RotationEuler.x,
-			ParentTransform.RotationEuler.y + LocalTransform.RotationEuler.y,
-			ParentTransform.RotationEuler.z + LocalTransform.RotationEuler.z);
-		CombinedTransform.Scale = DirectX::XMFLOAT3(
-			ParentTransform.Scale.x * LocalTransform.Scale.x,
-			ParentTransform.Scale.y * LocalTransform.Scale.y,
-			ParentTransform.Scale.z * LocalTransform.Scale.z);
-		return CombinedTransform;
+		const DirectX::XMMATRIX LocalMatrix = LocalTransform.ToMatrix();
+		const DirectX::XMMATRIX ParentMatrix = ParentTransform.ToMatrix();
+		const DirectX::XMMATRIX CombinedMatrix = LocalMatrix * ParentMatrix;
+		return FromMatrix(CombinedMatrix);
+	}
+
+	static Transform MakeRelative(const Transform& ParentTransform, const Transform& WorldTransform)
+	{
+		const DirectX::XMMATRIX ParentMatrix = ParentTransform.ToMatrix();
+		const DirectX::XMMATRIX ParentInverseMatrix = DirectX::XMMatrixInverse(nullptr, ParentMatrix);
+		const DirectX::XMMATRIX WorldMatrix = WorldTransform.ToMatrix();
+		const DirectX::XMMATRIX RelativeMatrix = WorldMatrix * ParentInverseMatrix;
+		return FromMatrix(RelativeMatrix);
 	}
 
 	DirectX::XMMATRIX ToMatrix() const
@@ -45,5 +51,68 @@ struct Transform
 			Position.y,
 			Position.z);
 		return ScaleMatrix * RotationMatrix * TranslationMatrix;
+	}
+
+private:
+	static Transform FromMatrix(const DirectX::XMMATRIX& MatrixValue)
+	{
+		Transform ResultTransform;
+
+		DirectX::XMVECTOR ScaleVector;
+		DirectX::XMVECTOR RotationQuaternion;
+		DirectX::XMVECTOR TranslationVector;
+		const bool IsDecompositionSucceeded = DirectX::XMMatrixDecompose(
+			&ScaleVector,
+			&RotationQuaternion,
+			&TranslationVector,
+			MatrixValue);
+		if (IsDecompositionSucceeded == false)
+		{
+			return ResultTransform;
+		}
+
+		DirectX::XMStoreFloat3(&ResultTransform.Scale, ScaleVector);
+		DirectX::XMStoreFloat3(&ResultTransform.Position, TranslationVector);
+
+		const DirectX::XMMATRIX RotationMatrix = DirectX::XMMatrixRotationQuaternion(RotationQuaternion);
+		ResultTransform.RotationEuler = ExtractRotationEulerFromMatrix(RotationMatrix);
+		return ResultTransform;
+	}
+
+	static DirectX::XMFLOAT3 ExtractRotationEulerFromMatrix(const DirectX::XMMATRIX& RotationMatrix)
+	{
+		DirectX::XMFLOAT4X4 RotationMatrixValues;
+		DirectX::XMStoreFloat4x4(&RotationMatrixValues, RotationMatrix);
+
+		const float ClampedPitchInput = ClampValue(-RotationMatrixValues._32, -1.0f, 1.0f);
+		const float Pitch = std::asin(ClampedPitchInput);
+		const float CosPitch = std::cos(Pitch);
+
+		float Yaw = 0.0f;
+		float Roll = 0.0f;
+		if (std::fabs(CosPitch) > 0.0001f)
+		{
+			Yaw = std::atan2(RotationMatrixValues._31, RotationMatrixValues._33);
+			Roll = std::atan2(RotationMatrixValues._12, RotationMatrixValues._22);
+		}
+		else
+		{
+			Yaw = std::atan2(-RotationMatrixValues._13, RotationMatrixValues._11);
+		}
+
+		return DirectX::XMFLOAT3(Pitch, Yaw, Roll);
+	}
+
+	static float ClampValue(float Value, float MinValue, float MaxValue)
+	{
+		if (Value < MinValue)
+		{
+			return MinValue;
+		}
+		if (Value > MaxValue)
+		{
+			return MaxValue;
+		}
+		return Value;
 	}
 };

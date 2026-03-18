@@ -24,9 +24,8 @@ public:
 	void AddComponent(std::unique_ptr<ActorComponent> Component);
 	const std::vector<std::unique_ptr<ActorComponent>>& GetComponents() const;
 
-	void SetTransform(const Transform& NewTransform);
-	Transform GetTransform() const;
-	const Transform& GetLocalTransform() const;
+	void SetTransform(const Transform& NewTransform, ETransformSpace TransformSpace = ETransformSpace::World);
+	Transform GetTransform(ETransformSpace TransformSpace = ETransformSpace::World) const;
 	void SetPivotTransform(const Transform& NewPivotTransform);
 	const Transform& GetPivotTransform() const;
 	void AttachToActor(Actor* NewParentActor);
@@ -34,12 +33,12 @@ public:
 	Actor* GetParentActor() const;
 	const std::vector<Actor*>& GetChildActors() const;
 
-	void SetPosition(const DirectX::XMFLOAT3& NewPosition);
-	const DirectX::XMFLOAT3& GetPosition() const;
-	void SetRotation(const DirectX::XMFLOAT3& NewRotation);
-	const DirectX::XMFLOAT3& GetRotation() const;
-	void SetScale(const DirectX::XMFLOAT3& NewScale);
-	const DirectX::XMFLOAT3& GetScale() const;
+	void SetLocation(const DirectX::XMFLOAT3& NewLocation, ETransformSpace TransformSpace = ETransformSpace::World);
+	DirectX::XMFLOAT3 GetLocation(ETransformSpace TransformSpace = ETransformSpace::World) const;
+	void SetRotation(const DirectX::XMFLOAT3& NewRotation, ETransformSpace TransformSpace = ETransformSpace::World);
+	DirectX::XMFLOAT3 GetRotation(ETransformSpace TransformSpace = ETransformSpace::World) const;
+	void SetScale(const DirectX::XMFLOAT3& NewScale, ETransformSpace TransformSpace = ETransformSpace::World);
+	DirectX::XMFLOAT3 GetScale(ETransformSpace TransformSpace = ETransformSpace::World) const;
 
 private:
 	void RemoveChildActorReference(Actor* ExistingChildActor);

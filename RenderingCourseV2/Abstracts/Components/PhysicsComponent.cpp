@@ -388,7 +388,7 @@ void PhysicsComponent::CreatePhysicsActor(PhysicsSubsystem* NewPhysicsSubsystem)
 		return;
 	}
 
-	const Transform ActorWorldTransform = OwningActorInstance->GetTransform();
+	const Transform ActorWorldTransform = OwningActorInstance->GetTransform(ETransformSpace::World);
 	const physx::PxTransform ActorPhysicsTransform = PhysXTypeConversion::ToPxTransform(ActorWorldTransform);
 	if (IsStatic)
 	{
@@ -544,7 +544,7 @@ void PhysicsComponent::SyncPhysicsTransformFromActor()
 		return;
 	}
 
-	const Transform ActorTransform = OwningActorInstance->GetTransform();
+	const Transform ActorTransform = OwningActorInstance->GetTransform(ETransformSpace::World);
 	const physx::PxTransform PhysicsTransform = PhysXTypeConversion::ToPxTransform(ActorTransform);
 	PhysicsActor->setGlobalPose(PhysicsTransform, true);
 }
@@ -562,12 +562,12 @@ void PhysicsComponent::SyncActorTransformFromPhysics()
 		return;
 	}
 
-	const Transform ExistingActorTransform = OwningActorInstance->GetTransform();
+	const Transform ExistingActorTransform = OwningActorInstance->GetTransform(ETransformSpace::World);
 	const physx::PxTransform PhysicsTransform = PhysicsActor->getGlobalPose();
 	const Transform NewActorTransform = PhysXTypeConversion::ToDirectXTransform(
 		PhysicsTransform,
 		ExistingActorTransform.Scale);
-	OwningActorInstance->SetTransform(NewActorTransform);
+	OwningActorInstance->SetTransform(NewActorTransform, ETransformSpace::World);
 }
 
 void PhysicsComponent::ApplyBoundarySphereConstraint(const DirectX::XMFLOAT3& BoundaryCenter, float BoundaryRadius)

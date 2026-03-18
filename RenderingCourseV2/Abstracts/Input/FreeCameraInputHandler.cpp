@@ -50,7 +50,7 @@ void FreeCameraInputHandler::HandleInput(Game* OwningGame, InputDevice* Input, f
 		return;
 	}
 
-	Transform CameraTransform = CameraActor->GetLocalTransform();
+	Transform CameraTransform = CameraActor->GetTransform();
 	const float MouseDeltaX = static_cast<float>(Input->GetMouseDeltaX());
 	const float MouseDeltaY = static_cast<float>(Input->GetMouseDeltaY());
 
