@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <iostream>
 
+Game* GlobalGame = nullptr;
+
 namespace
 {
 	void SetMouseCursorVisibleState(bool IsMouseCursorVisible)
@@ -55,6 +57,7 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, CurrentMouseInputMode(MouseInputMode::GameAndUI)
 	, DefaultCameraSettingsWindowVisible(true)
 {
+	GlobalGame = this;
 }
 
 /**
@@ -62,6 +65,11 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
  */
 Game::~Game()
 {
+	if (GlobalGame == this)
+	{
+		GlobalGame = nullptr;
+	}
+
 	ClipCursor(nullptr);
 	SetMouseCursorVisibleState(true);
 

@@ -5,8 +5,10 @@
 #include "Abstracts/Components/CameraComponent.h"
 #include "Abstracts/Components/FPSSpectateCameraComponent.h"
 #include "Abstracts/Components/MeshUniversalComponent.h"
+#include "Abstracts/Components/PhysicsComponent.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Transform.h"
+#include "Abstracts/Others/PhysicsLibrary.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include <iostream>
@@ -218,6 +220,13 @@ void PlanetsGame::Update(float DeltaTime)
 
 LRESULT PlanetsGame::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
 {
+	if (Message == WM_LBUTTONDOWN)
+	{
+		const int MousePositionX = static_cast<int>(static_cast<short>(LOWORD(LParam)));
+		const int MousePositionY = static_cast<int>(static_cast<short>(HIWORD(LParam)));
+		HandleCelestialBodySelection(MousePositionX, MousePositionY);
+	}
+
 	return Game::MessageHandler(WindowHandle, Message, WParam, LParam);
 }
 
@@ -235,9 +244,23 @@ Actor* PlanetsGame::CreateCelestialActor(
 	std::unique_ptr<MeshUniversalComponent> NewMeshUniversalComponent = std::make_unique<MeshUniversalComponent>();
 	NewMeshUniversalComponent->ModelMeshPath = ModelMeshPath;
 	NewMeshUniversalComponent->BaseColor = ActorColor;
+	std::unique_ptr<PhysicsComponent> NewPhysicsComponent = std::make_unique<PhysicsComponent>();
+	NewPhysicsComponent->SetIsStatic(true);
+	NewPhysicsComponent->SetUseGravity(false);
+	PhysicsComponent* NewPhysicsComponentInstance = NewPhysicsComponent.get();
 	Actor* NewActorRaw = NewActor.get();
 	NewActor->AddComponent(std::move(NewMeshUniversalComponent));
+	NewActor->AddComponent(std::move(NewPhysicsComponent));
 	AddActor(std::move(NewActor));
+	if (NewPhysicsComponentInstance != nullptr)
+	{
+		FocusableCelestialPhysicsComponents.push_back(NewPhysicsComponentInstance);
+		physx::PxRigidActor* PhysicsActor = NewPhysicsComponentInstance->GetPhysicsActor();
+		if (PhysicsActor != nullptr)
+		{
+			FocusableCelestialBodyMap[PhysicsActor] = NewActorRaw;
+		}
+	}
 	return NewActorRaw;
 }
 
@@ -394,6 +417,73 @@ void PlanetsGame::SetOrbitRadiusScaleValues(float NewPlanetOrbitRadiusScale, flo
 {
 	PlanetOrbitRadiusScale = (std::max)(0.15f, NewPlanetOrbitRadiusScale);
 	MoonOrbitRadiusScale = (std::max)(0.15f, NewMoonOrbitRadiusScale);
+}
+
+void PlanetsGame::HandleCelestialBodySelection(int MousePositionX, int MousePositionY)
+{
+	if (OrbitCameraForPlanets == nullptr)
+	{
+		return;
+	}
+
+	DirectX::XMFLOAT3 TraceStart;
+	DirectX::XMFLOAT3 TraceDirection;
+	const bool HasValidTraceRay = PhysicsLibrary::BuildLineTraceFromMousePosition(
+		MousePositionX,
+		MousePositionY,
+		TraceStart,
+		TraceDirection);
+	if (HasValidTraceRay == false)
+	{
+		return;
+	}
+
+	PhysicsLineTraceHitResult HitResult;
+	const float TraceLength = 5000.0f;
+	const bool HasLineTraceHit = PhysicsLibrary::LineTrace(
+		TraceStart,
+		TraceDirection,
+		TraceLength,
+		HitResult);
+	if (HasLineTraceHit == false || HitResult.HitActor == nullptr)
+	{
+		return;
+	}
+
+	RefreshFocusableCelestialBodyMap();
+	const auto FocusedBodyIterator = FocusableCelestialBodyMap.find(HitResult.HitActor);
+	if (FocusedBodyIterator == FocusableCelestialBodyMap.end() || FocusedBodyIterator->second == nullptr)
+	{
+		return;
+	}
+
+	OrbitCameraForPlanets->SetOrbitTargetActor(FocusedBodyIterator->second);
+}
+
+void PlanetsGame::RefreshFocusableCelestialBodyMap()
+{
+	FocusableCelestialBodyMap.clear();
+	for (PhysicsComponent* ExistingPhysicsComponent : FocusableCelestialPhysicsComponents)
+	{
+		if (ExistingPhysicsComponent == nullptr)
+		{
+			continue;
+		}
+
+		Actor* ExistingActor = ExistingPhysicsComponent->GetOwningActor();
+		if (ExistingActor == nullptr)
+		{
+			continue;
+		}
+
+		physx::PxRigidActor* ExistingPhysicsActor = ExistingPhysicsComponent->GetPhysicsActor();
+		if (ExistingPhysicsActor == nullptr)
+		{
+			continue;
+		}
+
+		FocusableCelestialBodyMap[ExistingPhysicsActor] = ExistingActor;
+	}
 }
 
 void PlanetsGame::HandlePhysicsCollisionDetected(

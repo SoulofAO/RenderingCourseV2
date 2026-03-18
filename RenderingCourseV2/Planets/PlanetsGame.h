@@ -3,7 +3,9 @@
 #include "Abstracts/Core/MulticastDelegate.h"
 #include "Abstracts/Core/Game.h"
 #include <directxmath.h>
+#include <physx/PxPhysicsAPI.h>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class Actor;
@@ -65,6 +67,8 @@ private:
 	void UpdateCameraProjectionTypes();
 	void SetOrbitSpeedScaleValues(float NewPlanetOrbitSpeedScale, float NewMoonOrbitSpeedScale);
 	void SetOrbitRadiusScaleValues(float NewPlanetOrbitRadiusScale, float NewMoonOrbitRadiusScale);
+	void HandleCelestialBodySelection(int MousePositionX, int MousePositionY);
+	void RefreshFocusableCelestialBodyMap();
 	void HandlePhysicsCollisionDetected(
 		PhysicsComponent* FirstPhysicsComponent,
 		PhysicsComponent* SecondPhysicsComponent,
@@ -76,6 +80,8 @@ private:
 	FPSSpectateCameraComponent* FPSCameraComponentForPlanets;
 	PlanetsUIRenderingComponent* PlanetsUIRenderingComponentInstance;
 	std::vector<PlanetMoonOrbitData> PlanetMoonOrbitDataList;
+	std::vector<PhysicsComponent*> FocusableCelestialPhysicsComponents;
+	std::unordered_map<physx::PxRigidActor*, Actor*> FocusableCelestialBodyMap;
 	DelegateHandle PhysicsCollisionDetectedDelegateHandle;
 	int PhysicsCollisionDetectedEventCount;
 

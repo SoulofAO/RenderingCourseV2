@@ -79,6 +79,9 @@
     <ClCompile Include="Abstracts\Others\MainMathLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Abstracts\Others\PhysicsLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -142,6 +145,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Abstracts\Others\MainMathLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Others\PhysicsLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

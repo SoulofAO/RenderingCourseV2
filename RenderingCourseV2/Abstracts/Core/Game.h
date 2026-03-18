@@ -96,3 +96,5 @@ protected:
 	MouseInputMode CurrentMouseInputMode;
 	bool DefaultCameraSettingsWindowVisible;
 };
+
+extern Game* GlobalGame;
