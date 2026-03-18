@@ -2,6 +2,10 @@
 #include <d3d11.h>
 #include <filesystem>
 
+#include <comdef.h>
+#include <iostream>
+#include <iomanip>
+
 #include <DirectXTex.h>
 
 ResourceCooker::ResourceCooker()
@@ -68,7 +72,23 @@ bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const st
 
 	if (FileSystem::exists(CookedPath))
 	{
-		return true;
+		std::wstring ExistingCookedWidePath(CookedPath.begin(), CookedPath.end());
+		DirectX::TexMetadata ExistingMetadata = {};
+		HRESULT ExistingMetadataResult = DirectX::GetMetadataFromDDSFile(ExistingCookedWidePath.c_str(), DirectX::DDS_FLAGS_NONE, ExistingMetadata);
+		if (SUCCEEDED(ExistingMetadataResult))
+		{
+			const bool ExistingTextureUsesBlockCompression = DirectX::IsCompressed(ExistingMetadata.format);
+			const bool ExistingTextureHasValidBlockDimensions =
+				(ExistingMetadata.width % 4 == 0) &&
+				(ExistingMetadata.height % 4 == 0);
+			if (!ExistingTextureUsesBlockCompression || ExistingTextureHasValidBlockDimensions)
+			{
+				return true;
+			}
+		}
+
+		std::error_code RemoveErrorCode;
+		FileSystem::remove(CookedPath, RemoveErrorCode);
 	}
 
 	FileSystem::create_directories(FileSystem::path(CookedPath).parent_path());
@@ -83,17 +103,45 @@ bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const st
 
 	DirectX::ScratchImage CompressedImage;
 	const DirectX::TexMetadata& Metadata = LoadedImage.GetMetadata();
-	HRESULT CompressResult = DirectX::Compress(
-		LoadedImage.GetImages(),
-		LoadedImage.GetImageCount(),
-		Metadata,
-		DXGI_FORMAT_BC3_UNORM,
-		DirectX::TEX_COMPRESS_DEFAULT,
-		DirectX::TEX_THRESHOLD_DEFAULT,
-		CompressedImage);
-	if (FAILED(CompressResult))
+	const bool HasBlockCompressionCompatibleDimensions =
+		(Metadata.width % 4 == 0) &&
+		(Metadata.height % 4 == 0);
+	if (HasBlockCompressionCompatibleDimensions)
 	{
-		return false;
+		HRESULT CompressResult = DirectX::Compress(
+			LoadedImage.GetImages(),
+			LoadedImage.GetImageCount(),
+			Metadata,
+			DXGI_FORMAT_BC3_UNORM,
+			DirectX::TEX_COMPRESS_DEFAULT,
+			DirectX::TEX_THRESHOLD_DEFAULT,
+			CompressedImage);
+		if (FAILED(CompressResult))
+		{
+
+			return false;
+		}
+	}
+	else
+	{
+		HRESULT ConvertResult = DirectX::Convert(
+			LoadedImage.GetImages(),
+			LoadedImage.GetImageCount(),
+			Metadata,
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DirectX::TEX_FILTER_DEFAULT,
+			DirectX::TEX_THRESHOLD_DEFAULT,
+			CompressedImage);
+		if (FAILED(ConvertResult))
+		{
+			_com_error Error(ConvertResult);
+			std::wcerr
+				<< L"DirectX::Convert failed: 0x"
+				<< std::hex << std::uppercase
+				<< static_cast<unsigned long>(ConvertResult)
+				<< L" (" << Error.ErrorMessage() << L")\n";
+			return false;
+		}
 	}
 
 	std::wstring CookedWidePath(CookedPath.begin(), CookedPath.end());
