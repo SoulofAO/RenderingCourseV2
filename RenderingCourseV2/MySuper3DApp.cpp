@@ -1,4 +1,5 @@
 #include "FirstTask/FirstTaskGame.h"
+#include "KatamaryTask/KatamaryGame.h"
 #include "Planets/PlanetsGame.h"
 #include "PingPongTask/PingPongGame.h"
 #include "Tests/LightingTestGame.h"
@@ -66,8 +67,16 @@ int RunLightingTest()
 	return 0;
 }
 
+int RunKatamaryTask()
+{
+	KatamaryGame MyGame(L"My3DApp KatamaryTask", 1280, 720);
+	MyGame.Initialize();
+	MyGame.Run();
+	return 0;
+}
+
 int main()
 {
-	RunPhysicsTest();
+	PlanetsTask();
 }
 

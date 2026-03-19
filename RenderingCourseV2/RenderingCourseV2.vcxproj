@@ -161,6 +161,8 @@
     <ClCompile Include="Abstracts\Subsystems\Subsystem.cpp" />
     <ClCompile Include="FirstTask\FirstTaskGame.cpp" />
     <ClCompile Include="FirstTask\TriangleComponent.cpp" />
+    <ClCompile Include="KatamaryTask\KatamaryGame.cpp" />
+    <ClCompile Include="KatamaryTask\KatamaryUIRenderingComponent.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
     <ClCompile Include="Planets\PlanetsGame.cpp" />
     <ClCompile Include="Planets\OrbitCameraComponent.cpp" />
@@ -213,6 +215,8 @@
     <ClInclude Include="Abstracts\Subsystems\Subsystem.h" />
     <ClInclude Include="FirstTask\FirstTaskGame.h" />
     <ClInclude Include="FirstTask\TriangleComponent.h" />
+    <ClInclude Include="KatamaryTask\KatamaryGame.h" />
+    <ClInclude Include="KatamaryTask\KatamaryUIRenderingComponent.h" />
     <ClInclude Include="PingPongTask\PingPongGame.h" />
     <ClInclude Include="Planets\PlanetsGame.h" />
     <ClInclude Include="Planets\OrbitCameraComponent.h" />

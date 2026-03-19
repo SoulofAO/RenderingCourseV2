@@ -1,0 +1,470 @@
+#include "KatamaryTask/KatamaryGame.h"
+#include "KatamaryTask/KatamaryUIRenderingComponent.h"
+#include "Abstracts/Components/CameraComponent.h"
+#include "Abstracts/Components/MeshUniversalComponent.h"
+#include "Abstracts/Components/PhysicsComponent.h"
+#include "Abstracts/Core/Actor.h"
+#include "Abstracts/Core/Transform.h"
+#include "Abstracts/Subsystems/CameraSubsystem.h"
+#include "Abstracts/Subsystems/InputDevice.h"
+#include "Abstracts/Subsystems/PhysicsSubsystem.h"
+#include <algorithm>
+#include <cmath>
+#include <memory>
+
+KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
+	: Game(ApplicationName, ScreenWidth, ScreenHeight)
+	, PlayerActor(nullptr)
+	, PlayerPhysicsComponent(nullptr)
+	, GameplayCameraComponent(nullptr)
+	, KatamaryUIRenderingComponentInstance(nullptr)
+	, RandomNumberGenerator(std::random_device{}())
+	, PlayerMoveForce(120.0f)
+	, PlayerMaximumPlanarSpeed(9.0f)
+	, RoundDurationSeconds(60.0f)
+	, RemainingTimeSeconds(60.0f)
+	, IsRoundFinished(false)
+	, CollectedItemCount(0)
+{
+	CollectibleMeshPaths = {
+		"G:/RenderingCourseV2/InputResources/Meshes/Katamary/Crate.fbx",
+		"G:/RenderingCourseV2/InputResources/Meshes/Katamary/grass.fbx",
+		"G:/RenderingCourseV2/InputResources/Meshes/Katamary/Tree.FBX"
+	};
+}
+
+KatamaryGame::~KatamaryGame()
+{
+	PhysicsSubsystem* PhysicsSubsystemInstance = GetSubsystem<PhysicsSubsystem>();
+	if (
+		PhysicsSubsystemInstance != nullptr &&
+		OverlapBeginDelegateHandle.IsValid())
+	{
+		PhysicsSubsystemInstance->GetOnOverlapBeginDelegate().Remove(OverlapBeginDelegateHandle);
+		OverlapBeginDelegateHandle.Reset();
+	}
+}
+
+int KatamaryGame::GetCollectedItemCount() const
+{
+	return CollectedItemCount;
+}
+
+float KatamaryGame::GetRemainingTimeSeconds() const
+{
+	return RemainingTimeSeconds;
+}
+
+bool KatamaryGame::GetIsRoundFinished() const
+{
+	return IsRoundFinished;
+}
+
+void KatamaryGame::BeginPlay()
+{
+	SetDefaultCameraSettingsWindowVisible(false);
+	SetMouseInputMode(MouseInputMode::UIOnly);
+	BuildScene();
+	Game::BeginPlay();
+}
+
+void KatamaryGame::Update(float DeltaTime)
+{
+	HandleRoundTimer(DeltaTime);
+	HandlePlayerMovement(DeltaTime);
+	UpdateGameplayCamera();
+	Game::Update(DeltaTime);
+}
+
+LRESULT KatamaryGame::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
+{
+	if (KatamaryUIRenderingComponentInstance != nullptr)
+	{
+		if (KatamaryUIRenderingComponentInstance->HandleMessage(WindowHandle, Message, WParam, LParam))
+		{
+			return 1;
+		}
+	}
+
+	return Game::MessageHandler(WindowHandle, Message, WParam, LParam);
+}
+
+void KatamaryGame::BuildScene()
+{
+	PhysicsSubsystem* PhysicsSubsystemInstance = GetSubsystem<PhysicsSubsystem>();
+	if (PhysicsSubsystemInstance != nullptr)
+	{
+		PhysicsSubsystemInstance->SetFixedDeltaTime(1.0f / 90.0f);
+		PhysicsSubsystemInstance->SetWorldBoundarySphere(DirectX::XMFLOAT3(0.0f, 3.0f, 0.0f), 28.0f);
+		if (OverlapBeginDelegateHandle.IsValid())
+		{
+			PhysicsSubsystemInstance->GetOnOverlapBeginDelegate().Remove(OverlapBeginDelegateHandle);
+			OverlapBeginDelegateHandle.Reset();
+		}
+		OverlapBeginDelegateHandle = PhysicsSubsystemInstance->GetOnOverlapBeginDelegate().AddRaw(this, &KatamaryGame::HandlePhysicsOverlapBegin);
+	}
+
+	SpawnFloor();
+	SpawnPlayer();
+	SpawnGameplayCamera();
+	SpawnCollectibles();
+	SpawnUserInterface();
+}
+
+void KatamaryGame::SpawnGameplayCamera()
+{
+	std::unique_ptr<Actor> CameraActor = std::make_unique<Actor>();
+	Transform CameraTransform;
+	CameraTransform.Position = DirectX::XMFLOAT3(-8.0f, 7.0f, -8.0f);
+	CameraTransform.RotationEuler = DirectX::XMFLOAT3(0.45f, 0.78f, 0.0f);
+	CameraActor->SetTransform(CameraTransform);
+
+	std::unique_ptr<CameraComponent> CameraComponentInstance = std::make_unique<CameraComponent>();
+	CameraComponentInstance->SetFieldOfViewDegrees(65.0f);
+	GameplayCameraComponent = CameraComponentInstance.get();
+
+	CameraActor->AddComponent(std::move(CameraComponentInstance));
+	AddActor(std::move(CameraActor));
+}
+
+void KatamaryGame::SpawnFloor()
+{
+	std::unique_ptr<Actor> FloorActor = std::make_unique<Actor>();
+	Transform FloorTransform;
+	FloorTransform.Position = DirectX::XMFLOAT3(0.0f, -2.0f, 0.0f);
+	FloorTransform.Scale = DirectX::XMFLOAT3(26.0f, 1.0f, 26.0f);
+	FloorActor->SetTransform(FloorTransform);
+
+	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
+	FloorMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.2f, 0.25f, 0.3f, 1.0f);
+
+	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
+	FloorPhysicsComponent->SetIsStatic(true);
+	FloorPhysicsComponent->SetUseGravity(false);
+	FloorPhysicsComponent->SetAabbCollider(DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f));
+
+	FloorActor->AddComponent(std::move(FloorMeshComponent));
+	FloorActor->AddComponent(std::move(FloorPhysicsComponent));
+	AddActor(std::move(FloorActor));
+}
+
+void KatamaryGame::SpawnPlayer()
+{
+	std::unique_ptr<Actor> NewPlayerActor = std::make_unique<Actor>();
+	Transform PlayerTransform;
+	PlayerTransform.Position = DirectX::XMFLOAT3(0.0f, 2.0f, 0.0f);
+	PlayerTransform.Scale = DirectX::XMFLOAT3(1.4f, 1.4f, 1.4f);
+	NewPlayerActor->SetTransform(PlayerTransform);
+
+	std::unique_ptr<MeshUniversalComponent> PlayerMeshComponent = std::make_unique<MeshUniversalComponent>();
+	PlayerMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx";
+	PlayerMeshComponent->BaseColor = DirectX::XMFLOAT4(0.75f, 0.28f, 0.95f, 1.0f);
+
+	std::unique_ptr<PhysicsComponent> NewPlayerPhysicsComponent = std::make_unique<PhysicsComponent>();
+	NewPlayerPhysicsComponent->SetMass(6.0f);
+	NewPlayerPhysicsComponent->SetUseGravity(true);
+	NewPlayerPhysicsComponent->SetSphereCollider(0.5f);
+	NewPlayerPhysicsComponent->SetLinearDamping(0.45f);
+	NewPlayerPhysicsComponent->SetAngularDamping(0.1f);
+	NewPlayerPhysicsComponent->SetRestitution(0.05f);
+	PlayerPhysicsComponent = NewPlayerPhysicsComponent.get();
+
+	PlayerActor = NewPlayerActor.get();
+	NewPlayerActor->AddComponent(std::move(PlayerMeshComponent));
+	NewPlayerActor->AddComponent(std::move(NewPlayerPhysicsComponent));
+	AddActor(std::move(NewPlayerActor));
+}
+
+void KatamaryGame::SpawnCollectibles()
+{
+	if (CollectibleMeshPaths.empty())
+	{
+		return;
+	}
+
+	const int SpawnedCollectibleCount = 70;
+	CollectiblePhysicsComponents.reserve(SpawnedCollectibleCount);
+	for (int SpawnedCollectibleIndex = 0; SpawnedCollectibleIndex < SpawnedCollectibleCount; ++SpawnedCollectibleIndex)
+	{
+		const int RandomMeshPathIndex = static_cast<int>(GetRandomValueInRange(0.0f, static_cast<float>(CollectibleMeshPaths.size())));
+		const int ClampedMeshPathIndex = (std::clamp)(RandomMeshPathIndex, 0, static_cast<int>(CollectibleMeshPaths.size()) - 1);
+		const std::string& SelectedModelMeshPath = CollectibleMeshPaths[ClampedMeshPathIndex];
+
+		float SpawnPositionX = 0.0f;
+		float SpawnPositionZ = 0.0f;
+		for (int AttemptIndex = 0; AttemptIndex < 10; ++AttemptIndex)
+		{
+			SpawnPositionX = GetRandomValueInRange(-18.0f, 18.0f);
+			SpawnPositionZ = GetRandomValueInRange(-18.0f, 18.0f);
+			const float SpawnDistanceToCenter = std::sqrt((SpawnPositionX * SpawnPositionX) + (SpawnPositionZ * SpawnPositionZ));
+			if (SpawnDistanceToCenter > 4.0f)
+			{
+				break;
+			}
+		}
+
+		float SpawnScaleValue = 0.65f;
+		if (SelectedModelMeshPath.find("Tree") != std::string::npos)
+		{
+			SpawnScaleValue = GetRandomValueInRange(0.16f, 0.3f);
+		}
+		else
+		{
+			SpawnScaleValue = GetRandomValueInRange(0.45f, 0.95f);
+		}
+
+		std::unique_ptr<Actor> CollectibleActor = std::make_unique<Actor>();
+		Transform CollectibleTransform;
+		CollectibleTransform.Position = DirectX::XMFLOAT3(SpawnPositionX, -0.9f, SpawnPositionZ);
+		CollectibleTransform.Scale = DirectX::XMFLOAT3(SpawnScaleValue, SpawnScaleValue, SpawnScaleValue);
+		CollectibleActor->SetTransform(CollectibleTransform);
+
+		std::unique_ptr<MeshUniversalComponent> CollectibleMeshComponent = std::make_unique<MeshUniversalComponent>();
+		CollectibleMeshComponent->ModelMeshPath = SelectedModelMeshPath;
+		CollectibleMeshComponent->BaseColor = DirectX::XMFLOAT4(
+			GetRandomValueInRange(0.45f, 1.0f),
+			GetRandomValueInRange(0.45f, 1.0f),
+			GetRandomValueInRange(0.45f, 1.0f),
+			1.0f);
+
+		std::unique_ptr<PhysicsComponent> CollectiblePhysicsComponent = std::make_unique<PhysicsComponent>();
+		CollectiblePhysicsComponent->SetMass((std::max)(0.2f, SpawnScaleValue * 0.8f));
+		CollectiblePhysicsComponent->SetUseGravity(false);
+		CollectiblePhysicsComponent->SetLinearDamping(6.0f);
+		CollectiblePhysicsComponent->SetAngularDamping(6.0f);
+		CollectiblePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Trigger);
+		CollectiblePhysicsComponent->EnableAutoConvexColliderFromMesh(true);
+		CollectiblePhysicsComponents.push_back(CollectiblePhysicsComponent.get());
+
+		CollectibleActor->AddComponent(std::move(CollectibleMeshComponent));
+		CollectibleActor->AddComponent(std::move(CollectiblePhysicsComponent));
+		AddActor(std::move(CollectibleActor));
+	}
+}
+
+void KatamaryGame::SpawnUserInterface()
+{
+	std::unique_ptr<Actor> UserInterfaceActor = std::make_unique<Actor>();
+	std::unique_ptr<KatamaryUIRenderingComponent> NewKatamaryUIRenderingComponent = std::make_unique<KatamaryUIRenderingComponent>();
+	KatamaryUIRenderingComponentInstance = NewKatamaryUIRenderingComponent.get();
+	UserInterfaceActor->AddComponent(std::move(NewKatamaryUIRenderingComponent));
+	AddActor(std::move(UserInterfaceActor));
+}
+
+void KatamaryGame::HandleRoundTimer(float DeltaTime)
+{
+	if (IsRoundFinished || DeltaTime <= 0.0f)
+	{
+		return;
+	}
+
+	RemainingTimeSeconds -= DeltaTime;
+	if (RemainingTimeSeconds <= 0.0f)
+	{
+		RemainingTimeSeconds = 0.0f;
+		IsRoundFinished = true;
+	}
+}
+
+void KatamaryGame::HandlePlayerMovement(float DeltaTime)
+{
+	if (IsRoundFinished || PlayerPhysicsComponent == nullptr || DeltaTime <= 0.0f)
+	{
+		return;
+	}
+
+	DirectX::XMFLOAT3 DesiredPlanarMovementDirection = BuildCameraRelativeMovementDirection();
+	const float DesiredDirectionLengthSquared =
+		(DesiredPlanarMovementDirection.x * DesiredPlanarMovementDirection.x) +
+		(DesiredPlanarMovementDirection.z * DesiredPlanarMovementDirection.z);
+
+	if (DesiredDirectionLengthSquared > 0.0001f)
+	{
+		const float DesiredDirectionLength = std::sqrt(DesiredDirectionLengthSquared);
+		if (DesiredDirectionLength > 0.0001f)
+		{
+			DesiredPlanarMovementDirection.x /= DesiredDirectionLength;
+			DesiredPlanarMovementDirection.z /= DesiredDirectionLength;
+		}
+
+		const DirectX::XMFLOAT3 ForceValue(
+			DesiredPlanarMovementDirection.x * PlayerMoveForce,
+			0.0f,
+			DesiredPlanarMovementDirection.z * PlayerMoveForce);
+		PlayerPhysicsComponent->AddForce(ForceValue);
+	}
+
+	DirectX::XMFLOAT3 CurrentVelocity = PlayerPhysicsComponent->GetVelocity();
+	const float CurrentPlanarSpeedSquared =
+		(CurrentVelocity.x * CurrentVelocity.x) +
+		(CurrentVelocity.z * CurrentVelocity.z);
+	const float PlayerMaximumPlanarSpeedSquared = PlayerMaximumPlanarSpeed * PlayerMaximumPlanarSpeed;
+	if (CurrentPlanarSpeedSquared > PlayerMaximumPlanarSpeedSquared)
+	{
+		const float CurrentPlanarSpeed = std::sqrt(CurrentPlanarSpeedSquared);
+		if (CurrentPlanarSpeed > 0.0001f)
+		{
+			const float SpeedScale = PlayerMaximumPlanarSpeed / CurrentPlanarSpeed;
+			CurrentVelocity.x *= SpeedScale;
+			CurrentVelocity.z *= SpeedScale;
+			PlayerPhysicsComponent->SetVelocity(CurrentVelocity);
+		}
+	}
+}
+
+void KatamaryGame::UpdateGameplayCamera()
+{
+	if (GameplayCameraComponent == nullptr || PlayerActor == nullptr)
+	{
+		return;
+	}
+
+	Actor* CameraActor = GameplayCameraComponent->GetOwningActor();
+	if (CameraActor == nullptr)
+	{
+		return;
+	}
+
+	const DirectX::XMFLOAT3 PlayerPosition = PlayerActor->GetLocation();
+	const DirectX::XMFLOAT3 CameraOffset(-8.0f, 7.0f, -8.0f);
+	const DirectX::XMFLOAT3 CameraPosition(
+		PlayerPosition.x + CameraOffset.x,
+		PlayerPosition.y + CameraOffset.y,
+		PlayerPosition.z + CameraOffset.z);
+
+	const DirectX::XMFLOAT3 ViewDirection(
+		PlayerPosition.x - CameraPosition.x,
+		PlayerPosition.y - CameraPosition.y,
+		PlayerPosition.z - CameraPosition.z);
+	const float ViewDirectionPlanarLength = std::sqrt(
+		(ViewDirection.x * ViewDirection.x) +
+		(ViewDirection.z * ViewDirection.z));
+	const float CameraYaw = std::atan2(ViewDirection.x, ViewDirection.z);
+	const float CameraPitch = std::atan2(ViewDirection.y, (std::max)(0.0001f, ViewDirectionPlanarLength));
+
+	Transform CameraTransform;
+	CameraTransform.Position = CameraPosition;
+	CameraTransform.RotationEuler = DirectX::XMFLOAT3(CameraPitch, CameraYaw, 0.0f);
+	CameraActor->SetTransform(CameraTransform);
+}
+
+DirectX::XMFLOAT3 KatamaryGame::BuildCameraRelativeMovementDirection() const
+{
+	InputDevice* InputDeviceInstance = GetInputDevice();
+	if (InputDeviceInstance == nullptr)
+	{
+		return DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+
+	float MovementInputForward = 0.0f;
+	float MovementInputRight = 0.0f;
+	if (InputDeviceInstance->IsKeyDown('W'))
+	{
+		MovementInputForward += 1.0f;
+	}
+	if (InputDeviceInstance->IsKeyDown('S'))
+	{
+		MovementInputForward -= 1.0f;
+	}
+	if (InputDeviceInstance->IsKeyDown('D'))
+	{
+		MovementInputRight += 1.0f;
+	}
+	if (InputDeviceInstance->IsKeyDown('A'))
+	{
+		MovementInputRight -= 1.0f;
+	}
+
+	float CameraYaw = 0.0f;
+	CameraSubsystem* CameraSubsystemInstance = GetSubsystem<CameraSubsystem>();
+	if (CameraSubsystemInstance != nullptr)
+	{
+		CameraComponent* ActiveCameraComponent = CameraSubsystemInstance->GetActiveCamera();
+		if (ActiveCameraComponent != nullptr)
+		{
+			Actor* ActiveCameraActor = ActiveCameraComponent->GetOwningActor();
+			if (ActiveCameraActor != nullptr)
+			{
+				CameraYaw = ActiveCameraActor->GetRotation(ETransformSpace::World).y;
+			}
+		}
+	}
+
+	const DirectX::XMFLOAT3 CameraForwardDirection(std::sin(CameraYaw), 0.0f, std::cos(CameraYaw));
+	const DirectX::XMFLOAT3 CameraRightDirection(std::cos(CameraYaw), 0.0f, -std::sin(CameraYaw));
+	return DirectX::XMFLOAT3(
+		(CameraForwardDirection.x * MovementInputForward) + (CameraRightDirection.x * MovementInputRight),
+		0.0f,
+		(CameraForwardDirection.z * MovementInputForward) + (CameraRightDirection.z * MovementInputRight));
+}
+
+void KatamaryGame::HandlePhysicsOverlapBegin(PhysicsComponent* FirstPhysicsComponent, PhysicsComponent* SecondPhysicsComponent)
+{
+	if (IsRoundFinished || PlayerPhysicsComponent == nullptr)
+	{
+		return;
+	}
+
+	PhysicsComponent* CandidateCollectiblePhysicsComponent = nullptr;
+	if (FirstPhysicsComponent == PlayerPhysicsComponent && IsCollectiblePhysicsComponent(SecondPhysicsComponent))
+	{
+		CandidateCollectiblePhysicsComponent = SecondPhysicsComponent;
+	}
+	else if (SecondPhysicsComponent == PlayerPhysicsComponent && IsCollectiblePhysicsComponent(FirstPhysicsComponent))
+	{
+		CandidateCollectiblePhysicsComponent = FirstPhysicsComponent;
+	}
+
+	if (CandidateCollectiblePhysicsComponent == nullptr)
+	{
+		return;
+	}
+
+	TryAttachCollectibleToPlayer(CandidateCollectiblePhysicsComponent);
+}
+
+void KatamaryGame::TryAttachCollectibleToPlayer(PhysicsComponent* CandidateCollectiblePhysicsComponent)
+{
+	if (
+		CandidateCollectiblePhysicsComponent == nullptr ||
+		PlayerPhysicsComponent == nullptr)
+	{
+		return;
+	}
+
+	if (CollectedCollectiblePhysicsComponents.find(CandidateCollectiblePhysicsComponent) != CollectedCollectiblePhysicsComponents.end())
+	{
+		return;
+	}
+
+	const bool IsWeldSucceeded = PlayerPhysicsComponent->WeldWithComponent(CandidateCollectiblePhysicsComponent, true);
+	if (IsWeldSucceeded == false)
+	{
+		return;
+	}
+
+	CandidateCollectiblePhysicsComponent->SetUseGravity(false);
+	CollectedCollectiblePhysicsComponents.insert(CandidateCollectiblePhysicsComponent);
+	CollectedItemCount += 1;
+}
+
+bool KatamaryGame::IsCollectiblePhysicsComponent(const PhysicsComponent* CandidatePhysicsComponent) const
+{
+	if (CandidatePhysicsComponent == nullptr)
+	{
+		return false;
+	}
+
+	const auto ExistingCollectiblePhysicsComponentIterator = std::find(
+		CollectiblePhysicsComponents.begin(),
+		CollectiblePhysicsComponents.end(),
+		CandidatePhysicsComponent);
+	return ExistingCollectiblePhysicsComponentIterator != CollectiblePhysicsComponents.end();
+}
+
+float KatamaryGame::GetRandomValueInRange(float MinimumValue, float MaximumValue)
+{
+	std::uniform_real_distribution<float> RandomDistribution(MinimumValue, MaximumValue);
+	return RandomDistribution(RandomNumberGenerator);
+}
