@@ -1,6 +1,5 @@
 #include "Planets/PlanetsGame.h"
 #include "Planets/OrbitCameraComponent.h"
-#include "Planets/OrbitCameraInputHandler.h"
 #include "Planets/PlanetsUIRenderingComponent.h"
 #include "Abstracts/Components/CameraComponent.h"
 #include "Abstracts/Components/FPSSpectateCameraComponent.h"
@@ -203,7 +202,6 @@ void PlanetsGame::BeginPlay()
 	PlanetsUIRenderingComponentInstance = NewPlanetsUIRenderingComponent.get();
 	PlanetsUIActor->AddComponent(std::move(NewPlanetsUIRenderingComponent));
 	AddActor(std::move(PlanetsUIActor));
-	RegisterInputHandler(std::make_unique<OrbitCameraInputHandler>());
 
 	Game::BeginPlay();
 	SetUseOrbitCamera(UseOrbitCamera);
@@ -218,16 +216,9 @@ void PlanetsGame::Update(float DeltaTime)
 	Game::Update(DeltaTime);
 }
 
-LRESULT PlanetsGame::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
+void PlanetsGame::HandleCelestialBodySelectionFromInputDevice(int MousePositionX, int MousePositionY)
 {
-	if (Message == WM_LBUTTONDOWN)
-	{
-		const int MousePositionX = static_cast<int>(static_cast<short>(LOWORD(LParam)));
-		const int MousePositionY = static_cast<int>(static_cast<short>(HIWORD(LParam)));
-		HandleCelestialBodySelection(MousePositionX, MousePositionY);
-	}
-
-	return Game::MessageHandler(WindowHandle, Message, WParam, LParam);
+	HandleCelestialBodySelection(MousePositionX, MousePositionY);
 }
 
 Actor* PlanetsGame::CreateCelestialActor(

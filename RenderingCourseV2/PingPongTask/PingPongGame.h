@@ -5,6 +5,7 @@
 class PingPongPlane;
 class PingPongSphere;
 class PingPongUIRenderingComponent;
+class PingPongPlayerInputHandler;
 
 class PingPongGame : public Game
 {
@@ -18,6 +19,7 @@ public:
 	int GetComputerVictoryCount() const;
 	bool GetBounceAccelerationEnabled() const;
 	void SetBounceAccelerationEnabledFromUI(bool NewBounceAccelerationEnabled);
+	void ApplyPlayerMovementInput(float DeltaTime, float MovementDirection);
 
 protected:
 	void BeginPlay() override;
@@ -25,7 +27,7 @@ protected:
 	LRESULT MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam) override;
 
 private:
-	void HandlePlayerInput(float DeltaTime);
+	void UpdatePlayerInputHandlerRegistrationState();
 	void UpdateComputerPlane(float DeltaTime);
 	void UpdateBall(float DeltaTime);
 	void ClampPlanePosition(Actor* PlaneActor) const;
@@ -38,6 +40,7 @@ private:
 	PingPongPlane* RightPlaneActor;
 	PingPongSphere* BallActor;
 	PingPongUIRenderingComponent* UIRenderingComponent;
+	PingPongPlayerInputHandler* PingPongPlayerInputHandlerInstance;
 	DirectX::XMFLOAT3 BallVelocity;
 	bool ShouldLaunchBallToRight;
 

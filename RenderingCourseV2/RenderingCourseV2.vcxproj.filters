@@ -76,6 +76,12 @@
     <ClCompile Include="PingPongTask\PingPongSphere.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PingPongTask\PingPongPlayerInputHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Planets\PlanetsSelectionInputHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Abstracts\Others\MainMathLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -142,6 +148,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PingPongTask\PingPongSphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PingPongTask\PingPongPlayerInputHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Planets\PlanetsSelectionInputHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Abstracts\Others\MainMathLibrary.h">

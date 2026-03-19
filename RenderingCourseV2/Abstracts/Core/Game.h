@@ -75,6 +75,8 @@ protected:
 	void ApplyMouseInputMode();
 	void UpdateMouseInputModeState();
 	void UpdateInputHandlerActivationState();
+	void DrawCameraPossessionUserInterface();
+	void ToggleCameraPossessionFromUserInterface();
 
 	LPCWSTR Name;
 	int ScreenWidth;

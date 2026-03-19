@@ -51,6 +51,7 @@ public:
 	int GetCollectedItemCount() const;
 	float GetRemainingTimeSeconds() const;
 	bool GetIsRoundFinished() const;
+	void HandlePlayerMovementInput(float DeltaTime, float MovementInputForward, float MovementInputRight);
 
 protected:
 	void BeginPlay() override;
@@ -65,10 +66,10 @@ private:
 	void SpawnCollectibles();
 	void SpawnUserInterface();
 	void HandleRoundTimer(float DeltaTime);
-	void HandlePlayerMovement(float DeltaTime);
 	void ProcessPendingCollectibleAttachments();
+	void UpdatePlayerCollisionSphereRadius();
 	void UpdateGameplayCamera();
-	DirectX::XMFLOAT3 BuildCameraRelativeMovementDirection() const;
+	DirectX::XMFLOAT3 BuildCameraRelativeMovementDirection(float MovementInputForward, float MovementInputRight) const;
 	void HandlePhysicsCollisionDetected(
 		PhysicsComponent* FirstPhysicsComponent,
 		PhysicsComponent* SecondPhysicsComponent,
@@ -91,6 +92,8 @@ private:
 	std::vector<MeshLocalData> CollectibleMeshPaths;
 
 	float GlobalCollectibleMeshScale;
+	float BasePlayerSphereColliderRadius;
+	float PlayerSphereColliderGrowthPerCollectible;
 	float PlayerMoveForce;
 	float PlayerMaximumPlanarSpeed;
 	float RoundDurationSeconds;

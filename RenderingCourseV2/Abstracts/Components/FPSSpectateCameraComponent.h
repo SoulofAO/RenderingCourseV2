@@ -3,6 +3,7 @@
 #include "Abstracts/Components/CameraComponent.h"
 
 class FPSSpectateCameraComponentSettingsUI;
+class FreeCameraInputHandler;
 
 class FPSSpectateCameraComponent : public CameraComponent
 {
@@ -20,6 +21,7 @@ public:
 
 private:
 	FPSSpectateCameraComponentSettingsUI* FPSSpectateCameraComponentSettingsUIInstance;
+	FreeCameraInputHandler* FreeCameraInputHandlerInstance;
 	float MovementSpeedScale;
 	bool IsPossessed;
 };

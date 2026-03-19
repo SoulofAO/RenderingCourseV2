@@ -1,9 +1,12 @@
 #include "Planets/OrbitCameraComponent.h"
+#include "Planets/OrbitCameraInputHandler.h"
+#include "Planets/PlanetsSelectionInputHandler.h"
 #include "Abstracts/Core/Actor.h"
+#include "Abstracts/Core/Game.h"
 #include "Abstracts/Core/Transform.h"
-#include "Abstracts/Subsystems/InputDevice.h"
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include "Abstracts/Others/MainMathLibrary.h"
 
 OrbitCameraComponent::OrbitCameraComponent()
@@ -14,6 +17,9 @@ OrbitCameraComponent::OrbitCameraComponent()
 	, OrbitDistance(14.0f)
 	, RotationSensitivity(0.0025f)
 	, ZoomStep(1.0f)
+	, IsPossessed(false)
+	, OrbitCameraInputHandlerInstance(nullptr)
+	, PlanetsSelectionInputHandlerInstance(nullptr)
 {
 }
 
@@ -31,26 +37,79 @@ Actor* OrbitCameraComponent::GetOrbitTargetActor() const
 	return OrbitTargetActor;
 }
 
+void OrbitCameraComponent::Posses()
+{
+	if (IsPossessed)
+	{
+		return;
+	}
+
+	Game* OwningGame = GetOwningGame();
+	if (OwningGame == nullptr)
+	{
+		return;
+	}
+
+	if (OrbitCameraInputHandlerInstance == nullptr)
+	{
+		std::unique_ptr<OrbitCameraInputHandler> NewOrbitCameraInputHandler = std::make_unique<OrbitCameraInputHandler>();
+		OrbitCameraInputHandlerInstance = NewOrbitCameraInputHandler.get();
+		OwningGame->RegisterInputHandler(std::move(NewOrbitCameraInputHandler));
+	}
+
+	if (PlanetsSelectionInputHandlerInstance == nullptr)
+	{
+		std::unique_ptr<PlanetsSelectionInputHandler> NewPlanetsSelectionInputHandler = std::make_unique<PlanetsSelectionInputHandler>();
+		PlanetsSelectionInputHandlerInstance = NewPlanetsSelectionInputHandler.get();
+		OwningGame->RegisterInputHandler(std::move(NewPlanetsSelectionInputHandler));
+	}
+
+	IsPossessed = true;
+}
+
+void OrbitCameraComponent::Unposses()
+{
+	if (IsPossessed == false)
+	{
+		return;
+	}
+
+	Game* OwningGame = GetOwningGame();
+	if (OwningGame != nullptr)
+	{
+		if (OrbitCameraInputHandlerInstance != nullptr)
+		{
+			OwningGame->UnregisterInputHandler(OrbitCameraInputHandlerInstance);
+			OrbitCameraInputHandlerInstance = nullptr;
+		}
+
+		if (PlanetsSelectionInputHandlerInstance != nullptr)
+		{
+			OwningGame->UnregisterInputHandler(PlanetsSelectionInputHandlerInstance);
+			PlanetsSelectionInputHandlerInstance = nullptr;
+		}
+	}
+
+	IsPossessed = false;
+}
+
 void OrbitCameraComponent::Update(float DeltaTime)
 {
 	CameraComponent::Update(DeltaTime);
 	ApplyOrbitTransform();
 }
 
-void OrbitCameraComponent::HandleOrbitInput(InputDevice* Input, float DeltaTime)
+void OrbitCameraComponent::ApplyOrbitInput(float MouseDeltaX, float MouseDeltaY, int MouseWheelDelta, float DeltaTime)
 {
-	if (Input == nullptr || OrbitTargetActor == nullptr || DeltaTime <= 0.0f)
+	if (OrbitTargetActor == nullptr || DeltaTime <= 0.0f)
 	{
 		return;
 	}
 
-	const float MouseDeltaX = static_cast<float>(Input->GetMouseDeltaX());
-	const float MouseDeltaY = static_cast<float>(Input->GetMouseDeltaY());
 	OrbitYawRadians += MouseDeltaX * RotationSensitivity;
 	OrbitPitchRadians += MouseDeltaY * RotationSensitivity;
 	OrbitPitchRadians = (std::clamp)(OrbitPitchRadians, -1.3f, 1.3f);
 
-	const int MouseWheelDelta = Input->GetMouseWheelDelta();
 	if (MouseWheelDelta != 0)
 	{
 		const float MouseWheelStep = static_cast<float>(MouseWheelDelta) / 120.0f;

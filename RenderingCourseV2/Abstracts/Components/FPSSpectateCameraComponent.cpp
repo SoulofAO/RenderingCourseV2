@@ -2,12 +2,14 @@
 #include "Abstracts/Components/FPSSpectateCameraComponentSettingsUI.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Game.h"
+#include "Abstracts/Input/FreeCameraInputHandler.h"
 #include <algorithm>
 #include <memory>
 
 FPSSpectateCameraComponent::FPSSpectateCameraComponent()
 	: CameraComponent()
 	, FPSSpectateCameraComponentSettingsUIInstance(nullptr)
+	, FreeCameraInputHandlerInstance(nullptr)
 	, MovementSpeedScale(1.0f)
 	, IsPossessed(false)
 {
@@ -57,6 +59,13 @@ void FPSSpectateCameraComponent::Posses()
 		FPSSpectateCameraComponentSettingsUIInstance->SetTargetFPSSpectateCameraComponent(this);
 	}
 
+	if (FreeCameraInputHandlerInstance == nullptr)
+	{
+		std::unique_ptr<FreeCameraInputHandler> NewFreeCameraInputHandler = std::make_unique<FreeCameraInputHandler>();
+		FreeCameraInputHandlerInstance = NewFreeCameraInputHandler.get();
+		OwningGame->RegisterInputHandler(std::move(NewFreeCameraInputHandler));
+	}
+
 	IsPossessed = true;
 }
 
@@ -73,6 +82,12 @@ void FPSSpectateCameraComponent::Unposses()
 		if (FPSSpectateCameraComponentSettingsUIInstance != nullptr)
 		{
 			FPSSpectateCameraComponentSettingsUIInstance->SetTargetFPSSpectateCameraComponent(nullptr);
+		}
+
+		if (FreeCameraInputHandlerInstance != nullptr)
+		{
+			OwningGame->UnregisterInputHandler(FreeCameraInputHandlerInstance);
+			FreeCameraInputHandlerInstance = nullptr;
 		}
 	}
 

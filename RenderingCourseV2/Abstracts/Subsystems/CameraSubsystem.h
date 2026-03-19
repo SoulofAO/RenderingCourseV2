@@ -19,6 +19,8 @@ public:
 	void CycleActiveCamera();
 	void SetFallbackCamera(CameraComponent* NewFallbackCamera);
 	CameraComponent* GetFallbackCamera() const;
+	void SetIsFallbackCameraForced(bool NewIsFallbackCameraForced);
+	bool GetIsFallbackCameraForced() const;
 
 	CameraComponent* GetActiveCamera() const;
 	int GetCameraCount() const;
@@ -33,6 +35,8 @@ private:
 
 	std::vector<CameraComponent*> Cameras;
 	int ActiveCameraIndex;
+	int LastNonFallbackActiveCameraIndex;
 	CameraComponent* FallbackCamera;
 	CameraComponent* PossessedCamera;
+	bool IsFallbackCameraForced;
 };

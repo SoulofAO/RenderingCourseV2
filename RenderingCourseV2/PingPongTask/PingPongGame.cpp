@@ -1,9 +1,9 @@
 #include "PingPongGame.h"
 #include "PingPongPlane.h"
+#include "PingPongPlayerInputHandler.h"
 #include "PingPongSphere.h"
 #include "PingPongUIRenderingComponent.h"
 #include "Abstracts/Core/Actor.h"
-#include "Abstracts/Subsystems/InputDevice.h"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -14,6 +14,7 @@ PingPongGame::PingPongGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, RightPlaneActor(nullptr)
 	, BallActor(nullptr)
 	, UIRenderingComponent(nullptr)
+	, PingPongPlayerInputHandlerInstance(nullptr)
 	, BallVelocity(0.0f, 0.0f, 0.0f)
 	, ShouldLaunchBallToRight(true)
 	, ArenaHalfWidth(2.0f)
@@ -64,38 +65,38 @@ void PingPongGame::BeginPlay()
 
 void PingPongGame::Update(float DeltaTime)
 {
-	HandlePlayerInput(DeltaTime);
+	UpdatePlayerInputHandlerRegistrationState();
 	UpdateComputerPlane(DeltaTime);
 	UpdateBall(DeltaTime);
 	Game::Update(DeltaTime);
 }
 
-void PingPongGame::HandlePlayerInput(float DeltaTime)
+void PingPongGame::UpdatePlayerInputHandlerRegistrationState()
 {
-	if (LeftPlaneActor == nullptr)
+	const bool IsFallbackCameraCurrentlyPossessed = GetIsFallbackCameraPossessed();
+	if (IsFallbackCameraCurrentlyPossessed && PingPongPlayerInputHandlerInstance == nullptr)
+	{
+		std::unique_ptr<PingPongPlayerInputHandler> NewPingPongPlayerInputHandler = std::make_unique<PingPongPlayerInputHandler>();
+		PingPongPlayerInputHandlerInstance = NewPingPongPlayerInputHandler.get();
+		RegisterInputHandler(std::move(NewPingPongPlayerInputHandler));
+	}
+
+	if (IsFallbackCameraCurrentlyPossessed == false && PingPongPlayerInputHandlerInstance != nullptr)
+	{
+		UnregisterInputHandler(PingPongPlayerInputHandlerInstance);
+		PingPongPlayerInputHandlerInstance = nullptr;
+	}
+}
+
+void PingPongGame::ApplyPlayerMovementInput(float DeltaTime, float MovementDirection)
+{
+	if (LeftPlaneActor == nullptr || DeltaTime <= 0.0f)
 	{
 		return;
-	}
-
-	InputDevice* Input = GetInputDevice();
-	if (Input == nullptr)
-	{
-		return;
-	}
-
-	float Direction = 0.0f;
-	if (Input->IsKeyDown(0x57) || Input->IsKeyDown(VK_UP))
-	{
-		Direction += 1.0f;
-	}
-
-	if (Input->IsKeyDown(0x53) || Input->IsKeyDown(VK_DOWN))
-	{
-		Direction -= 1.0f;
 	}
 
 	DirectX::XMFLOAT3 Position = LeftPlaneActor->GetLocation();
-	Position.y += Direction * PlayerPlaneSpeed * DeltaTime;
+	Position.y += MovementDirection * PlayerPlaneSpeed * DeltaTime;
 	LeftPlaneActor->SetLocation(Position);
 	ClampPlanePosition(LeftPlaneActor);
 }

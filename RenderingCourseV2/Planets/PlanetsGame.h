@@ -36,11 +36,11 @@ public:
 	void SetUseOrbitCamera(bool NewUseOrbitCamera);
 	bool GetTeleportFPSSpectateCameraToOrbitCameraOnSwitch() const;
 	void SetTeleportFPSSpectateCameraToOrbitCameraOnSwitch(bool NewTeleportFPSSpectateCameraToOrbitCameraOnSwitch);
+	void HandleCelestialBodySelectionFromInputDevice(int MousePositionX, int MousePositionY);
 
 protected:
 	void BeginPlay() override;
 	void Update(float DeltaTime) override;
-	LRESULT MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam) override;
 
 private:
 	struct PlanetMoonOrbitData

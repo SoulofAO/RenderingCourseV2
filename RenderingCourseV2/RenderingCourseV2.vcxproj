@@ -169,6 +169,7 @@
     <ClCompile Include="Planets\PlanetsGame.cpp" />
     <ClCompile Include="Planets\OrbitCameraComponent.cpp" />
     <ClCompile Include="Planets\OrbitCameraInputHandler.cpp" />
+    <ClCompile Include="Planets\PlanetsSelectionInputHandler.cpp" />
     <ClCompile Include="Planets\PlanetsUIRenderingComponent.cpp" />
     <ClCompile Include="Tests\LightingTestGame.cpp" />
     <ClCompile Include="Tests\MeshTestGame.cpp" />
@@ -176,6 +177,7 @@
     <ClCompile Include="Tests\TestsBaseGame.cpp" />
     <ClCompile Include="Tests\TexturingTestGame.cpp" />
     <ClCompile Include="PingPongTask\PingPongGame.cpp" />
+    <ClCompile Include="PingPongTask\PingPongPlayerInputHandler.cpp" />
     <ClCompile Include="PingPongTask\PingPongPlane.cpp" />
     <ClCompile Include="PingPongTask\PingPongSphere.cpp" />
     <ClCompile Include="PingPongTask\PingPongUIRenderingComponent.cpp" />
@@ -222,9 +224,11 @@
     <ClInclude Include="KatamaryTask\KatamaryOrbitCameraInputHandler.h" />
     <ClInclude Include="KatamaryTask\KatamaryUIRenderingComponent.h" />
     <ClInclude Include="PingPongTask\PingPongGame.h" />
+    <ClInclude Include="PingPongTask\PingPongPlayerInputHandler.h" />
     <ClInclude Include="Planets\PlanetsGame.h" />
     <ClInclude Include="Planets\OrbitCameraComponent.h" />
     <ClInclude Include="Planets\OrbitCameraInputHandler.h" />
+    <ClInclude Include="Planets\PlanetsSelectionInputHandler.h" />
     <ClInclude Include="Planets\PlanetsUIRenderingComponent.h" />
     <ClInclude Include="Tests\LightingTestGame.h" />
     <ClInclude Include="Tests\MeshTestGame.h" />

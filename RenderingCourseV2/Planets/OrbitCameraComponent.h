@@ -3,7 +3,8 @@
 #include "Abstracts/Components/CameraComponent.h"
 
 class Actor;
-class InputDevice;
+class OrbitCameraInputHandler;
+class PlanetsSelectionInputHandler;
 
 class OrbitCameraComponent : public CameraComponent
 {
@@ -13,8 +14,10 @@ public:
 
 	void SetOrbitTargetActor(Actor* NewOrbitTargetActor);
 	Actor* GetOrbitTargetActor() const;
+	void Posses() override;
+	void Unposses() override;
 	virtual void Update(float DeltaTime) override;
-	void HandleOrbitInput(InputDevice* Input, float DeltaTime);
+	void ApplyOrbitInput(float MouseDeltaX, float MouseDeltaY, int MouseWheelDelta, float DeltaTime);
 
 private:
 	void ApplyOrbitTransform();
@@ -25,4 +28,7 @@ private:
 	float OrbitDistance;
 	float RotationSensitivity;
 	float ZoomStep;
+	bool IsPossessed;
+	OrbitCameraInputHandler* OrbitCameraInputHandlerInstance;
+	PlanetsSelectionInputHandler* PlanetsSelectionInputHandlerInstance;
 };

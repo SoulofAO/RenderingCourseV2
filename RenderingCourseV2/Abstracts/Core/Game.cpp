@@ -3,7 +3,6 @@
 #include "Abstracts/Subsystems/Subsystem.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Input/EngineHotkeyInputHandler.h"
-#include "Abstracts/Input/FreeCameraInputHandler.h"
 #include "Abstracts/Input/GameInputHandler.h"
 #include "Abstracts/Components/RenderingComponent.h"
 #include "Abstracts/Components/LightComponent.h"
@@ -16,6 +15,7 @@
 #include "Abstracts/Subsystems/DisplayWin32.h"
 #include "Abstracts/Rendering/DeferredRenderer.h"
 #include "Abstracts/Resources/ResourceManager.h"
+#include <imgui.h>
 #include <filesystem>
 #include <directxmath.h>
 #include <algorithm>
@@ -125,7 +125,6 @@ void Game::Initialize()
 	}
 
 	RegisterInputHandler(std::make_unique<EngineHotkeyInputHandler>());
-	RegisterInputHandler(std::make_unique<FreeCameraInputHandler>());
 
 	for (std::unique_ptr<Subsystem>& ExistingSubsystem : Subsystems)
 	{
@@ -254,6 +253,7 @@ void Game::Draw()
 
 	SceneViewport->BeginFrame(TotalRunTimeSeconds);
 	SceneViewport->BeginDearImGuiFrame();
+	DrawCameraPossessionUserInterface();
 
 	std::vector<RenderingComponent*> RenderingComponents;
 	std::vector<LightComponent*> LightComponents;
@@ -485,6 +485,22 @@ LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPA
 		}
 		return 0;
 	}
+	case WM_LBUTTONDOWN:
+	{
+		if (Input)
+		{
+			Input->OnKeyDown(VK_LBUTTON);
+		}
+		return 0;
+	}
+	case WM_LBUTTONUP:
+	{
+		if (Input)
+		{
+			Input->OnKeyUp(VK_LBUTTON);
+		}
+		return 0;
+	}
 	case WM_MOUSEWHEEL:
 	{
 		if (Input)
@@ -593,6 +609,59 @@ bool Game::GetIsFallbackCameraPossessed() const
 	}
 
 	return CameraSystem->GetActiveCamera() == FallbackCameraComponentInstance;
+}
+
+void Game::DrawCameraPossessionUserInterface()
+{
+	ImGuiViewport* MainViewport = ImGui::GetMainViewport();
+	if (MainViewport == nullptr)
+	{
+		return;
+	}
+
+	const ImVec2 WindowPadding(14.0f, 14.0f);
+	const ImVec2 WindowPosition(
+		MainViewport->Pos.x + WindowPadding.x,
+		MainViewport->Pos.y + MainViewport->Size.y - WindowPadding.y);
+	ImGui::SetNextWindowPos(WindowPosition, ImGuiCond_Always, ImVec2(0.0f, 1.0f));
+
+	const ImGuiWindowFlags WindowFlags =
+		ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_AlwaysAutoResize |
+		ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_NoNav;
+	if (ImGui::Begin("Camera Possession Control", nullptr, WindowFlags))
+	{
+		const bool IsFallbackCameraCurrentlyPossessed = GetIsFallbackCameraPossessed();
+		const char* ButtonLabel = IsFallbackCameraCurrentlyPossessed ? "Possess" : "Unpossess";
+		if (ImGui::Button(ButtonLabel))
+		{
+			ToggleCameraPossessionFromUserInterface();
+		}
+
+		ImGui::SameLine();
+		if (IsFallbackCameraCurrentlyPossessed)
+		{
+			ImGui::TextUnformatted("Fallback camera");
+		}
+		else
+		{
+			ImGui::TextUnformatted("Gameplay camera");
+		}
+	}
+	ImGui::End();
+}
+
+void Game::ToggleCameraPossessionFromUserInterface()
+{
+	CameraSubsystem* CameraSystem = GetSubsystem<CameraSubsystem>();
+	if (CameraSystem == nullptr)
+	{
+		return;
+	}
+
+	const bool IsFallbackCameraCurrentlyPossessed = GetIsFallbackCameraPossessed();
+	CameraSystem->SetIsFallbackCameraForced(!IsFallbackCameraCurrentlyPossessed);
 }
 
 void Game::ApplyMouseInputMode()

@@ -25,5 +25,8 @@ void OrbitCameraInputHandler::HandleInput(Game* OwningGame, InputDevice* Input, 
 		return;
 	}
 
-	ActiveOrbitCameraComponent->HandleOrbitInput(Input, DeltaTime);
+	const float MouseDeltaX = static_cast<float>(Input->GetMouseDeltaX());
+	const float MouseDeltaY = static_cast<float>(Input->GetMouseDeltaY());
+	const int MouseWheelDelta = Input->GetMouseWheelDelta();
+	ActiveOrbitCameraComponent->ApplyOrbitInput(MouseDeltaX, MouseDeltaY, MouseWheelDelta, DeltaTime);
 }

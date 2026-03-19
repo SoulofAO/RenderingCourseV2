@@ -1,9 +1,11 @@
 #include "KatamaryTask/KatamaryOrbitCameraComponent.h"
+#include "KatamaryTask/KatamaryOrbitCameraInputHandler.h"
 #include "Abstracts/Core/Actor.h"
+#include "Abstracts/Core/Game.h"
 #include "Abstracts/Core/Transform.h"
-#include "Abstracts/Subsystems/InputDevice.h"
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include "Abstracts/Others/MainMathLibrary.h"
 
 KatamaryOrbitCameraComponent::KatamaryOrbitCameraComponent()
@@ -14,6 +16,8 @@ KatamaryOrbitCameraComponent::KatamaryOrbitCameraComponent()
 	, OrbitDistance(7.0f)
 	, RotationSensitivity(0.0025f)
 	, ZoomStep(1.0f)
+	, IsPossessed(false)
+	, KatamaryOrbitCameraInputHandlerInstance(nullptr)
 {
 }
 
@@ -31,26 +35,63 @@ Actor* KatamaryOrbitCameraComponent::GetOrbitTargetActor() const
 	return OrbitTargetActor;
 }
 
+void KatamaryOrbitCameraComponent::Posses()
+{
+	if (IsPossessed)
+	{
+		return;
+	}
+
+	Game* OwningGame = GetOwningGame();
+	if (OwningGame == nullptr)
+	{
+		return;
+	}
+
+	if (KatamaryOrbitCameraInputHandlerInstance == nullptr)
+	{
+		std::unique_ptr<KatamaryOrbitCameraInputHandler> NewKatamaryOrbitCameraInputHandler = std::make_unique<KatamaryOrbitCameraInputHandler>();
+		KatamaryOrbitCameraInputHandlerInstance = NewKatamaryOrbitCameraInputHandler.get();
+		OwningGame->RegisterInputHandler(std::move(NewKatamaryOrbitCameraInputHandler));
+	}
+
+	IsPossessed = true;
+}
+
+void KatamaryOrbitCameraComponent::Unposses()
+{
+	if (IsPossessed == false)
+	{
+		return;
+	}
+
+	Game* OwningGame = GetOwningGame();
+	if (OwningGame != nullptr && KatamaryOrbitCameraInputHandlerInstance != nullptr)
+	{
+		OwningGame->UnregisterInputHandler(KatamaryOrbitCameraInputHandlerInstance);
+		KatamaryOrbitCameraInputHandlerInstance = nullptr;
+	}
+
+	IsPossessed = false;
+}
+
 void KatamaryOrbitCameraComponent::Update(float DeltaTime)
 {
 	CameraComponent::Update(DeltaTime);
 	ApplyOrbitTransform();
 }
 
-void KatamaryOrbitCameraComponent::HandleOrbitInput(InputDevice* Input, float DeltaTime)
+void KatamaryOrbitCameraComponent::ApplyOrbitInput(float MouseDeltaX, float MouseDeltaY, int MouseWheelDelta, float DeltaTime)
 {
-	if (Input == nullptr || OrbitTargetActor == nullptr || DeltaTime <= 0.0f)
+	if (OrbitTargetActor == nullptr || DeltaTime <= 0.0f)
 	{
 		return;
 	}
 
-	const float MouseDeltaX = static_cast<float>(Input->GetMouseDeltaX());
-	const float MouseDeltaY = static_cast<float>(Input->GetMouseDeltaY());
 	OrbitYawRadians += MouseDeltaX * RotationSensitivity;
 	OrbitPitchRadians += MouseDeltaY * RotationSensitivity;
 	OrbitPitchRadians = (std::clamp)(OrbitPitchRadians, -1.3f, 1.3f);
 
-	const int MouseWheelDelta = Input->GetMouseWheelDelta();
 	if (MouseWheelDelta != 0)
 	{
 		const float MouseWheelStep = static_cast<float>(MouseWheelDelta) / 120.0f;

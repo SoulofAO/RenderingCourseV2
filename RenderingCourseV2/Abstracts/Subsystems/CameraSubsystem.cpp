@@ -5,8 +5,10 @@
 CameraSubsystem::CameraSubsystem()
 	: Subsystem()
 	, ActiveCameraIndex(-1)
+	, LastNonFallbackActiveCameraIndex(-1)
 	, FallbackCamera(nullptr)
 	, PossessedCamera(nullptr)
+	, IsFallbackCameraForced(false)
 {
 }
 
@@ -36,6 +38,7 @@ void CameraSubsystem::RegisterCamera(CameraComponent* NewCamera)
 	{
 		ActiveCameraIndex = 0;
 	}
+	LastNonFallbackActiveCameraIndex = ActiveCameraIndex;
 
 	UpdateCameraPossessionState();
 }
@@ -67,9 +70,20 @@ void CameraSubsystem::UnregisterCamera(CameraComponent* ExistingCamera)
 	const int RemovedCameraIndex = static_cast<int>(std::distance(Cameras.begin(), ExistingCameraIterator));
 	Cameras.erase(ExistingCameraIterator);
 
+	if (LastNonFallbackActiveCameraIndex == RemovedCameraIndex)
+	{
+		LastNonFallbackActiveCameraIndex = -1;
+	}
+	else if (LastNonFallbackActiveCameraIndex > RemovedCameraIndex)
+	{
+		LastNonFallbackActiveCameraIndex -= 1;
+	}
+
 	if (Cameras.empty())
 	{
 		ActiveCameraIndex = -1;
+		LastNonFallbackActiveCameraIndex = -1;
+		UpdateCameraPossessionState();
 		return;
 	}
 
@@ -81,6 +95,18 @@ void CameraSubsystem::UnregisterCamera(CameraComponent* ExistingCamera)
 	if (ActiveCameraIndex < 0)
 	{
 		ActiveCameraIndex = 0;
+	}
+	if (ActiveCameraIndex >= static_cast<int>(Cameras.size()))
+	{
+		ActiveCameraIndex = static_cast<int>(Cameras.size()) - 1;
+	}
+	if (LastNonFallbackActiveCameraIndex < 0)
+	{
+		LastNonFallbackActiveCameraIndex = ActiveCameraIndex;
+	}
+	if (LastNonFallbackActiveCameraIndex >= static_cast<int>(Cameras.size()))
+	{
+		LastNonFallbackActiveCameraIndex = static_cast<int>(Cameras.size()) - 1;
 	}
 
 	UpdateCameraPossessionState();
@@ -97,16 +123,23 @@ void CameraSubsystem::CycleActiveCamera()
 	if (ActiveCameraIndex < 0)
 	{
 		ActiveCameraIndex = 0;
+		LastNonFallbackActiveCameraIndex = ActiveCameraIndex;
 		UpdateCameraPossessionState();
 		return;
 	}
 
 	ActiveCameraIndex = (ActiveCameraIndex + 1) % static_cast<int>(Cameras.size());
+	LastNonFallbackActiveCameraIndex = ActiveCameraIndex;
 	UpdateCameraPossessionState();
 }
 
 CameraComponent* CameraSubsystem::GetActiveCamera() const
 {
+	if (IsFallbackCameraForced && FallbackCamera != nullptr)
+	{
+		return FallbackCamera;
+	}
+
 	if (ActiveCameraIndex < 0 || ActiveCameraIndex >= static_cast<int>(Cameras.size()))
 	{
 		return FallbackCamera;
@@ -134,6 +167,48 @@ void CameraSubsystem::SetFallbackCamera(CameraComponent* NewFallbackCamera)
 CameraComponent* CameraSubsystem::GetFallbackCamera() const
 {
 	return FallbackCamera;
+}
+
+void CameraSubsystem::SetIsFallbackCameraForced(bool NewIsFallbackCameraForced)
+{
+	if (IsFallbackCameraForced == NewIsFallbackCameraForced)
+	{
+		return;
+	}
+
+	if (NewIsFallbackCameraForced)
+	{
+		if (ActiveCameraIndex >= 0 && ActiveCameraIndex < static_cast<int>(Cameras.size()))
+		{
+			LastNonFallbackActiveCameraIndex = ActiveCameraIndex;
+		}
+		IsFallbackCameraForced = true;
+		UpdateCameraPossessionState();
+		return;
+	}
+
+	IsFallbackCameraForced = false;
+	if (Cameras.empty())
+	{
+		ActiveCameraIndex = -1;
+	}
+	else
+	{
+		if (LastNonFallbackActiveCameraIndex >= 0 && LastNonFallbackActiveCameraIndex < static_cast<int>(Cameras.size()))
+		{
+			ActiveCameraIndex = LastNonFallbackActiveCameraIndex;
+		}
+		else
+		{
+			ActiveCameraIndex = 0;
+		}
+	}
+	UpdateCameraPossessionState();
+}
+
+bool CameraSubsystem::GetIsFallbackCameraForced() const
+{
+	return IsFallbackCameraForced;
 }
 
 DirectX::XMMATRIX CameraSubsystem::GetActiveViewMatrix() const
