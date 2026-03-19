@@ -54,10 +54,6 @@ void PlanetsUIRenderingComponent::RenderUI()
 	}
 
 	ImGui::Spacing();
-	ImGui::Text("Hotkeys:");
-	ImGui::BulletText("K - Toggle FPS camera settings");
-	ImGui::BulletText("WASD + Mouse - Move FPS camera");
-	ImGui::BulletText("Q/E - Vertical move for FPS camera");
 
 	ImGui::End();
 }

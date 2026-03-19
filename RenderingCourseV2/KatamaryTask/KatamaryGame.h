@@ -8,6 +8,35 @@
 #include <unordered_set>
 #include <vector>
 
+
+struct MeshLocalData
+{
+	std::string MeshPath;
+	std::string AlbedoTexture;
+	DirectX::XMFLOAT4 DefaultAlbedoColor;
+	std::string MetallicTexture;
+	std::string RoughnessTexture;
+	std::string NormalTexture;
+	
+
+	
+	MeshLocalData(
+	std::string InMeshPath,
+	std::string InAlbedoTexture,
+	DirectX::XMFLOAT4 InDefaultAlbedoColor,
+	std::string InMetallicTexture,
+	std::string InRoughnessTexture,
+	std::string InNormalTexture)
+	: MeshPath(std::move(InMeshPath))
+	, AlbedoTexture(std::move(InAlbedoTexture))
+	, DefaultAlbedoColor(InDefaultAlbedoColor)
+	, MetallicTexture(std::move(InMetallicTexture))
+	, RoughnessTexture(std::move(InRoughnessTexture))
+	, NormalTexture(std::move(InNormalTexture))
+	{
+	}
+};
+
 class Actor;
 class CameraComponent;
 class KatamaryUIRenderingComponent;
@@ -52,7 +81,7 @@ private:
 	std::unordered_set<PhysicsComponent*> CollectedCollectiblePhysicsComponents;
 	DelegateHandle OverlapBeginDelegateHandle;
 	std::mt19937 RandomNumberGenerator;
-	std::vector<std::string> CollectibleMeshPaths;
+	std::vector<MeshLocalData> CollectibleMeshPaths;
 
 	float PlayerMoveForce;
 	float PlayerMaximumPlanarSpeed;

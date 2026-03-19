@@ -30,7 +30,7 @@ void PhysicsTestGame::BuildTestScene()
 	FloorTransform.Scale = DirectX::XMFLOAT3(26.0f, 1.0f, 26.0f);
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCube.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.22f, 0.24f, 0.28f, 1.0f);
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
 	FloorPhysicsComponent->SetIsStatic(true);
@@ -46,7 +46,7 @@ void PhysicsTestGame::BuildTestScene()
 	SphereTransform.Scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	SphereActor->SetTransform(SphereTransform);
 	std::unique_ptr<MeshUniversalComponent> SphereMeshComponent = std::make_unique<MeshUniversalComponent>();
-	SphereMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx";
+	SphereMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleSphere.fbx";
 	SphereMeshComponent->BaseColor = DirectX::XMFLOAT4(0.95f, 0.28f, 0.28f, 1.0f);
 	std::unique_ptr<PhysicsComponent> SpherePhysicsComponent = std::make_unique<PhysicsComponent>();
 	SpherePhysicsComponent->SetMass(1.0f);
@@ -63,7 +63,7 @@ void PhysicsTestGame::BuildTestScene()
 	CubeTransform.Scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	CubeActor->SetTransform(CubeTransform);
 	std::unique_ptr<MeshUniversalComponent> CubeMeshComponent = std::make_unique<MeshUniversalComponent>();
-	CubeMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx";
+	CubeMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCube.fbx";
 	CubeMeshComponent->BaseColor = DirectX::XMFLOAT4(0.25f, 0.62f, 0.98f, 1.0f);
 	std::unique_ptr<PhysicsComponent> CubePhysicsComponent = std::make_unique<PhysicsComponent>();
 	CubePhysicsComponent->SetMass(1.1f);
@@ -80,7 +80,7 @@ void PhysicsTestGame::BuildTestScene()
 	TriangleTransform.Scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	TriangleActor->SetTransform(TriangleTransform);
 	std::unique_ptr<MeshUniversalComponent> TriangleMeshComponent = std::make_unique<MeshUniversalComponent>();
-	TriangleMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/Test.fbx";
+	TriangleMeshComponent->ModelMeshPath = "../../InputResources/Meshes/Test.fbx";
 	TriangleMeshComponent->BaseColor = DirectX::XMFLOAT4(0.35f, 0.95f, 0.45f, 1.0f);
 	std::unique_ptr<PhysicsComponent> TrianglePhysicsComponent = std::make_unique<PhysicsComponent>();
 	TrianglePhysicsComponent->SetMass(1.2f);
@@ -97,7 +97,7 @@ void PhysicsTestGame::BuildTestScene()
 	RotatingSphereTransform.Scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	RotatingSphereActor->SetTransform(RotatingSphereTransform);
 	std::unique_ptr<MeshUniversalComponent> RotatingSphereMeshComponent = std::make_unique<MeshUniversalComponent>();
-	RotatingSphereMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx";
+	RotatingSphereMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleSphere.fbx";
 	RotatingSphereMeshComponent->BaseColor = DirectX::XMFLOAT4(0.98f, 0.84f, 0.24f, 1.0f);
 	std::unique_ptr<PhysicsComponent> RotatingSpherePhysicsComponentInstance = std::make_unique<PhysicsComponent>();
 	RotatingSpherePhysicsComponentInstance->SetMass(1.0f);

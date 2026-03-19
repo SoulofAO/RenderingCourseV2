@@ -1,4 +1,4 @@
-#include "Planets/OrbitCameraComponent.h"
+#include "KatamaryTask/KatamaryOrbitCameraComponent.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Transform.h"
 #include "Abstracts/Subsystems/InputDevice.h"
@@ -6,38 +6,38 @@
 #include <cmath>
 #include "Abstracts/Others/MainMathLibrary.h"
 
-OrbitCameraComponent::OrbitCameraComponent()
+KatamaryOrbitCameraComponent::KatamaryOrbitCameraComponent()
 	: CameraComponent()
 	, OrbitTargetActor(nullptr)
 	, OrbitYawRadians(3.14159265358979323846f)
 	, OrbitPitchRadians(0.25f)
-	, OrbitDistance(14.0f)
+	, OrbitDistance(7.0f)
 	, RotationSensitivity(0.0025f)
 	, ZoomStep(1.0f)
 {
 }
 
-OrbitCameraComponent::~OrbitCameraComponent() = default;
+KatamaryOrbitCameraComponent::~KatamaryOrbitCameraComponent() = default;
 
-void OrbitCameraComponent::SetOrbitTargetActor(Actor* NewOrbitTargetActor)
+void KatamaryOrbitCameraComponent::SetOrbitTargetActor(Actor* NewOrbitTargetActor)
 {
 	OrbitTargetActor = NewOrbitTargetActor;
 
 	ApplyOrbitTransform();
 }
 
-Actor* OrbitCameraComponent::GetOrbitTargetActor() const
+Actor* KatamaryOrbitCameraComponent::GetOrbitTargetActor() const
 {
 	return OrbitTargetActor;
 }
 
-void OrbitCameraComponent::Update(float DeltaTime)
+void KatamaryOrbitCameraComponent::Update(float DeltaTime)
 {
 	CameraComponent::Update(DeltaTime);
 	ApplyOrbitTransform();
 }
 
-void OrbitCameraComponent::HandleOrbitInput(InputDevice* Input, float DeltaTime)
+void KatamaryOrbitCameraComponent::HandleOrbitInput(InputDevice* Input, float DeltaTime)
 {
 	if (Input == nullptr || OrbitTargetActor == nullptr || DeltaTime <= 0.0f)
 	{
@@ -61,7 +61,7 @@ void OrbitCameraComponent::HandleOrbitInput(InputDevice* Input, float DeltaTime)
 	ApplyOrbitTransform();
 }
 
-void OrbitCameraComponent::ApplyOrbitTransform()
+void KatamaryOrbitCameraComponent::ApplyOrbitTransform()
 {
 	if (OrbitTargetActor == nullptr)
 	{

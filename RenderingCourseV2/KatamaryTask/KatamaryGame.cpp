@@ -1,6 +1,6 @@
 #include "KatamaryTask/KatamaryGame.h"
 #include "KatamaryTask/KatamaryUIRenderingComponent.h"
-#include "Abstracts/Components/CameraComponent.h"
+#include "KatamaryTask/KatamaryOrbitCameraComponent.h"
 #include "Abstracts/Components/MeshUniversalComponent.h"
 #include "Abstracts/Components/PhysicsComponent.h"
 #include "Abstracts/Core/Actor.h"
@@ -8,6 +8,7 @@
 #include "Abstracts/Subsystems/CameraSubsystem.h"
 #include "Abstracts/Subsystems/InputDevice.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
+#include "KatamaryTask/KatamaryOrbitCameraInputHandler.h"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -26,11 +27,8 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, IsRoundFinished(false)
 	, CollectedItemCount(0)
 {
-	CollectibleMeshPaths = {
-		"G:/RenderingCourseV2/InputResources/Meshes/Katamary/Crate.fbx",
-		"G:/RenderingCourseV2/InputResources/Meshes/Katamary/grass.fbx",
-		"G:/RenderingCourseV2/InputResources/Meshes/Katamary/Tree.FBX"
-	};
+	
+	CollectibleMeshPaths.push_back(MeshLocalData("../../InputResources/Meshes/Katamary/Crate.fbx", ""))
 }
 
 KatamaryGame::~KatamaryGame()
@@ -119,12 +117,15 @@ void KatamaryGame::SpawnGameplayCamera()
 	CameraTransform.RotationEuler = DirectX::XMFLOAT3(0.45f, 0.78f, 0.0f);
 	CameraActor->SetTransform(CameraTransform);
 
-	std::unique_ptr<CameraComponent> CameraComponentInstance = std::make_unique<CameraComponent>();
+	std::unique_ptr<KatamaryOrbitCameraComponent> CameraComponentInstance = std::make_unique<KatamaryOrbitCameraComponent>();
 	CameraComponentInstance->SetFieldOfViewDegrees(65.0f);
 	GameplayCameraComponent = CameraComponentInstance.get();
-
+	CameraComponentInstance->SetOrbitTargetActor(CameraActor.get());
+	
 	CameraActor->AddComponent(std::move(CameraComponentInstance));
 	AddActor(std::move(CameraActor));
+	RegisterInputHandler(std::make_unique<KatamaryOrbitCameraInputHandler>());
+	
 }
 
 void KatamaryGame::SpawnFloor()
@@ -136,7 +137,7 @@ void KatamaryGame::SpawnFloor()
 	FloorActor->SetTransform(FloorTransform);
 
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCube.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.2f, 0.25f, 0.3f, 1.0f);
 
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
@@ -158,7 +159,7 @@ void KatamaryGame::SpawnPlayer()
 	NewPlayerActor->SetTransform(PlayerTransform);
 
 	std::unique_ptr<MeshUniversalComponent> PlayerMeshComponent = std::make_unique<MeshUniversalComponent>();
-	PlayerMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx";
+	PlayerMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleSphere.fbx";
 	PlayerMeshComponent->BaseColor = DirectX::XMFLOAT4(0.75f, 0.28f, 0.95f, 1.0f);
 
 	std::unique_ptr<PhysicsComponent> NewPlayerPhysicsComponent = std::make_unique<PhysicsComponent>();
@@ -203,33 +204,22 @@ void KatamaryGame::SpawnCollectibles()
 				break;
 			}
 		}
-
-		float SpawnScaleValue = 0.65f;
-		if (SelectedModelMeshPath.find("Tree") != std::string::npos)
-		{
-			SpawnScaleValue = GetRandomValueInRange(0.16f, 0.3f);
-		}
-		else
-		{
-			SpawnScaleValue = GetRandomValueInRange(0.45f, 0.95f);
-		}
+		
 
 		std::unique_ptr<Actor> CollectibleActor = std::make_unique<Actor>();
 		Transform CollectibleTransform;
 		CollectibleTransform.Position = DirectX::XMFLOAT3(SpawnPositionX, -0.9f, SpawnPositionZ);
-		CollectibleTransform.Scale = DirectX::XMFLOAT3(SpawnScaleValue, SpawnScaleValue, SpawnScaleValue);
+		CollectibleTransform.Scale = DirectX::XMFLOAT3(1, 1, 1);
 		CollectibleActor->SetTransform(CollectibleTransform);
 
 		std::unique_ptr<MeshUniversalComponent> CollectibleMeshComponent = std::make_unique<MeshUniversalComponent>();
 		CollectibleMeshComponent->ModelMeshPath = SelectedModelMeshPath;
-		CollectibleMeshComponent->BaseColor = DirectX::XMFLOAT4(
-			GetRandomValueInRange(0.45f, 1.0f),
-			GetRandomValueInRange(0.45f, 1.0f),
-			GetRandomValueInRange(0.45f, 1.0f),
-			1.0f);
+		CollectibleMeshComponent->AlbedoTexturePath = ;
+		CollectibleMeshComponent->NormalTexturePath = ;
+		
 
 		std::unique_ptr<PhysicsComponent> CollectiblePhysicsComponent = std::make_unique<PhysicsComponent>();
-		CollectiblePhysicsComponent->SetMass((std::max)(0.2f, SpawnScaleValue * 0.8f));
+		CollectiblePhysicsComponent->SetMass((std::max)(0.2f, 1* 0.8f));
 		CollectiblePhysicsComponent->SetUseGravity(false);
 		CollectiblePhysicsComponent->SetLinearDamping(6.0f);
 		CollectiblePhysicsComponent->SetAngularDamping(6.0f);

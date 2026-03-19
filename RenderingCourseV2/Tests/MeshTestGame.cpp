@@ -27,7 +27,7 @@ void MeshTestGame::BuildTestScene()
 	FloorTransform.Scale = DirectX::XMFLOAT3(30.0f, 1.0f, 30.0f);
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCube.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.18f, 0.2f, 0.22f, 1.0f);
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
 	FloorPhysicsComponent->SetIsStatic(true);
@@ -38,10 +38,10 @@ void MeshTestGame::BuildTestScene()
 
 	const char* MeshPaths[] =
 	{
-		"G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx",
-		"G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx",
-		"G:/RenderingCourseV2/InputResources/Meshes/SimpleCone.fbx",
-		"G:/RenderingCourseV2/InputResources/Meshes/Test.fbx"
+		"../../InputResources/Meshes/SimpleCube.fbx",
+		"../../InputResources/Meshes/SimpleSphere.fbx",
+		"../../InputResources/Meshes/SimpleCone.fbx",
+		"../../InputResources/Meshes/Test.fbx"
 	};
 
 	for (int MeshIndex = 0; MeshIndex < 4; ++MeshIndex)

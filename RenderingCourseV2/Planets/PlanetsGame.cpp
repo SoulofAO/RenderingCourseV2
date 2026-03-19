@@ -174,7 +174,7 @@ void PlanetsGame::BeginPlay()
 	}
 
 	SunActor = CreateCelestialActor(
-		"G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx",
+		"../../InputResources/Meshes/SimpleSphere.fbx",
 		DirectX::XMFLOAT3(2.2f, 2.2f, 2.2f),
 		DirectX::XMFLOAT4(1.0f, 0.82f, 0.25f, 1.0f));
 
@@ -289,11 +289,11 @@ void PlanetsGame::SpawnPlanetsAndMoons()
 	{
 		const bool ShouldUseCubeMeshForPlanet = (PlanetIndex % 2) == 0;
 		const std::string PlanetModelMeshPath = ShouldUseCubeMeshForPlanet
-			? "G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx"
-			: "G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx";
+			? "../../InputResources/Meshes/SimpleCube.fbx"
+			: "../../InputResources/Meshes/SimpleSphere.fbx";
 		const std::string MoonModelMeshPath = ShouldUseCubeMeshForPlanet
-			? "G:/RenderingCourseV2/InputResources/Meshes/SimpleSphere.fbx"
-			: "G:/RenderingCourseV2/InputResources/Meshes/SimpleCube.fbx";
+			? "../../InputResources/Meshes/SimpleSphere.fbx"
+			: "../../InputResources/Meshes/SimpleCube.fbx";
 
 		const float PlanetScaleValue = 0.55f + (static_cast<float>(PlanetIndex) * 0.08f);
 		Actor* PlanetActor = CreateCelestialActor(
