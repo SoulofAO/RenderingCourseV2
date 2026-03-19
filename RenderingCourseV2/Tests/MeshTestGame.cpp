@@ -9,6 +9,7 @@
 MeshTestGame::MeshTestGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: TestsBaseGame(ApplicationName, ScreenWidth, ScreenHeight)
 {
+	bSpawnDirectionalLightActor  = true;
 }
 
 MeshTestGame::~MeshTestGame() = default;
@@ -24,14 +25,15 @@ void MeshTestGame::BuildTestScene()
 	std::unique_ptr<Actor> FloorActor = std::make_unique<Actor>();
 	Transform FloorTransform;
 	FloorTransform.Position = DirectX::XMFLOAT3(0.0f, -2.0f, 0.0f);
-	FloorTransform.Scale = DirectX::XMFLOAT3(30.0f, 1.0f, 30.0f);
+	FloorTransform.RotationEuler = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	FloorTransform.Scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/BlockArena.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.18f, 0.2f, 0.22f, 1.0f);
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
 	FloorPhysicsComponent->SetIsStatic(true);
-	FloorPhysicsComponent->SetAabbCollider(DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f));
+	FloorPhysicsComponent->EnableAutoTriangleMeshColliderFromMesh(true);
 	FloorActor->AddComponent(std::move(FloorMeshComponent));
 	FloorActor->AddComponent(std::move(FloorPhysicsComponent));
 	AddActor(std::move(FloorActor));

@@ -262,9 +262,20 @@ void PhysicsComponent::EnableAutoConvexColliderFromMesh(bool NewAutoConvexEnable
 	RebuildPhysicsActor();
 }
 
+void PhysicsComponent::EnableAutoTriangleMeshColliderFromMesh(bool NewAutoTriangleMeshEnabled)
+{
+	ColliderKind = NewAutoTriangleMeshEnabled ? PhysicsColliderKind::TriangleMeshAuto : PhysicsColliderKind::Sphere;
+	RebuildPhysicsActor();
+}
+
 bool PhysicsComponent::GetAutoConvexColliderFromMeshEnabled() const
 {
 	return ColliderKind == PhysicsColliderKind::ConvexMeshAuto;
+}
+
+bool PhysicsComponent::GetAutoTriangleMeshColliderFromMeshEnabled() const
+{
+	return ColliderKind == PhysicsColliderKind::TriangleMeshAuto;
 }
 
 bool PhysicsComponent::GetUsesSphereCollider() const
@@ -427,7 +438,40 @@ void PhysicsComponent::CreatePhysicsActor(PhysicsSubsystem* NewPhysicsSubsystem)
 	}
 
 	physx::PxShape* NewShape = nullptr;
-	if (ColliderKind == PhysicsColliderKind::ConvexMeshAuto)
+	if (ColliderKind == PhysicsColliderKind::TriangleMeshAuto && IsStatic)
+	{
+		MeshUniversalComponent* MeshComponent = nullptr;
+		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = OwningActorInstance->GetComponents();
+		for (const std::unique_ptr<ActorComponent>& ExistingComponent : ActorComponents)
+		{
+			MeshUniversalComponent* MeshCandidate = dynamic_cast<MeshUniversalComponent*>(ExistingComponent.get());
+			if (MeshCandidate != nullptr)
+			{
+				MeshComponent = MeshCandidate;
+				break;
+			}
+		}
+
+		if (MeshComponent != nullptr && MeshComponent->ModelMeshPath.empty() == false)
+		{
+			physx::PxTriangleMesh* TriangleMeshValue = PhysicsSubsystemInstance->AcquireTriangleMesh(MeshComponent->ModelMeshPath);
+			if (TriangleMeshValue != nullptr)
+			{
+				const physx::PxMeshScale TriangleScale(
+					PhysXTypeConversion::ToPxVector(ActorWorldTransform.Scale),
+					physx::PxQuat(physx::PxIdentity));
+				const physx::PxTriangleMeshGeometry GeometryValue(TriangleMeshValue, TriangleScale);
+				NewShape = PhysicsInstance->createShape(GeometryValue, *PhysicsMaterial, true);
+			}
+		}
+	}
+
+	if (
+		NewShape == nullptr &&
+		(
+			ColliderKind == PhysicsColliderKind::ConvexMeshAuto ||
+			(ColliderKind == PhysicsColliderKind::TriangleMeshAuto && IsStatic == false)
+		))
 	{
 		MeshUniversalComponent* MeshComponent = nullptr;
 		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = OwningActorInstance->GetComponents();

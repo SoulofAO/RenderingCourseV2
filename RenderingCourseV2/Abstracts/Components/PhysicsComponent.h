@@ -12,7 +12,8 @@ enum class PhysicsColliderKind
 {
 	Sphere,
 	Box,
-	ConvexMeshAuto
+	ConvexMeshAuto,
+	TriangleMeshAuto
 };
 
 enum class PhysicsCollisionMode
@@ -59,7 +60,9 @@ public:
 	void SetSphereCollider(float NewRadius);
 	void SetAabbCollider(const DirectX::XMFLOAT3& NewHalfExtents);
 	void EnableAutoConvexColliderFromMesh(bool NewAutoConvexEnabled);
+	void EnableAutoTriangleMeshColliderFromMesh(bool NewAutoTriangleMeshEnabled);
 	bool GetAutoConvexColliderFromMeshEnabled() const;
+	bool GetAutoTriangleMeshColliderFromMeshEnabled() const;
 	bool GetUsesSphereCollider() const;
 	const DirectX::XMFLOAT3& GetHalfExtents() const;
 	float GetSphereRadius() const;

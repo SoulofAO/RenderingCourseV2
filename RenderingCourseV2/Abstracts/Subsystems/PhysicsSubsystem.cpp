@@ -5,6 +5,7 @@
 #include "Abstracts/Resources/ModelResource.h"
 #include "Abstracts/Resources/ResourceManager.h"
 #include <algorithm>
+#include <cstdint>
 #include <cmath>
 #include <vector>
 
@@ -169,6 +170,7 @@ void PhysicsSubsystem::Shutdown()
 	}
 	PhysicsActorToComponentMap.clear();
 	ReleaseCachedConvexMeshes();
+	ReleaseCachedTriangleMeshes();
 	ShutdownPhysXContext();
 	AccumulatedTime = 0.0f;
 	Subsystem::Shutdown();
@@ -363,6 +365,82 @@ physx::PxConvexMesh* PhysicsSubsystem::AcquireConvexMesh(const std::string& Mode
 
 	ConvexMeshCache.insert({ ModelMeshPath, NewConvexMesh });
 	return NewConvexMesh;
+}
+
+physx::PxTriangleMesh* PhysicsSubsystem::AcquireTriangleMesh(const std::string& ModelMeshPath)
+{
+	if (ModelMeshPath.empty() || Physics == nullptr)
+	{
+		return nullptr;
+	}
+
+	const auto CachedPosition = TriangleMeshCache.find(ModelMeshPath);
+	if (CachedPosition != TriangleMeshCache.end())
+	{
+		return CachedPosition->second;
+	}
+
+	Game* OwningGameInstance = GetOwningGame();
+	if (OwningGameInstance == nullptr)
+	{
+		return nullptr;
+	}
+
+	ResourceManager* ResourceManagerInstance = OwningGameInstance->GetResourceManager();
+	if (ResourceManagerInstance == nullptr)
+	{
+		return nullptr;
+	}
+
+	const std::shared_ptr<ModelResource> ModelResourceInstance = ResourceManagerInstance->LoadModelResource(ModelMeshPath);
+	if (
+		ModelResourceInstance == nullptr ||
+		ModelResourceInstance->Vertices.size() < 3 ||
+		ModelResourceInstance->Indices.size() < 3 ||
+		(ModelResourceInstance->Indices.size() % 3) != 0)
+	{
+		return nullptr;
+	}
+
+	std::vector<physx::PxVec3> TriangleVertices;
+	TriangleVertices.reserve(ModelResourceInstance->Vertices.size());
+	for (const ModelResourceVertex& ExistingVertex : ModelResourceInstance->Vertices)
+	{
+		TriangleVertices.push_back(physx::PxVec3(
+			ExistingVertex.Position.x,
+			ExistingVertex.Position.y,
+			ExistingVertex.Position.z));
+	}
+
+	std::vector<physx::PxU32> TriangleIndices;
+	TriangleIndices.reserve(ModelResourceInstance->Indices.size());
+	for (unsigned int ExistingIndex : ModelResourceInstance->Indices)
+	{
+		TriangleIndices.push_back(static_cast<physx::PxU32>(ExistingIndex));
+	}
+
+	physx::PxTriangleMeshDesc TriangleDescription = {};
+	TriangleDescription.points.count = static_cast<physx::PxU32>(TriangleVertices.size());
+	TriangleDescription.points.stride = sizeof(physx::PxVec3);
+	TriangleDescription.points.data = TriangleVertices.data();
+	TriangleDescription.triangles.count = static_cast<physx::PxU32>(TriangleIndices.size() / 3);
+	TriangleDescription.triangles.stride = static_cast<physx::PxU32>(sizeof(physx::PxU32) * 3);
+	TriangleDescription.triangles.data = TriangleIndices.data();
+
+	physx::PxTriangleMeshCookingResult::Enum CookingResult = physx::PxTriangleMeshCookingResult::eFAILURE;
+	physx::PxCookingParams CookingParameters(Physics->getTolerancesScale());
+	physx::PxTriangleMesh* NewTriangleMesh = PxCreateTriangleMesh(
+		CookingParameters,
+		TriangleDescription,
+		Physics->getPhysicsInsertionCallback(),
+		&CookingResult);
+	if (NewTriangleMesh == nullptr)
+	{
+		return nullptr;
+	}
+
+	TriangleMeshCache.insert({ ModelMeshPath, NewTriangleMesh });
+	return NewTriangleMesh;
 }
 
 PhysicsCollisionDetectedDelegate& PhysicsSubsystem::GetOnCollisionDetectedDelegate()
@@ -581,4 +659,17 @@ void PhysicsSubsystem::ReleaseCachedConvexMeshes()
 		}
 	}
 	ConvexMeshCache.clear();
+}
+
+void PhysicsSubsystem::ReleaseCachedTriangleMeshes()
+{
+	for (auto& ExistingPair : TriangleMeshCache)
+	{
+		if (ExistingPair.second != nullptr)
+		{
+			ExistingPair.second->release();
+			ExistingPair.second = nullptr;
+		}
+	}
+	TriangleMeshCache.clear();
 }

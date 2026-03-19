@@ -52,6 +52,7 @@ public:
 	physx::PxScene* GetScene() const;
 	physx::PxMaterial* GetDefaultMaterial() const;
 	physx::PxConvexMesh* AcquireConvexMesh(const std::string& ModelMeshPath);
+	physx::PxTriangleMesh* AcquireTriangleMesh(const std::string& ModelMeshPath);
 
 	PhysicsCollisionDetectedDelegate& GetOnCollisionDetectedDelegate();
 	PhysicsOverlapDetectedDelegate& GetOnOverlapBeginDelegate();
@@ -78,10 +79,12 @@ private:
 	void InitializePhysXContext();
 	void ShutdownPhysXContext();
 	void ReleaseCachedConvexMeshes();
+	void ReleaseCachedTriangleMeshes();
 
 	std::vector<PhysicsComponent*> PhysicsComponents;
 	std::unordered_map<physx::PxRigidActor*, PhysicsComponent*> PhysicsActorToComponentMap;
 	std::unordered_map<std::string, physx::PxConvexMesh*> ConvexMeshCache;
+	std::unordered_map<std::string, physx::PxTriangleMesh*> TriangleMeshCache;
 
 	float FixedDeltaTime;
 	float AccumulatedTime;

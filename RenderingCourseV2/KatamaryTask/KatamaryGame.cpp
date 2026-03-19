@@ -26,9 +26,31 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, RemainingTimeSeconds(60.0f)
 	, IsRoundFinished(false)
 	, CollectedItemCount(0)
+	, SpawnedCollectibleCount(15)
 {
-	
-	CollectibleMeshPaths.push_back(MeshLocalData("../../InputResources/Meshes/Katamary/Crate.fbx", ""))
+	CollectibleMeshPaths.push_back(MeshLocalData(
+		"../../InputResources/Meshes/Katamary/Crate.fbx",
+		"../../InputResources/Textures/Katamary/Crate/Crate_Albedo.png",
+		DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		"../../InputResources/Textures/Katamary/Crate/Crate_Metalness.png",
+		"../../InputResources/Textures/Katamary/Crate/Crate_Roughness.png",
+		"../../InputResources/Textures/Katamary/Crate/Crate_Normal.png"));
+
+	CollectibleMeshPaths.push_back(MeshLocalData(
+		"../../InputResources/Meshes/Katamary/grass.fbx",
+		"",
+		DirectX::XMFLOAT4(0.36f, 0.79f, 0.41f, 1.0f),
+		"",
+		"",
+		""));
+
+	CollectibleMeshPaths.push_back(MeshLocalData(
+		"../../InputResources/Meshes/Katamary/Tree.FBX",
+		"../../InputResources/Textures/Katamary/Tree/Tree_Diffuse.png",
+		DirectX::XMFLOAT4(0.65f, 0.64f, 0.58f, 1.0f),
+		"../../InputResources/Textures/Katamary/Tree/Tree_Metalness.png",
+		"../../InputResources/Textures/Katamary/Tree/Tree_Roughness.png",
+		"../../InputResources/Textures/Katamary/Tree/Tree_normal.png"));
 }
 
 KatamaryGame::~KatamaryGame()
@@ -133,18 +155,18 @@ void KatamaryGame::SpawnFloor()
 	std::unique_ptr<Actor> FloorActor = std::make_unique<Actor>();
 	Transform FloorTransform;
 	FloorTransform.Position = DirectX::XMFLOAT3(0.0f, -2.0f, 0.0f);
-	FloorTransform.Scale = DirectX::XMFLOAT3(26.0f, 1.0f, 26.0f);
+	FloorTransform.Scale = DirectX::XMFLOAT3(4.0f, 1.0f, 4.0f);
 	FloorActor->SetTransform(FloorTransform);
 
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/BlockArena.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.2f, 0.25f, 0.3f, 1.0f);
 
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
 	FloorPhysicsComponent->SetIsStatic(true);
 	FloorPhysicsComponent->SetUseGravity(false);
-	FloorPhysicsComponent->SetAabbCollider(DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f));
-
+	FloorPhysicsComponent->EnableAutoTriangleMeshColliderFromMesh(true);
+	
 	FloorActor->AddComponent(std::move(FloorMeshComponent));
 	FloorActor->AddComponent(std::move(FloorPhysicsComponent));
 	AddActor(std::move(FloorActor));
@@ -154,7 +176,7 @@ void KatamaryGame::SpawnPlayer()
 {
 	std::unique_ptr<Actor> NewPlayerActor = std::make_unique<Actor>();
 	Transform PlayerTransform;
-	PlayerTransform.Position = DirectX::XMFLOAT3(0.0f, 2.0f, 0.0f);
+	PlayerTransform.Position = DirectX::XMFLOAT3(0.0f, 10.0f, 0.0f);
 	PlayerTransform.Scale = DirectX::XMFLOAT3(1.4f, 1.4f, 1.4f);
 	NewPlayerActor->SetTransform(PlayerTransform);
 
@@ -183,14 +205,13 @@ void KatamaryGame::SpawnCollectibles()
 	{
 		return;
 	}
-
-	const int SpawnedCollectibleCount = 70;
+	
 	CollectiblePhysicsComponents.reserve(SpawnedCollectibleCount);
 	for (int SpawnedCollectibleIndex = 0; SpawnedCollectibleIndex < SpawnedCollectibleCount; ++SpawnedCollectibleIndex)
 	{
 		const int RandomMeshPathIndex = static_cast<int>(GetRandomValueInRange(0.0f, static_cast<float>(CollectibleMeshPaths.size())));
 		const int ClampedMeshPathIndex = (std::clamp)(RandomMeshPathIndex, 0, static_cast<int>(CollectibleMeshPaths.size()) - 1);
-		const std::string& SelectedModelMeshPath = CollectibleMeshPaths[ClampedMeshPathIndex];
+		const MeshLocalData& SelectedMeshLocalData = CollectibleMeshPaths[ClampedMeshPathIndex];
 
 		float SpawnPositionX = 0.0f;
 		float SpawnPositionZ = 0.0f;
@@ -213,9 +234,12 @@ void KatamaryGame::SpawnCollectibles()
 		CollectibleActor->SetTransform(CollectibleTransform);
 
 		std::unique_ptr<MeshUniversalComponent> CollectibleMeshComponent = std::make_unique<MeshUniversalComponent>();
-		CollectibleMeshComponent->ModelMeshPath = SelectedModelMeshPath;
-		CollectibleMeshComponent->AlbedoTexturePath = ;
-		CollectibleMeshComponent->NormalTexturePath = ;
+		CollectibleMeshComponent->ModelMeshPath = SelectedMeshLocalData.MeshPath;
+		CollectibleMeshComponent->BaseColor = SelectedMeshLocalData.DefaultAlbedoColor;
+		CollectibleMeshComponent->AlbedoTexturePath = SelectedMeshLocalData.AlbedoTexture;
+		CollectibleMeshComponent->NormalTexturePath = SelectedMeshLocalData.NormalTexture;
+		CollectibleMeshComponent->SpecularTexturePath = SelectedMeshLocalData.MetallicTexture;
+		CollectibleMeshComponent->EmissiveTexturePath = SelectedMeshLocalData.RoughnessTexture;
 		
 
 		std::unique_ptr<PhysicsComponent> CollectiblePhysicsComponent = std::make_unique<PhysicsComponent>();

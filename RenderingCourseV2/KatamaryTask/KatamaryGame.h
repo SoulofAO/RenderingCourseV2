@@ -89,4 +89,5 @@ private:
 	float RemainingTimeSeconds;
 	bool IsRoundFinished;
 	int CollectedItemCount;
+	int SpawnedCollectibleCount;
 };
