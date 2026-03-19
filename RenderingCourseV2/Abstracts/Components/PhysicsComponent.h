@@ -3,6 +3,7 @@
 #include "Abstracts/Components/ActorComponent.h"
 #include <physx/PxPhysicsAPI.h>
 #include <directxmath.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -69,6 +70,10 @@ public:
 
 	void SetCollisionMode(PhysicsCollisionMode NewCollisionMode);
 	PhysicsCollisionMode GetCollisionMode() const;
+	void SetCollisionLayer(std::uint32_t NewCollisionLayer);
+	std::uint32_t GetCollisionLayer() const;
+	void SetCollisionMask(std::uint32_t NewCollisionMask);
+	std::uint32_t GetCollisionMask() const;
 
 	void Integrate(float DeltaTime);
 	void ApplyImpulse(const DirectX::XMFLOAT3& ImpulseValue);
@@ -91,6 +96,7 @@ private:
 	void RecalculateInverseMass();
 	void RebuildPhysicsActor();
 	void ApplyCollisionModeToAllShapes();
+	void ApplyCollisionFilterDataToAllShapes();
 	void ReleaseAllWeldJoints();
 
 	float Mass;
@@ -102,6 +108,8 @@ private:
 	bool IsStatic;
 	PhysicsColliderKind ColliderKind;
 	PhysicsCollisionMode CollisionMode;
+	std::uint32_t CollisionLayer;
+	std::uint32_t CollisionMask;
 	float SphereRadius;
 	DirectX::XMFLOAT3 HalfExtents;
 	DirectX::XMFLOAT3 CachedVelocity;

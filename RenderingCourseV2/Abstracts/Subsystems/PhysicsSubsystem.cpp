@@ -119,13 +119,20 @@ private:
 
 static physx::PxFilterFlags PhysicsSimulationFilterShader(
 	physx::PxFilterObjectAttributes FirstAttributes,
-	physx::PxFilterData,
+	physx::PxFilterData FirstFilterData,
 	physx::PxFilterObjectAttributes SecondAttributes,
-	physx::PxFilterData,
+	physx::PxFilterData SecondFilterData,
 	physx::PxPairFlags& PairFlags,
 	const void*,
 	physx::PxU32)
 {
+	const bool IsCollisionAllowedByFirstMask = (FirstFilterData.word0 & SecondFilterData.word1) != 0u;
+	const bool IsCollisionAllowedBySecondMask = (SecondFilterData.word0 & FirstFilterData.word1) != 0u;
+	if (IsCollisionAllowedByFirstMask == false || IsCollisionAllowedBySecondMask == false)
+	{
+		return physx::PxFilterFlag::eSUPPRESS;
+	}
+
 	const bool IsFirstTrigger = physx::PxFilterObjectIsTrigger(FirstAttributes);
 	const bool IsSecondTrigger = physx::PxFilterObjectIsTrigger(SecondAttributes);
 	if (IsFirstTrigger || IsSecondTrigger)

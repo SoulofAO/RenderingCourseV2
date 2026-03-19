@@ -19,6 +19,8 @@ PhysicsComponent::PhysicsComponent()
 	, IsStatic(false)
 	, ColliderKind(PhysicsColliderKind::ConvexMeshAuto)
 	, CollisionMode(PhysicsCollisionMode::Simulation)
+	, CollisionLayer(1u)
+	, CollisionMask(0xFFFFFFFFu)
 	, SphereRadius(0.5f)
 	, HalfExtents(0.5f, 0.5f, 0.5f)
 	, CachedVelocity(0.0f, 0.0f, 0.0f)
@@ -304,6 +306,36 @@ PhysicsCollisionMode PhysicsComponent::GetCollisionMode() const
 	return CollisionMode;
 }
 
+void PhysicsComponent::SetCollisionLayer(std::uint32_t NewCollisionLayer)
+{
+	if (NewCollisionLayer == 0u)
+	{
+		CollisionLayer = 1u;
+	}
+	else
+	{
+		CollisionLayer = NewCollisionLayer;
+	}
+
+	ApplyCollisionFilterDataToAllShapes();
+}
+
+std::uint32_t PhysicsComponent::GetCollisionLayer() const
+{
+	return CollisionLayer;
+}
+
+void PhysicsComponent::SetCollisionMask(std::uint32_t NewCollisionMask)
+{
+	CollisionMask = NewCollisionMask;
+	ApplyCollisionFilterDataToAllShapes();
+}
+
+std::uint32_t PhysicsComponent::GetCollisionMask() const
+{
+	return CollisionMask;
+}
+
 void PhysicsComponent::Integrate(float DeltaTime)
 {
 	(void)DeltaTime;
@@ -541,6 +573,12 @@ void PhysicsComponent::CreatePhysicsActor(PhysicsSubsystem* NewPhysicsSubsystem)
 		NewShape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, false);
 	}
 
+	physx::PxFilterData SimulationFilterData;
+	SimulationFilterData.word0 = CollisionLayer;
+	SimulationFilterData.word1 = CollisionMask;
+	NewShape->setSimulationFilterData(SimulationFilterData);
+	NewShape->setQueryFilterData(SimulationFilterData);
+
 	PhysicsActor->attachShape(*NewShape);
 	NewShape->release();
 
@@ -722,6 +760,38 @@ void PhysicsComponent::ApplyCollisionModeToAllShapes()
 			ExistingShape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, true);
 			ExistingShape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, false);
 		}
+	}
+}
+
+void PhysicsComponent::ApplyCollisionFilterDataToAllShapes()
+{
+	if (PhysicsActor == nullptr)
+	{
+		return;
+	}
+
+	const physx::PxU32 ShapeCount = PhysicsActor->getNbShapes();
+	if (ShapeCount == 0)
+	{
+		return;
+	}
+
+	physx::PxFilterData SimulationFilterData;
+	SimulationFilterData.word0 = CollisionLayer;
+	SimulationFilterData.word1 = CollisionMask;
+
+	std::vector<physx::PxShape*> Shapes;
+	Shapes.resize(ShapeCount);
+	PhysicsActor->getShapes(Shapes.data(), ShapeCount);
+	for (physx::PxShape* ExistingShape : Shapes)
+	{
+		if (ExistingShape == nullptr)
+		{
+			continue;
+		}
+
+		ExistingShape->setSimulationFilterData(SimulationFilterData);
+		ExistingShape->setQueryFilterData(SimulationFilterData);
 	}
 }
 

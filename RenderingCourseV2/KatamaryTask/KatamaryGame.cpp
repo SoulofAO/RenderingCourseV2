@@ -11,7 +11,16 @@
 #include "KatamaryTask/KatamaryOrbitCameraInputHandler.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <memory>
+
+static constexpr std::uint32_t PhysicsCollisionLayerPlayer = 1u << 1u;
+static constexpr std::uint32_t PhysicsCollisionLayerCollectibleUncollected = 1u << 2u;
+static constexpr std::uint32_t PhysicsCollisionLayerCollectibleCollected = 1u << 3u;
+static constexpr std::uint32_t PhysicsCollisionMaskPlayer = 0xFFFFFFFFu & ~PhysicsCollisionLayerCollectibleCollected;
+static constexpr std::uint32_t PhysicsCollisionMaskCollectibleUncollected = 0xFFFFFFFFu;
+static constexpr std::uint32_t PhysicsCollisionMaskCollectibleCollected =
+	0xFFFFFFFFu & ~(PhysicsCollisionLayerPlayer | PhysicsCollisionLayerCollectibleCollected);
 
 KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Game(ApplicationName, ScreenWidth, ScreenHeight)
@@ -117,6 +126,7 @@ void KatamaryGame::BeginPlay()
 void KatamaryGame::Update(float DeltaTime)
 {
 	HandleRoundTimer(DeltaTime);
+	ProcessPendingCollectibleAttachments();
 	HandlePlayerMovement(DeltaTime);
 	UpdateGameplayCamera();
 	Game::Update(DeltaTime);
@@ -217,6 +227,8 @@ void KatamaryGame::SpawnPlayer()
 	NewPlayerPhysicsComponent->SetLinearDamping(0.45f);
 	NewPlayerPhysicsComponent->SetAngularDamping(0.1f);
 	NewPlayerPhysicsComponent->SetRestitution(0.05f);
+	NewPlayerPhysicsComponent->SetCollisionLayer(PhysicsCollisionLayerPlayer);
+	NewPlayerPhysicsComponent->SetCollisionMask(PhysicsCollisionMaskPlayer);
 	PlayerPhysicsComponent = NewPlayerPhysicsComponent.get();
 
 	PlayerActor = NewPlayerActor.get();
@@ -274,6 +286,8 @@ void KatamaryGame::SpawnCollectibles()
 		CollectiblePhysicsComponent->SetLinearDamping(0.4f);
 		CollectiblePhysicsComponent->SetAngularDamping(0.25f);
 		CollectiblePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Simulation);
+		CollectiblePhysicsComponent->SetCollisionLayer(PhysicsCollisionLayerCollectibleUncollected);
+		CollectiblePhysicsComponent->SetCollisionMask(PhysicsCollisionMaskCollectibleUncollected);
 		CollectiblePhysicsComponent->EnableAutoConvexColliderFromMesh(true);
 		CollectiblePhysicsComponents.push_back(CollectiblePhysicsComponent.get());
 
@@ -475,15 +489,17 @@ void KatamaryGame::HandlePhysicsCollisionDetected(
 		return;
 	}
 
-	TryAttachCollectibleToCollector(CollectorPhysicsComponent, CandidateCollectiblePhysicsComponent);
+	if (CollectedCollectiblePhysicsComponents.find(CandidateCollectiblePhysicsComponent) != CollectedCollectiblePhysicsComponents.end())
+	{
+		return;
+	}
+
+	PendingCollectiblePhysicsComponents.insert(CandidateCollectiblePhysicsComponent);
 }
 
-void KatamaryGame::TryAttachCollectibleToCollector(
-	PhysicsComponent* CollectorPhysicsComponent,
-	PhysicsComponent* CandidateCollectiblePhysicsComponent)
+void KatamaryGame::TryAttachCollectibleToPlayer(PhysicsComponent* CandidateCollectiblePhysicsComponent)
 {
 	if (
-		CollectorPhysicsComponent == nullptr ||
 		CandidateCollectiblePhysicsComponent == nullptr ||
 		PlayerPhysicsComponent == nullptr)
 	{
@@ -495,26 +511,48 @@ void KatamaryGame::TryAttachCollectibleToCollector(
 		return;
 	}
 
-	const bool IsWeldSucceeded = CollectorPhysicsComponent->WeldWithComponent(CandidateCollectiblePhysicsComponent, true);
+	const bool IsWeldSucceeded = PlayerPhysicsComponent->WeldWithComponent(CandidateCollectiblePhysicsComponent, true);
 	if (IsWeldSucceeded == false)
 	{
 		return;
 	}
 
-	Actor* CollectorActor = CollectorPhysicsComponent->GetOwningActor();
 	Actor* CandidateCollectibleActor = CandidateCollectiblePhysicsComponent->GetOwningActor();
-	if (CollectorActor != nullptr && CandidateCollectibleActor != nullptr)
+	if (PlayerActor != nullptr && CandidateCollectibleActor != nullptr)
 	{
 		const Transform CandidateCollectibleWorldTransform = CandidateCollectibleActor->GetTransform(ETransformSpace::World);
-		CandidateCollectibleActor->AttachToActor(CollectorActor);
+		CandidateCollectibleActor->AttachToActor(PlayerActor);
 		CandidateCollectibleActor->SetTransform(CandidateCollectibleWorldTransform, ETransformSpace::World);
 	}
 
 	CandidateCollectiblePhysicsComponent->SetUseGravity(false);
 	CandidateCollectiblePhysicsComponent->SetVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
 	CandidateCollectiblePhysicsComponent->SetAngularVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+	CandidateCollectiblePhysicsComponent->SetCollisionLayer(PhysicsCollisionLayerCollectibleCollected);
+	CandidateCollectiblePhysicsComponent->SetCollisionMask(PhysicsCollisionMaskCollectibleCollected);
 	CollectedCollectiblePhysicsComponents.insert(CandidateCollectiblePhysicsComponent);
 	CollectedItemCount += 1;
+}
+
+void KatamaryGame::ProcessPendingCollectibleAttachments()
+{
+	if (PendingCollectiblePhysicsComponents.empty())
+	{
+		return;
+	}
+
+	std::vector<PhysicsComponent*> PendingCollectiblesToAttach;
+	PendingCollectiblesToAttach.reserve(PendingCollectiblePhysicsComponents.size());
+	for (PhysicsComponent* ExistingPendingCollectiblePhysicsComponent : PendingCollectiblePhysicsComponents)
+	{
+		PendingCollectiblesToAttach.push_back(ExistingPendingCollectiblePhysicsComponent);
+	}
+	PendingCollectiblePhysicsComponents.clear();
+
+	for (PhysicsComponent* ExistingPendingCollectiblePhysicsComponent : PendingCollectiblesToAttach)
+	{
+		TryAttachCollectibleToPlayer(ExistingPendingCollectiblePhysicsComponent);
+	}
 }
 
 bool KatamaryGame::IsCollectiblePhysicsComponent(const PhysicsComponent* CandidatePhysicsComponent) const

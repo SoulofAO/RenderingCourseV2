@@ -66,6 +66,7 @@ private:
 	void SpawnUserInterface();
 	void HandleRoundTimer(float DeltaTime);
 	void HandlePlayerMovement(float DeltaTime);
+	void ProcessPendingCollectibleAttachments();
 	void UpdateGameplayCamera();
 	DirectX::XMFLOAT3 BuildCameraRelativeMovementDirection() const;
 	void HandlePhysicsCollisionDetected(
@@ -73,9 +74,7 @@ private:
 		PhysicsComponent* SecondPhysicsComponent,
 		const DirectX::XMFLOAT3& ContactNormal,
 		float PenetrationDepth);
-	void TryAttachCollectibleToCollector(
-		PhysicsComponent* CollectorPhysicsComponent,
-		PhysicsComponent* CandidateCollectiblePhysicsComponent);
+	void TryAttachCollectibleToPlayer(PhysicsComponent* CandidateCollectiblePhysicsComponent);
 	bool IsCollectiblePhysicsComponent(const PhysicsComponent* CandidatePhysicsComponent) const;
 	bool IsCollectorPhysicsComponent(const PhysicsComponent* CandidatePhysicsComponent) const;
 	float GetRandomValueInRange(float MinimumValue, float MaximumValue);
@@ -86,6 +85,7 @@ private:
 	KatamaryUIRenderingComponent* KatamaryUIRenderingComponentInstance;
 	std::vector<PhysicsComponent*> CollectiblePhysicsComponents;
 	std::unordered_set<PhysicsComponent*> CollectedCollectiblePhysicsComponents;
+	std::unordered_set<PhysicsComponent*> PendingCollectiblePhysicsComponents;
 	DelegateHandle CollisionDetectedDelegateHandle;
 	std::mt19937 RandomNumberGenerator;
 	std::vector<MeshLocalData> CollectibleMeshPaths;
