@@ -380,6 +380,7 @@ bool PhysicsComponent::WeldWithComponent(PhysicsComponent* TargetComponent, bool
 		return false;
 	}
 
+	NewJoint->setConstraintFlag(physx::PxConstraintFlag::eCOLLISION_ENABLED, false);
 	WeldJoints.push_back(NewJoint);
 	return true;
 }

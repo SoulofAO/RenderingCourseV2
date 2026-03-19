@@ -9,6 +9,8 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/PhysicsComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/PhysicsComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.h" afterDir="false" />
     </list>
@@ -27,7 +29,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://8" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://11" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" root0="FORCE_HIGHLIGHTING" />
@@ -50,7 +52,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "C/C++ Project.RenderingCourseV2.executor": "Run",
+    "C/C++ Project.RenderingCourseV2.executor": "Debug",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -109,7 +111,7 @@
       <workItem from="1773855724066" duration="3363000" />
       <workItem from="1773860519732" duration="6440000" />
       <workItem from="1773868575289" duration="4108000" />
-      <workItem from="1773908263007" duration="9261000" />
+      <workItem from="1773908263007" duration="10562000" />
     </task>
     <servers />
   </component>
@@ -136,6 +138,26 @@
           <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
           <option name="timeStamp" value="3" />
         </breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.cpp</url>
+          <line>484</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.cpp</url>
+          <line>447</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp</url>
+          <line>494</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp</url>
+          <line>129</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>

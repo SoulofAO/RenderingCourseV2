@@ -29,6 +29,7 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, SpawnedCollectibleCount(15)
 	,GlobalCollectibleMeshScale(0.5)
 {
+	/*
 	CollectibleMeshPaths.push_back(MeshLocalData(
 		"../../InputResources/Meshes/Katamary/Crate.fbx",
 		"../../InputResources/Textures/Katamary/Crate/Crate_Albedo.png",
@@ -52,6 +53,30 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 		"../../InputResources/Textures/Katamary/Tree/Tree_Metalness.png",
 		"../../InputResources/Textures/Katamary/Tree/Tree_Roughness.png",
 		"../../InputResources/Textures/Katamary/Tree/Tree_normal.png"));
+*/
+	CollectibleMeshPaths.push_back(MeshLocalData(
+		"../../InputResources/Meshes/SimpleSphere.fbx",
+		"",
+		DirectX::XMFLOAT4(0.79f, 0.37f, 0.96f, 1.0f),
+		"",
+		"",
+		""));
+
+	CollectibleMeshPaths.push_back(MeshLocalData(
+		"../../InputResources/Meshes/SimpleCube.fbx",
+		"",
+		DirectX::XMFLOAT4(0.74f, 0.83f, 0.91f, 1.0f),
+		"",
+		"",
+		""));
+
+	CollectibleMeshPaths.push_back(MeshLocalData(
+		"../../InputResources/Meshes/SimpleCone.fbx",
+		"",
+		DirectX::XMFLOAT4(0.93f, 0.73f, 0.39f, 1.0f),
+		"",
+		"",
+		""));
 }
 
 KatamaryGame::~KatamaryGame()
@@ -59,10 +84,10 @@ KatamaryGame::~KatamaryGame()
 	PhysicsSubsystem* PhysicsSubsystemInstance = GetSubsystem<PhysicsSubsystem>();
 	if (
 		PhysicsSubsystemInstance != nullptr &&
-		OverlapBeginDelegateHandle.IsValid())
+		CollisionDetectedDelegateHandle.IsValid())
 	{
-		PhysicsSubsystemInstance->GetOnOverlapBeginDelegate().Remove(OverlapBeginDelegateHandle);
-		OverlapBeginDelegateHandle.Reset();
+		PhysicsSubsystemInstance->GetOnCollisionDetectedDelegate().Remove(CollisionDetectedDelegateHandle);
+		CollisionDetectedDelegateHandle.Reset();
 	}
 }
 
@@ -117,12 +142,12 @@ void KatamaryGame::BuildScene()
 	{
 		PhysicsSubsystemInstance->SetFixedDeltaTime(1.0f / 90.0f);
 		PhysicsSubsystemInstance->SetWorldBoundarySphere(DirectX::XMFLOAT3(0.0f, 3.0f, 0.0f), 28.0f);
-		if (OverlapBeginDelegateHandle.IsValid())
+		if (CollisionDetectedDelegateHandle.IsValid())
 		{
-			PhysicsSubsystemInstance->GetOnOverlapBeginDelegate().Remove(OverlapBeginDelegateHandle);
-			OverlapBeginDelegateHandle.Reset();
+			PhysicsSubsystemInstance->GetOnCollisionDetectedDelegate().Remove(CollisionDetectedDelegateHandle);
+			CollisionDetectedDelegateHandle.Reset();
 		}
-		OverlapBeginDelegateHandle = PhysicsSubsystemInstance->GetOnOverlapBeginDelegate().AddRaw(this, &KatamaryGame::HandlePhysicsOverlapBegin);
+		CollisionDetectedDelegateHandle = PhysicsSubsystemInstance->GetOnCollisionDetectedDelegate().AddRaw(this, &KatamaryGame::HandlePhysicsCollisionDetected);
 	}
 
 	SpawnFloor();
@@ -244,11 +269,11 @@ void KatamaryGame::SpawnCollectibles()
 		
 
 		std::unique_ptr<PhysicsComponent> CollectiblePhysicsComponent = std::make_unique<PhysicsComponent>();
-		CollectiblePhysicsComponent->SetMass((std::max)(0.2f, 1* 0.8f));
-		CollectiblePhysicsComponent->SetUseGravity(false);
-		CollectiblePhysicsComponent->SetLinearDamping(6.0f);
-		CollectiblePhysicsComponent->SetAngularDamping(6.0f);
-		CollectiblePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Trigger);
+		CollectiblePhysicsComponent->SetMass(0.8f);
+		CollectiblePhysicsComponent->SetUseGravity(true);
+		CollectiblePhysicsComponent->SetLinearDamping(0.4f);
+		CollectiblePhysicsComponent->SetAngularDamping(0.25f);
+		CollectiblePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Simulation);
 		CollectiblePhysicsComponent->EnableAutoConvexColliderFromMesh(true);
 		CollectiblePhysicsComponents.push_back(CollectiblePhysicsComponent.get());
 
@@ -414,34 +439,51 @@ DirectX::XMFLOAT3 KatamaryGame::BuildCameraRelativeMovementDirection() const
 		(CameraForwardDirection.z * MovementInputForward) + (CameraRightDirection.z * MovementInputRight));
 }
 
-void KatamaryGame::HandlePhysicsOverlapBegin(PhysicsComponent* FirstPhysicsComponent, PhysicsComponent* SecondPhysicsComponent)
+void KatamaryGame::HandlePhysicsCollisionDetected(
+	PhysicsComponent* FirstPhysicsComponent,
+	PhysicsComponent* SecondPhysicsComponent,
+	const DirectX::XMFLOAT3&,
+	float)
 {
 	if (IsRoundFinished || PlayerPhysicsComponent == nullptr)
 	{
 		return;
 	}
 
+	const bool IsFirstUncollectedCollectible =
+		IsCollectiblePhysicsComponent(FirstPhysicsComponent) &&
+		CollectedCollectiblePhysicsComponents.find(FirstPhysicsComponent) == CollectedCollectiblePhysicsComponents.end();
+	const bool IsSecondUncollectedCollectible =
+		IsCollectiblePhysicsComponent(SecondPhysicsComponent) &&
+		CollectedCollectiblePhysicsComponents.find(SecondPhysicsComponent) == CollectedCollectiblePhysicsComponents.end();
+
+	PhysicsComponent* CollectorPhysicsComponent = nullptr;
 	PhysicsComponent* CandidateCollectiblePhysicsComponent = nullptr;
-	if (FirstPhysicsComponent == PlayerPhysicsComponent && IsCollectiblePhysicsComponent(SecondPhysicsComponent))
+	if (IsCollectorPhysicsComponent(FirstPhysicsComponent) && IsSecondUncollectedCollectible)
 	{
+		CollectorPhysicsComponent = FirstPhysicsComponent;
 		CandidateCollectiblePhysicsComponent = SecondPhysicsComponent;
 	}
-	else if (SecondPhysicsComponent == PlayerPhysicsComponent && IsCollectiblePhysicsComponent(FirstPhysicsComponent))
+	else if (IsCollectorPhysicsComponent(SecondPhysicsComponent) && IsFirstUncollectedCollectible)
 	{
+		CollectorPhysicsComponent = SecondPhysicsComponent;
 		CandidateCollectiblePhysicsComponent = FirstPhysicsComponent;
 	}
 
-	if (CandidateCollectiblePhysicsComponent == nullptr)
+	if (CollectorPhysicsComponent == nullptr || CandidateCollectiblePhysicsComponent == nullptr)
 	{
 		return;
 	}
 
-	TryAttachCollectibleToPlayer(CandidateCollectiblePhysicsComponent);
+	TryAttachCollectibleToCollector(CollectorPhysicsComponent, CandidateCollectiblePhysicsComponent);
 }
 
-void KatamaryGame::TryAttachCollectibleToPlayer(PhysicsComponent* CandidateCollectiblePhysicsComponent)
+void KatamaryGame::TryAttachCollectibleToCollector(
+	PhysicsComponent* CollectorPhysicsComponent,
+	PhysicsComponent* CandidateCollectiblePhysicsComponent)
 {
 	if (
+		CollectorPhysicsComponent == nullptr ||
 		CandidateCollectiblePhysicsComponent == nullptr ||
 		PlayerPhysicsComponent == nullptr)
 	{
@@ -453,13 +495,24 @@ void KatamaryGame::TryAttachCollectibleToPlayer(PhysicsComponent* CandidateColle
 		return;
 	}
 
-	const bool IsWeldSucceeded = PlayerPhysicsComponent->WeldWithComponent(CandidateCollectiblePhysicsComponent, true);
+	const bool IsWeldSucceeded = CollectorPhysicsComponent->WeldWithComponent(CandidateCollectiblePhysicsComponent, true);
 	if (IsWeldSucceeded == false)
 	{
 		return;
 	}
 
+	Actor* CollectorActor = CollectorPhysicsComponent->GetOwningActor();
+	Actor* CandidateCollectibleActor = CandidateCollectiblePhysicsComponent->GetOwningActor();
+	if (CollectorActor != nullptr && CandidateCollectibleActor != nullptr)
+	{
+		const Transform CandidateCollectibleWorldTransform = CandidateCollectibleActor->GetTransform(ETransformSpace::World);
+		CandidateCollectibleActor->AttachToActor(CollectorActor);
+		CandidateCollectibleActor->SetTransform(CandidateCollectibleWorldTransform, ETransformSpace::World);
+	}
+
 	CandidateCollectiblePhysicsComponent->SetUseGravity(false);
+	CandidateCollectiblePhysicsComponent->SetVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+	CandidateCollectiblePhysicsComponent->SetAngularVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
 	CollectedCollectiblePhysicsComponents.insert(CandidateCollectiblePhysicsComponent);
 	CollectedItemCount += 1;
 }
@@ -476,6 +529,29 @@ bool KatamaryGame::IsCollectiblePhysicsComponent(const PhysicsComponent* Candida
 		CollectiblePhysicsComponents.end(),
 		CandidatePhysicsComponent);
 	return ExistingCollectiblePhysicsComponentIterator != CollectiblePhysicsComponents.end();
+}
+
+bool KatamaryGame::IsCollectorPhysicsComponent(const PhysicsComponent* CandidatePhysicsComponent) const
+{
+	if (CandidatePhysicsComponent == nullptr)
+	{
+		return false;
+	}
+
+	if (CandidatePhysicsComponent == PlayerPhysicsComponent)
+	{
+		return true;
+	}
+
+	for (const PhysicsComponent* ExistingCollectedCollectiblePhysicsComponent : CollectedCollectiblePhysicsComponents)
+	{
+		if (ExistingCollectedCollectiblePhysicsComponent == CandidatePhysicsComponent)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 float KatamaryGame::GetRandomValueInRange(float MinimumValue, float MaximumValue)

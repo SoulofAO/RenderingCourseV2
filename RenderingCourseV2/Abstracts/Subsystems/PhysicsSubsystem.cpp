@@ -97,13 +97,14 @@ public:
 
 			physx::PxContactPairPoint ContactPoints[8];
 			const physx::PxU32 ContactPointCount = ContactPair.extractContacts(ContactPoints, 8);
-			if (ContactPointCount == 0)
+			physx::PxVec3 ContactNormal(0.0f, 1.0f, 0.0f);
+			float PenetrationDepth = 0.0f;
+			if (ContactPointCount > 0)
 			{
-				continue;
+				ContactNormal = ContactPoints[0].normal;
+				PenetrationDepth = (std::max)(0.0f, -ContactPoints[0].separation);
 			}
 
-			const physx::PxVec3 ContactNormal = ContactPoints[0].normal;
-			const float PenetrationDepth = (std::max)(0.0f, -ContactPoints[0].separation);
 			PhysicsSubsystemInstance->NotifyContactEvent(
 				FirstActor,
 				SecondActor,
@@ -115,6 +116,33 @@ public:
 private:
 	PhysicsSubsystem* PhysicsSubsystemInstance;
 };
+
+static physx::PxFilterFlags PhysicsSimulationFilterShader(
+	physx::PxFilterObjectAttributes FirstAttributes,
+	physx::PxFilterData,
+	physx::PxFilterObjectAttributes SecondAttributes,
+	physx::PxFilterData,
+	physx::PxPairFlags& PairFlags,
+	const void*,
+	physx::PxU32)
+{
+	const bool IsFirstTrigger = physx::PxFilterObjectIsTrigger(FirstAttributes);
+	const bool IsSecondTrigger = physx::PxFilterObjectIsTrigger(SecondAttributes);
+	if (IsFirstTrigger || IsSecondTrigger)
+	{
+		PairFlags = physx::PxPairFlag::eTRIGGER_DEFAULT |
+			physx::PxPairFlag::eNOTIFY_TOUCH_FOUND |
+			physx::PxPairFlag::eNOTIFY_TOUCH_LOST;
+		return physx::PxFilterFlag::eDEFAULT;
+	}
+
+	PairFlags = physx::PxPairFlag::eCONTACT_DEFAULT |
+		physx::PxPairFlag::eNOTIFY_TOUCH_FOUND |
+		physx::PxPairFlag::eNOTIFY_TOUCH_PERSISTS |
+		physx::PxPairFlag::eNOTIFY_TOUCH_LOST |
+		physx::PxPairFlag::eNOTIFY_CONTACT_POINTS;
+	return physx::PxFilterFlag::eDEFAULT;
+}
 
 PhysicsSubsystem::PhysicsSubsystem()
 	: FixedDeltaTime(1.0f / 60.0f)
@@ -603,7 +631,7 @@ void PhysicsSubsystem::InitializePhysXContext()
 	physx::PxSceneDesc SceneDescription(ToleranceScale);
 	SceneDescription.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
 	SceneDescription.cpuDispatcher = CpuDispatcher;
-	SceneDescription.filterShader = physx::PxDefaultSimulationFilterShader;
+	SceneDescription.filterShader = PhysicsSimulationFilterShader;
 	SceneDescription.simulationEventCallback = SimulationEventCallback;
 	PhysicsScene = Physics->createScene(SceneDescription);
 	if (PhysicsScene == nullptr)
