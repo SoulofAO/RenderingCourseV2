@@ -27,6 +27,7 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, IsRoundFinished(false)
 	, CollectedItemCount(0)
 	, SpawnedCollectibleCount(15)
+	,GlobalCollectibleMeshScale(0.5)
 {
 	CollectibleMeshPaths.push_back(MeshLocalData(
 		"../../InputResources/Meshes/Katamary/Crate.fbx",
@@ -142,7 +143,7 @@ void KatamaryGame::SpawnGameplayCamera()
 	std::unique_ptr<KatamaryOrbitCameraComponent> CameraComponentInstance = std::make_unique<KatamaryOrbitCameraComponent>();
 	CameraComponentInstance->SetFieldOfViewDegrees(65.0f);
 	GameplayCameraComponent = CameraComponentInstance.get();
-	CameraComponentInstance->SetOrbitTargetActor(CameraActor.get());
+	CameraComponentInstance->SetOrbitTargetActor(PlayerActor);
 	
 	CameraActor->AddComponent(std::move(CameraComponentInstance));
 	AddActor(std::move(CameraActor));
@@ -230,7 +231,7 @@ void KatamaryGame::SpawnCollectibles()
 		std::unique_ptr<Actor> CollectibleActor = std::make_unique<Actor>();
 		Transform CollectibleTransform;
 		CollectibleTransform.Position = DirectX::XMFLOAT3(SpawnPositionX, -0.9f, SpawnPositionZ);
-		CollectibleTransform.Scale = DirectX::XMFLOAT3(1, 1, 1);
+		CollectibleTransform.Scale = DirectX::XMFLOAT3(GlobalCollectibleMeshScale, GlobalCollectibleMeshScale, GlobalCollectibleMeshScale);
 		CollectibleActor->SetTransform(CollectibleTransform);
 
 		std::unique_ptr<MeshUniversalComponent> CollectibleMeshComponent = std::make_unique<MeshUniversalComponent>();

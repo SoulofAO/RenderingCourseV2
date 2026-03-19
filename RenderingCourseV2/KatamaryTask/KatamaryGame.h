@@ -83,6 +83,7 @@ private:
 	std::mt19937 RandomNumberGenerator;
 	std::vector<MeshLocalData> CollectibleMeshPaths;
 
+	float GlobalCollectibleMeshScale;
 	float PlayerMoveForce;
 	float PlayerMaximumPlanarSpeed;
 	float RoundDurationSeconds;
