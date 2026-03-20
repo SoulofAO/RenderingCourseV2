@@ -208,7 +208,7 @@ void KatamaryGame::SpawnFloor()
 	FloorActor->SetTransform(FloorTransform);
 
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "InputResources/Meshes/BlockArena.fbx";
+	FloorMeshComponent->ModelMeshPath = "InputResources/Meshes/BlockInterestingArena.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.2f, 0.25f, 0.3f, 1.0f);
 
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
