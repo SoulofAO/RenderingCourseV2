@@ -1,7 +1,79 @@
 #include "Abstracts/Rendering/DeferredRenderer.h"
 #include <d3dcompiler.h>
+#include <algorithm>
+#include <array>
+#include <cmath>
 
 #pragma comment(lib, "d3dcompiler.lib")
+
+namespace
+{
+	constexpr int ShadowCascadeCount = 4;
+	constexpr std::array<float, ShadowCascadeCount> ShadowCascadeSplitFactors =
+	{
+		0.08f,
+		0.2f,
+		0.45f,
+		1.0f
+	};
+
+	DirectX::XMFLOAT3 NormalizeVector3(const DirectX::XMFLOAT3& InputVector)
+	{
+		const DirectX::XMVECTOR VectorValue = DirectX::XMLoadFloat3(&InputVector);
+		DirectX::XMFLOAT3 OutputVector;
+		DirectX::XMStoreFloat3(&OutputVector, DirectX::XMVector3Normalize(VectorValue));
+		return OutputVector;
+	}
+
+	void CalculateCameraNearFar(
+		const DirectX::XMMATRIX& ProjectionMatrix,
+		float& OutNearPlaneDistance,
+		float& OutFarPlaneDistance)
+	{
+		const float MatrixElement33 = ProjectionMatrix.r[2].m128_f32[2];
+		const float MatrixElement43 = ProjectionMatrix.r[3].m128_f32[2];
+		const float SafeElement33 = (std::fabs(MatrixElement33) < 0.0001f) ? 0.0001f : MatrixElement33;
+		const float SafeFarDenominator = (std::fabs(MatrixElement33 - 1.0f) < 0.0001f) ? 0.0001f : (MatrixElement33 - 1.0f);
+		OutNearPlaneDistance = -MatrixElement43 / SafeElement33;
+		OutFarPlaneDistance = -MatrixElement43 / SafeFarDenominator;
+		OutNearPlaneDistance = (std::max)(0.01f, OutNearPlaneDistance);
+		OutFarPlaneDistance = (std::max)(OutNearPlaneDistance + 1.0f, OutFarPlaneDistance);
+	}
+
+	void BuildBaseFrustumCorners(
+		const DirectX::XMMATRIX& InverseViewProjectionMatrix,
+		std::array<DirectX::XMVECTOR, 8>& OutFrustumCorners)
+	{
+		const std::array<DirectX::XMFLOAT2, 4> NearPlaneCoordinates =
+		{
+			DirectX::XMFLOAT2(-1.0f, -1.0f),
+			DirectX::XMFLOAT2(-1.0f, 1.0f),
+			DirectX::XMFLOAT2(1.0f, 1.0f),
+			DirectX::XMFLOAT2(1.0f, -1.0f)
+		};
+
+		for (int CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
+		{
+			const DirectX::XMFLOAT2 ExistingNearPlaneCoordinate = NearPlaneCoordinates[CornerIndex];
+			DirectX::XMVECTOR NearPointClip = DirectX::XMVectorSet(
+				ExistingNearPlaneCoordinate.x,
+				ExistingNearPlaneCoordinate.y,
+				0.0f,
+				1.0f);
+			DirectX::XMVECTOR FarPointClip = DirectX::XMVectorSet(
+				ExistingNearPlaneCoordinate.x,
+				ExistingNearPlaneCoordinate.y,
+				1.0f,
+				1.0f);
+			DirectX::XMVECTOR NearPointWorld = DirectX::XMVector4Transform(NearPointClip, InverseViewProjectionMatrix);
+			DirectX::XMVECTOR FarPointWorld = DirectX::XMVector4Transform(FarPointClip, InverseViewProjectionMatrix);
+			NearPointWorld = DirectX::XMVectorScale(NearPointWorld, 1.0f / DirectX::XMVectorGetW(NearPointWorld));
+			FarPointWorld = DirectX::XMVectorScale(FarPointWorld, 1.0f / DirectX::XMVectorGetW(FarPointWorld));
+			OutFrustumCorners[CornerIndex] = NearPointWorld;
+			OutFrustumCorners[CornerIndex + 4] = FarPointWorld;
+		}
+	}
+}
 
 struct DeferredCameraBufferData
 {
@@ -16,7 +88,11 @@ struct DeferredLightBufferData
 	float DirectionalLightIntensity;
 	DirectX::XMFLOAT4 DirectionalLightColor;
 	float UseFullBrightnessWithoutLighting;
-	DirectX::XMFLOAT3 Padding0;
+	float ShadowBias;
+	float ShadowStrength;
+	float ShadowMapTexelSize;
+	DirectX::XMFLOAT4 CascadeSplitDepths;
+	DirectX::XMFLOAT4X4 CascadeViewProjectionMatrices[ShadowCascadeCount];
 };
 
 DeferredRenderer::DeferredRenderer()
@@ -39,9 +115,22 @@ DeferredRenderer::DeferredRenderer()
 	, CameraConstantBuffer(nullptr)
 	, LightConstantBuffer(nullptr)
 	, GBufferSampler(nullptr)
+	, ShadowDepthTextureArray(nullptr)
+	, ShadowDepthSRV(nullptr)
+	, ShadowComparisonSampler(nullptr)
+	, ShadowRasterizerState(nullptr)
+	, ShadowCascadeSplitDepths(10.0f, 30.0f, 60.0f, 120.0f)
+	, ShadowMapResolution(2048)
 	, CachedWidth(0)
 	, CachedHeight(0)
 {
+	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	{
+		ShadowDepthDSVs[CascadeIndex] = nullptr;
+		DirectX::XMStoreFloat4x4(&ShadowCascadeViewMatricesStorage[CascadeIndex], DirectX::XMMatrixIdentity());
+		DirectX::XMStoreFloat4x4(&ShadowCascadeProjectionMatricesStorage[CascadeIndex], DirectX::XMMatrixIdentity());
+		DirectX::XMStoreFloat4x4(&ShadowCascadeViewProjectionMatricesStorage[CascadeIndex], DirectX::XMMatrixIdentity());
+	}
 }
 
 DeferredRenderer::~DeferredRenderer()
@@ -79,11 +168,66 @@ void DeferredRenderer::Initialize(ID3D11Device* Device)
 	SamplerDescription.MinLOD = 0.0f;
 	SamplerDescription.MaxLOD = D3D11_FLOAT32_MAX;
 	Device->CreateSamplerState(&SamplerDescription, &GBufferSampler);
+
+	D3D11_TEXTURE2D_DESC ShadowDepthTextureDescription = {};
+	ShadowDepthTextureDescription.Width = static_cast<UINT>(ShadowMapResolution);
+	ShadowDepthTextureDescription.Height = static_cast<UINT>(ShadowMapResolution);
+	ShadowDepthTextureDescription.MipLevels = 1;
+	ShadowDepthTextureDescription.ArraySize = ShadowCascadeCount;
+	ShadowDepthTextureDescription.Format = DXGI_FORMAT_R32_TYPELESS;
+	ShadowDepthTextureDescription.SampleDesc.Count = 1;
+	ShadowDepthTextureDescription.Usage = D3D11_USAGE_DEFAULT;
+	ShadowDepthTextureDescription.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	Device->CreateTexture2D(&ShadowDepthTextureDescription, nullptr, &ShadowDepthTextureArray);
+
+	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	{
+		D3D11_DEPTH_STENCIL_VIEW_DESC ShadowDepthStencilViewDescription = {};
+		ShadowDepthStencilViewDescription.Format = DXGI_FORMAT_D32_FLOAT;
+		ShadowDepthStencilViewDescription.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+		ShadowDepthStencilViewDescription.Texture2DArray.MipSlice = 0;
+		ShadowDepthStencilViewDescription.Texture2DArray.FirstArraySlice = static_cast<UINT>(CascadeIndex);
+		ShadowDepthStencilViewDescription.Texture2DArray.ArraySize = 1;
+		Device->CreateDepthStencilView(ShadowDepthTextureArray, &ShadowDepthStencilViewDescription, &ShadowDepthDSVs[CascadeIndex]);
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC ShadowShaderResourceViewDescription = {};
+	ShadowShaderResourceViewDescription.Format = DXGI_FORMAT_R32_FLOAT;
+	ShadowShaderResourceViewDescription.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+	ShadowShaderResourceViewDescription.Texture2DArray.MostDetailedMip = 0;
+	ShadowShaderResourceViewDescription.Texture2DArray.MipLevels = 1;
+	ShadowShaderResourceViewDescription.Texture2DArray.FirstArraySlice = 0;
+	ShadowShaderResourceViewDescription.Texture2DArray.ArraySize = ShadowCascadeCount;
+	Device->CreateShaderResourceView(ShadowDepthTextureArray, &ShadowShaderResourceViewDescription, &ShadowDepthSRV);
+
+	D3D11_SAMPLER_DESC ShadowSamplerDescription = {};
+	ShadowSamplerDescription.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	ShadowSamplerDescription.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	ShadowSamplerDescription.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	ShadowSamplerDescription.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	ShadowSamplerDescription.BorderColor[0] = 1.0f;
+	ShadowSamplerDescription.BorderColor[1] = 1.0f;
+	ShadowSamplerDescription.BorderColor[2] = 1.0f;
+	ShadowSamplerDescription.BorderColor[3] = 1.0f;
+	ShadowSamplerDescription.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+	ShadowSamplerDescription.MinLOD = 0.0f;
+	ShadowSamplerDescription.MaxLOD = D3D11_FLOAT32_MAX;
+	Device->CreateSamplerState(&ShadowSamplerDescription, &ShadowComparisonSampler);
+
+	D3D11_RASTERIZER_DESC ShadowRasterizerDescription = {};
+	ShadowRasterizerDescription.FillMode = D3D11_FILL_SOLID;
+	ShadowRasterizerDescription.CullMode = D3D11_CULL_BACK;
+	ShadowRasterizerDescription.DepthBias = 1500;
+	ShadowRasterizerDescription.DepthBiasClamp = 0.0f;
+	ShadowRasterizerDescription.SlopeScaledDepthBias = 2.5f;
+	ShadowRasterizerDescription.DepthClipEnable = TRUE;
+	Device->CreateRasterizerState(&ShadowRasterizerDescription, &ShadowRasterizerState);
 }
 
 void DeferredRenderer::Shutdown()
 {
 	ReleaseTargets();
+	ReleaseShadowResources();
 
 	if (LightingVertexShader != nullptr)
 	{
@@ -125,6 +269,18 @@ void DeferredRenderer::Shutdown()
 	{
 		GBufferSampler->Release();
 		GBufferSampler = nullptr;
+	}
+
+	if (ShadowComparisonSampler != nullptr)
+	{
+		ShadowComparisonSampler->Release();
+		ShadowComparisonSampler = nullptr;
+	}
+
+	if (ShadowRasterizerState != nullptr)
+	{
+		ShadowRasterizerState->Release();
+		ShadowRasterizerState = nullptr;
 	}
 }
 
@@ -248,16 +404,26 @@ void DeferredRenderer::RenderLightingPass(
 	LightBufferData.DirectionalLightColor = DirectionalLightColor;
 	LightBufferData.DirectionalLightIntensity = DirectionalLightIntensity;
 	LightBufferData.UseFullBrightnessWithoutLighting = UseFullBrightnessWithoutLighting;
+	LightBufferData.ShadowBias = 0.0015f;
+	LightBufferData.ShadowStrength = 1.0f;
+	LightBufferData.ShadowMapTexelSize = 1.0f / static_cast<float>(ShadowMapResolution);
+	LightBufferData.CascadeSplitDepths = ShadowCascadeSplitDepths;
+	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	{
+		LightBufferData.CascadeViewProjectionMatrices[CascadeIndex] = ShadowCascadeViewProjectionMatricesStorage[CascadeIndex];
+	}
 	DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
 
-	ID3D11ShaderResourceView* ShaderResourceViews[4] = {
+	ID3D11ShaderResourceView* ShaderResourceViews[5] = {
 		GBufferAlbedoSRV,
 		GBufferNormalSRV,
 		GBufferMaterialSRV,
-		GBufferDepthSRV
+		GBufferDepthSRV,
+		ShadowDepthSRV
 	};
-	DeviceContext->PSSetShaderResources(0, 4, ShaderResourceViews);
-	DeviceContext->PSSetSamplers(0, 1, &GBufferSampler);
+	ID3D11SamplerState* SamplerStates[2] = { GBufferSampler, ShadowComparisonSampler };
+	DeviceContext->PSSetShaderResources(0, 5, ShaderResourceViews);
+	DeviceContext->PSSetSamplers(0, 2, SamplerStates);
 	DeviceContext->VSSetShader(LightingVertexShader, nullptr, 0);
 	DeviceContext->PSSetShader(LightingPixelShader, nullptr, 0);
 	DeviceContext->VSSetConstantBuffers(0, 1, &CameraConstantBuffer);
@@ -267,8 +433,167 @@ void DeferredRenderer::RenderLightingPass(
 	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	DeviceContext->Draw(3, 0);
 
-	ID3D11ShaderResourceView* NullShaderResources[4] = { nullptr, nullptr, nullptr, nullptr };
-	DeviceContext->PSSetShaderResources(0, 4, NullShaderResources);
+	ID3D11ShaderResourceView* NullShaderResources[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+	DeviceContext->PSSetShaderResources(0, 5, NullShaderResources);
+}
+
+void DeferredRenderer::PrepareCascadedShadowMaps(
+	const DirectX::XMMATRIX& CameraViewMatrix,
+	const DirectX::XMMATRIX& CameraProjectionMatrix,
+	const DirectX::XMFLOAT3& CameraWorldPosition,
+	const DirectX::XMFLOAT3& DirectionalLightDirection)
+{
+	float CameraNearPlaneDistance = 0.1f;
+	float CameraFarPlaneDistance = 1000.0f;
+	CalculateCameraNearFar(CameraProjectionMatrix, CameraNearPlaneDistance, CameraFarPlaneDistance);
+
+	const float ShadowMaximumDistance = (std::min)(CameraFarPlaneDistance, 160.0f);
+	std::array<float, ShadowCascadeCount> CascadeSplitDepths = {};
+	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	{
+		const float NormalizedSplitDepth = ShadowCascadeSplitFactors[CascadeIndex];
+		CascadeSplitDepths[CascadeIndex] = CameraNearPlaneDistance + ((ShadowMaximumDistance - CameraNearPlaneDistance) * NormalizedSplitDepth);
+	}
+	ShadowCascadeSplitDepths = DirectX::XMFLOAT4(
+		CascadeSplitDepths[0],
+		CascadeSplitDepths[1],
+		CascadeSplitDepths[2],
+		CascadeSplitDepths[3]);
+
+	const DirectX::XMMATRIX InverseCameraViewProjectionMatrix = DirectX::XMMatrixInverse(nullptr, CameraViewMatrix * CameraProjectionMatrix);
+	std::array<DirectX::XMVECTOR, 8> BaseFrustumCorners = {};
+	BuildBaseFrustumCorners(InverseCameraViewProjectionMatrix, BaseFrustumCorners);
+
+	const DirectX::XMFLOAT3 LightDirectionNormalized = NormalizeVector3(DirectionalLightDirection);
+	const DirectX::XMVECTOR LightDirectionVector = DirectX::XMLoadFloat3(&LightDirectionNormalized);
+	const DirectX::XMVECTOR CameraWorldPositionVector = DirectX::XMLoadFloat3(&CameraWorldPosition);
+	DirectX::XMVECTOR UpDirection = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	const float ParallelFactor = std::fabs(DirectX::XMVectorGetX(DirectX::XMVector3Dot(DirectX::XMVector3Normalize(LightDirectionVector), UpDirection)));
+	if (ParallelFactor > 0.98f)
+	{
+		UpDirection = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	}
+
+	float PreviousSplitDepth = CameraNearPlaneDistance;
+	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	{
+		const float CascadeSplitDepth = CascadeSplitDepths[CascadeIndex];
+		const float NearBlendFactor = (PreviousSplitDepth - CameraNearPlaneDistance) / (CameraFarPlaneDistance - CameraNearPlaneDistance);
+		const float FarBlendFactor = (CascadeSplitDepth - CameraNearPlaneDistance) / (CameraFarPlaneDistance - CameraNearPlaneDistance);
+
+		std::array<DirectX::XMVECTOR, 8> CascadeCorners = {};
+		for (int CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
+		{
+			const DirectX::XMVECTOR BaseNearCorner = BaseFrustumCorners[CornerIndex];
+			const DirectX::XMVECTOR BaseFarCorner = BaseFrustumCorners[CornerIndex + 4];
+			const DirectX::XMVECTOR FrustumSegmentVector = BaseFarCorner - BaseNearCorner;
+			CascadeCorners[CornerIndex] = BaseNearCorner + (FrustumSegmentVector * NearBlendFactor);
+			CascadeCorners[CornerIndex + 4] = BaseNearCorner + (FrustumSegmentVector * FarBlendFactor);
+		}
+
+		DirectX::XMVECTOR CascadeCenter = DirectX::XMVectorZero();
+		for (const DirectX::XMVECTOR ExistingCascadeCorner : CascadeCorners)
+		{
+			CascadeCenter += ExistingCascadeCorner;
+		}
+		CascadeCenter = CascadeCenter / static_cast<float>(CascadeCorners.size());
+
+		float CascadeRadius = 0.0f;
+		for (const DirectX::XMVECTOR ExistingCascadeCorner : CascadeCorners)
+		{
+			const DirectX::XMVECTOR CornerOffset = ExistingCascadeCorner - CascadeCenter;
+			const float CornerDistance = DirectX::XMVectorGetX(DirectX::XMVector3Length(CornerOffset));
+			CascadeRadius = (std::max)(CascadeRadius, CornerDistance);
+		}
+		CascadeRadius = std::ceil(CascadeRadius * 16.0f) / 16.0f;
+
+		const float CameraToCascadeDistance = DirectX::XMVectorGetX(DirectX::XMVector3Length(CascadeCenter - CameraWorldPositionVector));
+		const float LightPullbackDistance = (std::max)(CascadeRadius + 120.0f, CameraToCascadeDistance + 50.0f);
+		const DirectX::XMVECTOR LightPosition = CascadeCenter - (DirectX::XMVector3Normalize(LightDirectionVector) * LightPullbackDistance);
+		const DirectX::XMMATRIX LightViewMatrix = DirectX::XMMatrixLookAtLH(LightPosition, CascadeCenter, UpDirection);
+		const float MinimumBoundX = -CascadeRadius;
+		const float MaximumBoundX = CascadeRadius;
+		const float MinimumBoundY = -CascadeRadius;
+		const float MaximumBoundY = CascadeRadius;
+		const float MinimumBoundZ = 0.1f;
+		const float MaximumBoundZ = (CascadeRadius * 2.0f) + 240.0f;
+		const DirectX::XMMATRIX LightProjectionMatrix = DirectX::XMMatrixOrthographicOffCenterLH(
+			MinimumBoundX,
+			MaximumBoundX,
+			MinimumBoundY,
+			MaximumBoundY,
+			MinimumBoundZ,
+			MaximumBoundZ);
+		const DirectX::XMMATRIX LightViewProjectionMatrix = LightViewMatrix * LightProjectionMatrix;
+
+		DirectX::XMStoreFloat4x4(&ShadowCascadeViewMatricesStorage[CascadeIndex], LightViewMatrix);
+		DirectX::XMStoreFloat4x4(&ShadowCascadeProjectionMatricesStorage[CascadeIndex], LightProjectionMatrix);
+		DirectX::XMStoreFloat4x4(&ShadowCascadeViewProjectionMatricesStorage[CascadeIndex], DirectX::XMMatrixTranspose(LightViewProjectionMatrix));
+
+		PreviousSplitDepth = CascadeSplitDepth;
+	}
+}
+
+bool DeferredRenderer::BeginShadowCascadePass(ID3D11DeviceContext* DeviceContext, int CascadeIndex)
+{
+	if (
+		DeviceContext == nullptr ||
+		CascadeIndex < 0 ||
+		CascadeIndex >= ShadowCascadeCount ||
+		ShadowDepthDSVs[CascadeIndex] == nullptr)
+	{
+		return false;
+	}
+
+	DeviceContext->OMSetRenderTargets(0, nullptr, ShadowDepthDSVs[CascadeIndex]);
+	DeviceContext->ClearDepthStencilView(ShadowDepthDSVs[CascadeIndex], D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	D3D11_VIEWPORT ShadowViewport = {};
+	ShadowViewport.TopLeftX = 0.0f;
+	ShadowViewport.TopLeftY = 0.0f;
+	ShadowViewport.Width = static_cast<float>(ShadowMapResolution);
+	ShadowViewport.Height = static_cast<float>(ShadowMapResolution);
+	ShadowViewport.MinDepth = 0.0f;
+	ShadowViewport.MaxDepth = 1.0f;
+	DeviceContext->RSSetViewports(1, &ShadowViewport);
+	DeviceContext->RSSetState(ShadowRasterizerState);
+	return true;
+}
+
+void DeferredRenderer::EndShadowPass(ID3D11DeviceContext* DeviceContext)
+{
+	if (DeviceContext == nullptr)
+	{
+		return;
+	}
+
+	DeviceContext->RSSetState(nullptr);
+	DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+}
+
+int DeferredRenderer::GetShadowCascadeCount() const
+{
+	return ShadowCascadeCount;
+}
+
+DirectX::XMMATRIX DeferredRenderer::GetShadowCascadeViewMatrix(int CascadeIndex) const
+{
+	if (CascadeIndex < 0 || CascadeIndex >= ShadowCascadeCount)
+	{
+		return DirectX::XMMatrixIdentity();
+	}
+
+	return DirectX::XMLoadFloat4x4(&ShadowCascadeViewMatricesStorage[CascadeIndex]);
+}
+
+DirectX::XMMATRIX DeferredRenderer::GetShadowCascadeProjectionMatrix(int CascadeIndex) const
+{
+	if (CascadeIndex < 0 || CascadeIndex >= ShadowCascadeCount)
+	{
+		return DirectX::XMMatrixIdentity();
+	}
+
+	return DirectX::XMLoadFloat4x4(&ShadowCascadeProjectionMatricesStorage[CascadeIndex]);
 }
 
 ID3D11DepthStencilView* DeferredRenderer::GetDepthStencilView() const
@@ -348,6 +673,30 @@ void DeferredRenderer::ReleaseTargets()
 	{
 		GBufferDepthTexture->Release();
 		GBufferDepthTexture = nullptr;
+	}
+}
+
+void DeferredRenderer::ReleaseShadowResources()
+{
+	if (ShadowDepthSRV != nullptr)
+	{
+		ShadowDepthSRV->Release();
+		ShadowDepthSRV = nullptr;
+	}
+
+	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	{
+		if (ShadowDepthDSVs[CascadeIndex] != nullptr)
+		{
+			ShadowDepthDSVs[CascadeIndex]->Release();
+			ShadowDepthDSVs[CascadeIndex] = nullptr;
+		}
+	}
+
+	if (ShadowDepthTextureArray != nullptr)
+	{
+		ShadowDepthTextureArray->Release();
+		ShadowDepthTextureArray = nullptr;
 	}
 }
 

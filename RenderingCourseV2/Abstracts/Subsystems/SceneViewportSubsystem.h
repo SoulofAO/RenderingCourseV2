@@ -6,9 +6,11 @@
 #include <wrl.h>
 #include <d3d11.h>
 #include <memory>
+#include <vector>
 #include <directxmath.h>
 
 class DisplayWin32;
+class RenderingComponent;
 
 enum class RenderPipelineType
 {
@@ -49,11 +51,13 @@ public:
 	bool IsDeferredRenderingEnabled() const;
 	void BeginGeometryPass();
 	void EndGeometryPass();
+	void ExecuteDirectionalShadowPass(const std::vector<RenderingComponent*>& RenderingComponents);
 	void ExecuteDeferredLightingPass();
 	void BeginDearImGuiFrame();
 	void EndDearImGuiFrame();
 	bool HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 	bool GetIsDearImGuiInitialized() const;
+	bool GetIsShadowPassActive() const;
 
 	bool bDisplayChangedColor = false;
 
@@ -74,6 +78,8 @@ private:
 	ID3D11DepthStencilView* DepthStencilView;
 	DirectX::XMFLOAT4X4 ViewMatrixStorage;
 	DirectX::XMFLOAT4X4 ProjectionMatrixStorage;
+	DirectX::XMFLOAT4X4 ShadowPassViewMatrixStorage;
+	DirectX::XMFLOAT4X4 ShadowPassProjectionMatrixStorage;
 	DirectX::XMFLOAT3 CameraWorldPosition;
 	DirectX::XMFLOAT3 DirectionalLightDirection;
 	DirectX::XMFLOAT4 DirectionalLightColor;
@@ -82,4 +88,5 @@ private:
 	RenderPipelineType CurrentRenderPipelineType;
 	std::unique_ptr<DeferredRenderer> DeferredRendererInstance;
 	bool IsDearImGuiInitialized;
+	bool IsShadowPassActive;
 };

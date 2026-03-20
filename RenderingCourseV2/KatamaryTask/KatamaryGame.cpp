@@ -19,6 +19,8 @@ static constexpr std::uint32_t PhysicsCollisionLayerCollectibleUncollected = 1u 
 static constexpr std::uint32_t PhysicsCollisionLayerCollectibleCollected = 1u << 3u;
 static constexpr std::uint32_t PhysicsCollisionMaskPlayer = 0xFFFFFFFFu & ~PhysicsCollisionLayerCollectibleCollected;
 static constexpr std::uint32_t PhysicsCollisionMaskCollectibleUncollected = 0xFFFFFFFFu;
+static constexpr std::uint32_t PhysicsCollisionMaskCollectibleCollectedWeld =
+	0xFFFFFFFFu & ~PhysicsCollisionLayerPlayer & ~PhysicsCollisionLayerCollectibleCollected;
 
 KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: Game(ApplicationName, ScreenWidth, ScreenHeight)
@@ -30,10 +32,13 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, BasePlayerSphereColliderRadius(1.0f)
 	, PlayerSphereColliderGrowthPerCollectible(0.08f)
 	, PlayerMoveForce(120.0f)
+	, PlayerJumpImpulse(400.0f)
+	, PlayerJumpTraceExtraDistance(0.5f)
 	, PlayerMaximumPlanarSpeed(9.0f)
 	, RoundDurationSeconds(60.0f)
 	, RemainingTimeSeconds(60.0f)
 	, IsRoundFinished(false)
+	, UseWeldCollectMode(false)
 	, CollectedItemCount(0)
 	, SpawnedCollectibleCount(15)
 	,GlobalCollectibleMeshScale(0.5)
@@ -113,6 +118,17 @@ float KatamaryGame::GetRemainingTimeSeconds() const
 bool KatamaryGame::GetIsRoundFinished() const
 {
 	return IsRoundFinished;
+}
+
+bool KatamaryGame::GetUseWeldCollectMode() const
+{
+	return UseWeldCollectMode;
+}
+
+void KatamaryGame::SetUseWeldCollectMode(bool NewUseWeldCollectMode)
+{
+	UseWeldCollectMode = NewUseWeldCollectMode;
+	UpdatePlayerCollisionSphereRadius();
 }
 
 void KatamaryGame::BeginPlay()
@@ -400,6 +416,54 @@ void KatamaryGame::HandlePlayerMovementInput(float DeltaTime, float MovementInpu
 	}
 }
 
+void KatamaryGame::HandlePlayerJumpInput()
+{
+	if (IsRoundFinished || PlayerPhysicsComponent == nullptr)
+	{
+		return;
+	}
+	if (IsPlayerNearSurfaceForJump() == false)
+	{
+		return;
+	}
+
+	const DirectX::XMFLOAT3 JumpImpulseValue(0.0f, PlayerJumpImpulse, 0.0f);
+	PlayerPhysicsComponent->ApplyImpulse(JumpImpulseValue);
+}
+
+bool KatamaryGame::IsPlayerNearSurfaceForJump() const
+{
+	if (PlayerActor == nullptr || PlayerPhysicsComponent == nullptr)
+	{
+		return false;
+	}
+
+	const DirectX::XMFLOAT3 PlayerPosition = PlayerActor->GetLocation(ETransformSpace::World);
+	const DirectX::XMFLOAT3 PlayerScale = PlayerActor->GetScale(ETransformSpace::World);
+	const float PlayerMaximumScaleAxis = (std::max)(
+		(std::max)(std::fabs(PlayerScale.x), std::fabs(PlayerScale.y)),
+		std::fabs(PlayerScale.z));
+	const float EffectivePlayerSphereRadius = (std::max)(0.01f, PlayerPhysicsComponent->GetSphereRadius() * PlayerMaximumScaleAxis);
+	const float AllowedDistanceToSurface = EffectivePlayerSphereRadius + PlayerJumpTraceExtraDistance;
+	std::vector<PhysicsComponent*> IgnoredPhysicsComponents;
+	IgnoredPhysicsComponents.push_back(PlayerPhysicsComponent);
+
+	PhysicsLineTraceHitResult SurfaceTraceHitResult = {};
+	const bool HasSurfaceTraceHit = PhysicsLibrary::LineTrace(
+		PlayerPosition,
+		DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f),
+		AllowedDistanceToSurface,
+		IgnoredPhysicsComponents,
+		SurfaceTraceHitResult);
+	
+	if (HasSurfaceTraceHit == false || SurfaceTraceHitResult.HasBlockingHit == false)
+	{
+		return false;
+	}
+
+	return SurfaceTraceHitResult.HitDistance <= AllowedDistanceToSurface;
+}
+
 void KatamaryGame::UpdateGameplayCamera()
 {
 	if (GameplayCameraComponent == nullptr || PlayerActor == nullptr)
@@ -525,18 +589,35 @@ void KatamaryGame::TryAttachCollectibleToPlayer(PhysicsComponent* CandidateColle
 		return;
 	}
 
-	CandidateCollectiblePhysicsComponent->ClearForces();
-	CandidateCollectiblePhysicsComponent->SetUseGravity(false);
-	CandidateCollectiblePhysicsComponent->SetVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
-	CandidateCollectiblePhysicsComponent->SetAngularVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
-	CandidateCollectiblePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Trigger);
-	//CandidateCollectiblePhysicsComponent->SetCollisionLayer(PhysicsCollisionLayerCollectibleCollected);
-	//CandidateCollectiblePhysicsComponent->SetCollisionMask(0u);
-	CandidateCollectiblePhysicsComponent->SetIsStatic(true);
+	if (UseWeldCollectMode)
+	{
+		CandidateCollectiblePhysicsComponent->ClearForces();
+		CandidateCollectiblePhysicsComponent->SetIsStatic(false);
+		CandidateCollectiblePhysicsComponent->SetUseGravity(true);
+		CandidateCollectiblePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Simulation);
+		CandidateCollectiblePhysicsComponent->SetCollisionLayer(PhysicsCollisionLayerCollectibleCollected);
+		CandidateCollectiblePhysicsComponent->SetCollisionMask(PhysicsCollisionMaskCollectibleCollectedWeld);
+		CandidateCollectiblePhysicsComponent->SetVelocity(PlayerPhysicsComponent->GetVelocity());
+		CandidateCollectiblePhysicsComponent->SetAngularVelocity(PlayerPhysicsComponent->GetAngularVelocity());
 
-	const Transform CandidateCollectibleWorldTransform = CandidateCollectibleActor->GetTransform(ETransformSpace::World);
-	CandidateCollectibleActor->AttachToActor(PlayerActor);
-	CandidateCollectibleActor->SetTransform(CandidateCollectibleWorldTransform, ETransformSpace::World);
+		if (PlayerPhysicsComponent->WeldWithComponent(CandidateCollectiblePhysicsComponent, true) == false)
+		{
+			return;
+		}
+	}
+	else
+	{
+		CandidateCollectiblePhysicsComponent->ClearForces();
+		CandidateCollectiblePhysicsComponent->SetUseGravity(false);
+		CandidateCollectiblePhysicsComponent->SetVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+		CandidateCollectiblePhysicsComponent->SetAngularVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+		CandidateCollectiblePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Trigger);
+		CandidateCollectiblePhysicsComponent->SetIsStatic(true);
+
+		const Transform CandidateCollectibleWorldTransform = CandidateCollectibleActor->GetTransform(ETransformSpace::World);
+		CandidateCollectibleActor->AttachToActor(PlayerActor);
+		CandidateCollectibleActor->SetTransform(CandidateCollectibleWorldTransform, ETransformSpace::World);
+	}
 
 	CollectedCollectiblePhysicsComponents.insert(CandidateCollectiblePhysicsComponent);
 	CollectedItemCount += 1;
@@ -571,7 +652,17 @@ void KatamaryGame::UpdatePlayerCollisionSphereRadius()
 		return;
 	}
 
-	const float TargetSphereColliderRadius = BasePlayerSphereColliderRadius + (PlayerSphereColliderGrowthPerCollectible * static_cast<float>(CollectedItemCount));
+	float TargetSphereColliderRadius = BasePlayerSphereColliderRadius;
+	if (UseWeldCollectMode == false)
+	{
+		TargetSphereColliderRadius = BasePlayerSphereColliderRadius + (PlayerSphereColliderGrowthPerCollectible * static_cast<float>(CollectedItemCount));
+	}
+	const float CurrentSphereColliderRadius = PlayerPhysicsComponent->GetSphereRadius();
+	if (std::fabs(CurrentSphereColliderRadius - TargetSphereColliderRadius) <= 0.0001f)
+	{
+		return;
+	}
+
 	PlayerPhysicsComponent->SetSphereCollider(TargetSphereColliderRadius);
 }
 

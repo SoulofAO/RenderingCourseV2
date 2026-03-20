@@ -351,7 +351,9 @@ void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 		DeviceContext->PSSetConstantBuffers(0, 1, &TransformConstantBuffer);
 	}
 
-	if (LightConstantBuffer != nullptr)
+	const bool IsShadowPassActive = SceneViewport->GetIsShadowPassActive();
+
+	if (LightConstantBuffer != nullptr && IsShadowPassActive == false)
 	{
 		MeshUniversalLightBufferData LightBufferData = {};
 		LightBufferData.DirectionalLightDirection = SceneViewport->GetDirectionalLightDirection();
@@ -362,7 +364,7 @@ void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 		DeviceContext->PSSetConstantBuffers(1, 1, &LightConstantBuffer);
 	}
 
-	if (MaterialConstantBuffer != nullptr)
+	if (MaterialConstantBuffer != nullptr && IsShadowPassActive == false)
 	{
 		MeshUniversalMaterialBufferData MaterialBufferData = {};
 		MaterialBufferData.BaseColor = BaseColor;
@@ -374,15 +376,27 @@ void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
 		DeviceContext->PSSetConstantBuffers(2, 1, &MaterialConstantBuffer);
 	}
 
-	BindMaterialResources(DeviceContext);
-
-	if (SceneViewport->IsDeferredRenderingEnabled() && DeferredVertexShader != nullptr && DeferredPixelShader != nullptr)
+	if (IsShadowPassActive)
 	{
+		if (DeferredVertexShader != nullptr)
+		{
+			DeviceContext->VSSetShader(DeferredVertexShader, nullptr, 0);
+		}
+		else
+		{
+			DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+		}
+		DeviceContext->PSSetShader(nullptr, nullptr, 0);
+	}
+	else if (SceneViewport->IsDeferredRenderingEnabled() && DeferredVertexShader != nullptr && DeferredPixelShader != nullptr)
+	{
+		BindMaterialResources(DeviceContext);
 		DeviceContext->VSSetShader(DeferredVertexShader, nullptr, 0);
 		DeviceContext->PSSetShader(DeferredPixelShader, nullptr, 0);
 	}
 	else
 	{
+		BindMaterialResources(DeviceContext);
 		DeviceContext->VSSetShader(VertexShader, nullptr, 0);
 		DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 	}

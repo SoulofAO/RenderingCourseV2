@@ -1,4 +1,5 @@
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
+#include "Abstracts/Components/MeshUniversalComponent.h"
 #include "Abstracts/Subsystems/DisplayWin32.h"
 #include "Abstracts/Core/Game.h"
 #include <imgui.h>
@@ -26,9 +27,12 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, UseFullBrightnessWithoutLighting(0.0f)
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
 	, IsDearImGuiInitialized(false)
+	, IsShadowPassActive(false)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, DirectX::XMMatrixIdentity());
 	DirectX::XMStoreFloat4x4(&ProjectionMatrixStorage, DirectX::XMMatrixIdentity());
+	DirectX::XMStoreFloat4x4(&ShadowPassViewMatrixStorage, DirectX::XMMatrixIdentity());
+	DirectX::XMStoreFloat4x4(&ShadowPassProjectionMatrixStorage, DirectX::XMMatrixIdentity());
 }
 
 SceneViewportSubsystem::~SceneViewportSubsystem()
@@ -213,11 +217,21 @@ int SceneViewportSubsystem::GetScreenHeight() const
 
 DirectX::XMMATRIX SceneViewportSubsystem::GetViewMatrix() const
 {
+	if (IsShadowPassActive)
+	{
+		return DirectX::XMLoadFloat4x4(&ShadowPassViewMatrixStorage);
+	}
+
 	return DirectX::XMLoadFloat4x4(&ViewMatrixStorage);
 }
 
 DirectX::XMMATRIX SceneViewportSubsystem::GetProjectionMatrix() const
 {
+	if (IsShadowPassActive)
+	{
+		return DirectX::XMLoadFloat4x4(&ShadowPassProjectionMatrixStorage);
+	}
+
 	return DirectX::XMLoadFloat4x4(&ProjectionMatrixStorage);
 }
 
@@ -296,6 +310,59 @@ void SceneViewportSubsystem::EndGeometryPass()
 	}
 }
 
+void SceneViewportSubsystem::ExecuteDirectionalShadowPass(const std::vector<RenderingComponent*>& RenderingComponents)
+{
+	if (
+		CurrentRenderPipelineType != RenderPipelineType::Deferred ||
+		DeferredRendererInstance == nullptr ||
+		Context == nullptr ||
+		DirectionalLightIntensity <= 0.0f)
+	{
+		return;
+	}
+
+	const DirectX::XMMATRIX CameraViewMatrix = DirectX::XMLoadFloat4x4(&ViewMatrixStorage);
+	const DirectX::XMMATRIX CameraProjectionMatrix = DirectX::XMLoadFloat4x4(&ProjectionMatrixStorage);
+	DeferredRendererInstance->PrepareCascadedShadowMaps(
+		CameraViewMatrix,
+		CameraProjectionMatrix,
+		CameraWorldPosition,
+		DirectionalLightDirection);
+
+	const int ShadowCascadeCount = DeferredRendererInstance->GetShadowCascadeCount();
+	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	{
+		if (DeferredRendererInstance->BeginShadowCascadePass(Context, CascadeIndex) == false)
+		{
+			continue;
+		}
+
+		IsShadowPassActive = true;
+		DirectX::XMStoreFloat4x4(&ShadowPassViewMatrixStorage, DeferredRendererInstance->GetShadowCascadeViewMatrix(CascadeIndex));
+		DirectX::XMStoreFloat4x4(&ShadowPassProjectionMatrixStorage, DeferredRendererInstance->GetShadowCascadeProjectionMatrix(CascadeIndex));
+		for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
+		{
+			MeshUniversalComponent* ExistingMeshUniversalComponent = dynamic_cast<MeshUniversalComponent*>(ExistingRenderingComponent);
+			if (ExistingMeshUniversalComponent != nullptr)
+			{
+				ExistingMeshUniversalComponent->Render(this);
+			}
+		}
+		IsShadowPassActive = false;
+	}
+
+	DeferredRendererInstance->EndShadowPass(Context);
+
+	D3D11_VIEWPORT ScreenViewport = {};
+	ScreenViewport.Width = static_cast<float>(GetScreenWidth());
+	ScreenViewport.Height = static_cast<float>(GetScreenHeight());
+	ScreenViewport.TopLeftX = 0.0f;
+	ScreenViewport.TopLeftY = 0.0f;
+	ScreenViewport.MinDepth = 0.0f;
+	ScreenViewport.MaxDepth = 1.0f;
+	Context->RSSetViewports(1, &ScreenViewport);
+}
+
 void SceneViewportSubsystem::ExecuteDeferredLightingPass()
 {
 	if (CurrentRenderPipelineType != RenderPipelineType::Deferred || DeferredRendererInstance == nullptr)
@@ -355,6 +422,11 @@ bool SceneViewportSubsystem::HandleDearImGuiMessage(HWND WindowHandle, UINT Mess
 bool SceneViewportSubsystem::GetIsDearImGuiInitialized() const
 {
 	return IsDearImGuiInitialized;
+}
+
+bool SceneViewportSubsystem::GetIsShadowPassActive() const
+{
+	return IsShadowPassActive;
 }
 
 void SceneViewportSubsystem::CreateBackBuffer()

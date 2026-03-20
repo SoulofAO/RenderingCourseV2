@@ -334,6 +334,11 @@ void Game::Draw()
 			return LeftRenderingComponent->GetRenderOrder() < RightRenderingComponent->GetRenderOrder();
 		});
 
+	if (SceneViewport->IsDeferredRenderingEnabled())
+	{
+		SceneViewport->ExecuteDirectionalShadowPass(RenderingComponents);
+	}
+
 	SceneViewport->BeginGeometryPass();
 
 	for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)

@@ -1,10 +1,47 @@
 #include "Abstracts/Others/PhysicsLibrary.h"
+#include "Abstracts/Components/PhysicsComponent.h"
 #include "Abstracts/Core/Game.h"
 #include "Abstracts/Components/CameraComponent.h"
 #include "Abstracts/Physics/PhysXTypeConversion.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include <directxmath.h>
+#include <unordered_set>
+
+class PhysicsLibraryLineTraceQueryFilterCallback : public physx::PxQueryFilterCallback
+{
+public:
+	explicit PhysicsLibraryLineTraceQueryFilterCallback(const std::unordered_set<physx::PxRigidActor*>& NewIgnoredActors)
+		: IgnoredActors(NewIgnoredActors)
+	{
+	}
+
+	physx::PxQueryHitType::Enum preFilter(
+		const physx::PxFilterData&,
+		const physx::PxShape*,
+		const physx::PxRigidActor* CandidateActor,
+		physx::PxHitFlags&) override
+	{
+		if (CandidateActor != nullptr && IgnoredActors.find(const_cast<physx::PxRigidActor*>(CandidateActor)) != IgnoredActors.end())
+		{
+			return physx::PxQueryHitType::eNONE;
+		}
+
+		return physx::PxQueryHitType::eBLOCK;
+	}
+
+	physx::PxQueryHitType::Enum postFilter(
+		const physx::PxFilterData&,
+		const physx::PxQueryHit&,
+		const physx::PxShape*,
+		const physx::PxRigidActor*) override
+	{
+		return physx::PxQueryHitType::eBLOCK;
+	}
+
+private:
+	const std::unordered_set<physx::PxRigidActor*>& IgnoredActors;
+};
 
 bool PhysicsLibrary::BuildLineTraceFromMousePosition(
 	int MousePositionX,
@@ -78,6 +115,22 @@ bool PhysicsLibrary::LineTrace(
 	float TraceLength,
 	PhysicsLineTraceHitResult& HitResult)
 {
+	const std::vector<PhysicsComponent*> IgnoredPhysicsComponents;
+	return LineTrace(
+		TraceStart,
+		TraceDirection,
+		TraceLength,
+		IgnoredPhysicsComponents,
+		HitResult);
+}
+
+bool PhysicsLibrary::LineTrace(
+	const DirectX::XMFLOAT3& TraceStart,
+	const DirectX::XMFLOAT3& TraceDirection,
+	float TraceLength,
+	const std::vector<PhysicsComponent*>& IgnoredPhysicsComponents,
+	PhysicsLineTraceHitResult& HitResult)
+{
 	HitResult.HasBlockingHit = false;
 	HitResult.HitLocation = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	HitResult.HitNormal = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -123,13 +176,31 @@ bool PhysicsLibrary::LineTrace(
 	const physx::PxVec3 TraceDirectionPhysX = PhysXTypeConversion::ToPxVector(NormalizedTraceDirection);
 	const physx::PxHitFlags QueryHitFlags = physx::PxHitFlag::ePOSITION | physx::PxHitFlag::eNORMAL;
 	physx::PxRaycastBuffer RaycastHitBuffer;
+	std::unordered_set<physx::PxRigidActor*> IgnoredActors;
+	for (PhysicsComponent* ExistingIgnoredPhysicsComponent : IgnoredPhysicsComponents)
+	{
+		if (ExistingIgnoredPhysicsComponent == nullptr)
+		{
+			continue;
+		}
+
+		physx::PxRigidActor* ExistingIgnoredPhysicsActor = ExistingIgnoredPhysicsComponent->GetPhysicsActor();
+		if (ExistingIgnoredPhysicsActor != nullptr)
+		{
+			IgnoredActors.insert(ExistingIgnoredPhysicsActor);
+		}
+	}
+	PhysicsLibraryLineTraceQueryFilterCallback QueryFilterCallback(IgnoredActors);
+	const physx::PxQueryFilterData QueryFilterData(physx::PxQueryFlag::eSTATIC | physx::PxQueryFlag::eDYNAMIC | physx::PxQueryFlag::ePREFILTER);
 
 	const bool HasRaycastHit = PhysicsScene->raycast(
 		TraceStartPhysX,
 		TraceDirectionPhysX,
 		TraceLength,
 		RaycastHitBuffer,
-		QueryHitFlags);
+		QueryHitFlags,
+		QueryFilterData,
+		&QueryFilterCallback);
 	if (HasRaycastHit == false || RaycastHitBuffer.hasBlock == false)
 	{
 		return false;

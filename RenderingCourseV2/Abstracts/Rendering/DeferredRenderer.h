@@ -2,6 +2,7 @@
 
 #include <directxmath.h>
 #include <d3d11.h>
+#include <array>
 #include <string>
 
 class DeferredRenderer
@@ -24,11 +25,22 @@ public:
 		const DirectX::XMFLOAT4& DirectionalLightColor,
 		float DirectionalLightIntensity,
 		float UseFullBrightnessWithoutLighting);
+	void PrepareCascadedShadowMaps(
+		const DirectX::XMMATRIX& CameraViewMatrix,
+		const DirectX::XMMATRIX& CameraProjectionMatrix,
+		const DirectX::XMFLOAT3& CameraWorldPosition,
+		const DirectX::XMFLOAT3& DirectionalLightDirection);
+	bool BeginShadowCascadePass(ID3D11DeviceContext* DeviceContext, int CascadeIndex);
+	void EndShadowPass(ID3D11DeviceContext* DeviceContext);
+	int GetShadowCascadeCount() const;
+	DirectX::XMMATRIX GetShadowCascadeViewMatrix(int CascadeIndex) const;
+	DirectX::XMMATRIX GetShadowCascadeProjectionMatrix(int CascadeIndex) const;
 
 	ID3D11DepthStencilView* GetDepthStencilView() const;
 
 private:
 	void ReleaseTargets();
+	void ReleaseShadowResources();
 	bool CompileShader(ID3D11Device* Device, const std::string& Path, const char* EntryPoint, const char* Model, ID3DBlob** ByteCode, ID3D11DeviceChild** ShaderObject);
 
 	ID3D11Texture2D* GBufferAlbedoTexture;
@@ -50,6 +62,16 @@ private:
 	ID3D11Buffer* CameraConstantBuffer;
 	ID3D11Buffer* LightConstantBuffer;
 	ID3D11SamplerState* GBufferSampler;
+	ID3D11Texture2D* ShadowDepthTextureArray;
+	ID3D11ShaderResourceView* ShadowDepthSRV;
+	ID3D11DepthStencilView* ShadowDepthDSVs[4];
+	ID3D11SamplerState* ShadowComparisonSampler;
+	ID3D11RasterizerState* ShadowRasterizerState;
+	std::array<DirectX::XMFLOAT4X4, 4> ShadowCascadeViewMatricesStorage;
+	std::array<DirectX::XMFLOAT4X4, 4> ShadowCascadeProjectionMatricesStorage;
+	std::array<DirectX::XMFLOAT4X4, 4> ShadowCascadeViewProjectionMatricesStorage;
+	DirectX::XMFLOAT4 ShadowCascadeSplitDepths;
+	int ShadowMapResolution;
 	int CachedWidth;
 	int CachedHeight;
 };

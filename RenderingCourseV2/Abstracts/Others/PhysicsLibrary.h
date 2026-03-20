@@ -2,6 +2,9 @@
 
 #include <directxmath.h>
 #include <physx/PxPhysicsAPI.h>
+#include <vector>
+
+class PhysicsComponent;
 
 struct PhysicsLineTraceHitResult
 {
@@ -26,5 +29,12 @@ public:
 		const DirectX::XMFLOAT3& TraceStart,
 		const DirectX::XMFLOAT3& TraceDirection,
 		float TraceLength,
+		PhysicsLineTraceHitResult& HitResult);
+
+	static bool LineTrace(
+		const DirectX::XMFLOAT3& TraceStart,
+		const DirectX::XMFLOAT3& TraceDirection,
+		float TraceLength,
+		const std::vector<PhysicsComponent*>& IgnoredPhysicsComponents,
 		PhysicsLineTraceHitResult& HitResult);
 };

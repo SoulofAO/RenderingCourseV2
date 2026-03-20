@@ -15,4 +15,5 @@ protected:
 
 private:
 	KatamaryGame* GetOwningKatamaryGame() const;
+	bool UseWeldCollectMode;
 };

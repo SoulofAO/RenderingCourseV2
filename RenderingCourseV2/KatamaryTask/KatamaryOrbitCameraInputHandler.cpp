@@ -54,5 +54,9 @@ void KatamaryOrbitCameraInputHandler::HandleInput(Game* OwningGame, InputDevice*
 	if (KatamaryGameInstance != nullptr)
 	{
 		KatamaryGameInstance->HandlePlayerMovementInput(DeltaTime, MovementInputForward, MovementInputRight);
+		if (Input->WasKeyPressedThisFrame(VK_SPACE))
+		{
+			KatamaryGameInstance->HandlePlayerJumpInput();
+		}
 	}
 }

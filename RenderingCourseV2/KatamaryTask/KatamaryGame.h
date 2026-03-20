@@ -51,7 +51,10 @@ public:
 	int GetCollectedItemCount() const;
 	float GetRemainingTimeSeconds() const;
 	bool GetIsRoundFinished() const;
+	bool GetUseWeldCollectMode() const;
+	void SetUseWeldCollectMode(bool NewUseWeldCollectMode);
 	void HandlePlayerMovementInput(float DeltaTime, float MovementInputForward, float MovementInputRight);
+	void HandlePlayerJumpInput();
 
 protected:
 	void BeginPlay() override;
@@ -69,6 +72,7 @@ private:
 	void HandleRoundTimer(float DeltaTime);
 	void ProcessPendingCollectibleAttachments();
 	void UpdatePlayerCollisionSphereRadius();
+	bool IsPlayerNearSurfaceForJump() const;
 	void UpdateGameplayCamera();
 	DirectX::XMFLOAT3 BuildCameraRelativeMovementDirection(float MovementInputForward, float MovementInputRight) const;
 	void HandlePhysicsCollisionDetected(
@@ -96,10 +100,13 @@ private:
 	float BasePlayerSphereColliderRadius;
 	float PlayerSphereColliderGrowthPerCollectible;
 	float PlayerMoveForce;
+	float PlayerJumpImpulse;
+	float PlayerJumpTraceExtraDistance;
 	float PlayerMaximumPlanarSpeed;
 	float RoundDurationSeconds;
 	float RemainingTimeSeconds;
 	bool IsRoundFinished;
+	bool UseWeldCollectMode;
 	int CollectedItemCount;
 	int SpawnedCollectibleCount;
 };
