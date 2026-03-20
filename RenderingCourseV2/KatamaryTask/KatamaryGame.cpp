@@ -117,7 +117,6 @@ bool KatamaryGame::GetIsRoundFinished() const
 
 void KatamaryGame::BeginPlay()
 {
-	SetDefaultCameraSettingsWindowVisible(false);
 	SetMouseInputMode(MouseInputMode::UIOnly);
 	BuildScene();
 	Game::BeginPlay();
