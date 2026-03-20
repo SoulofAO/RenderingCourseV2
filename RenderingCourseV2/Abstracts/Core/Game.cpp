@@ -7,6 +7,7 @@
 #include "Abstracts/Components/RenderingComponent.h"
 #include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Components/CameraComponent.h"
+#include "Abstracts/Components/MeshUniversalComponent.h"
 #include "Abstracts/Components/FPSSpectateCameraComponent.h"
 #include "Abstracts/Components/UIRenderingComponent.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
@@ -56,6 +57,8 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, FallbackCameraComponentInstance(nullptr)
 	, CurrentMouseInputMode(MouseInputMode::GameAndUI)
 	, DefaultCameraSettingsWindowVisible(true)
+	, HasInputResourcesRebuildResult(false)
+	, LastInputResourcesRebuildSucceeded(false)
 	, IsWorldBoundarySphereEnabled(false)
 	, WorldBoundarySphereCenter(0.0f, 0.0f, 0.0f)
 	, WorldBoundarySphereRadius(4000.0f)
@@ -726,6 +729,24 @@ void Game::DrawCameraPossessionUserInterface()
 			ImGui::TextUnformatted("Gameplay camera");
 		}
 
+		if (ImGui::Button("Force Rebuild InputResources"))
+		{
+			LastInputResourcesRebuildSucceeded = ForceRebuildInputResourcesAndReinitializeScene();
+			HasInputResourcesRebuildResult = true;
+		}
+
+		if (HasInputResourcesRebuildResult)
+		{
+			if (LastInputResourcesRebuildSucceeded)
+			{
+				ImGui::TextUnformatted("InputResources rebuild: success");
+			}
+			else
+			{
+				ImGui::TextUnformatted("InputResources rebuild: failed");
+			}
+		}
+
 		LightComponent* DirectionalLightComponent = FindFirstDirectionalLightComponent();
 		if (DirectionalLightComponent != nullptr)
 		{
@@ -755,6 +776,52 @@ void Game::DrawCameraPossessionUserInterface()
 		}
 	}
 	ImGui::End();
+}
+
+bool Game::ForceRebuildInputResourcesAndReinitializeScene()
+{
+	SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+	ID3D11Device* Device = SceneViewportSubsystemInstance != nullptr ? SceneViewportSubsystemInstance->GetDevice() : nullptr;
+
+	if (Resources == nullptr)
+	{
+		return false;
+	}
+
+	const bool IsInputResourcesRebuildSucceeded = Resources->ForceRebuildInputResources(Device);
+
+	std::vector<MeshUniversalComponent*> MeshUniversalComponentsToReinitialize;
+	for (const std::unique_ptr<Actor>& ExistingActor : Actors)
+	{
+		if (ExistingActor == nullptr)
+		{
+			continue;
+		}
+
+		const std::vector<MeshUniversalComponent*> ExistingMeshUniversalComponents =
+			ExistingActor->GetAllComponentsByClass<MeshUniversalComponent>(false);
+		for (MeshUniversalComponent* ExistingMeshUniversalComponent : ExistingMeshUniversalComponents)
+		{
+			if (ExistingMeshUniversalComponent != nullptr)
+			{
+				MeshUniversalComponentsToReinitialize.push_back(ExistingMeshUniversalComponent);
+			}
+		}
+	}
+
+	for (MeshUniversalComponent* ExistingMeshUniversalComponent : MeshUniversalComponentsToReinitialize)
+	{
+		ExistingMeshUniversalComponent->Shutdown();
+		ExistingMeshUniversalComponent->Initialize();
+	}
+
+	PhysicsSubsystem* PhysicsSubsystemInstance = GetSubsystem<PhysicsSubsystem>();
+	if (PhysicsSubsystemInstance != nullptr)
+	{
+		PhysicsSubsystemInstance->RebuildAllPhysicsComponents();
+	}
+
+	return IsInputResourcesRebuildSucceeded;
 }
 
 void Game::ToggleCameraPossessionFromUserInterface()

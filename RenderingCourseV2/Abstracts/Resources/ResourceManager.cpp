@@ -1,5 +1,7 @@
 #include "Abstracts/Resources/ResourceManager.h"
 #include <d3d11.h>
+#include <algorithm>
+#include <cctype>
 #include <filesystem>
 
 #include <DirectXTex.h>
@@ -145,6 +147,79 @@ std::shared_ptr<ModelResource> ResourceManager::LoadModelResource(const std::str
 
 	ModelResourceCache.insert({ NormalizedSourcePath, NewModelResource });
 	return NewModelResource;
+}
+
+bool ResourceManager::ForceRebuildInputResources(ID3D11Device* Device)
+{
+	namespace FileSystem = std::filesystem;
+
+	if (ProjectRootPath.empty())
+	{
+		return false;
+	}
+
+	const FileSystem::path InputResourcesRootPath = FileSystem::u8path(ProjectRootPath) / "InputResources";
+	if (FileSystem::exists(InputResourcesRootPath) == false)
+	{
+		return false;
+	}
+
+	bool HasAnyProcessedAsset = false;
+	bool HasAnyFailedAsset = false;
+
+	for (const FileSystem::directory_entry& ExistingEntry : FileSystem::recursive_directory_iterator(InputResourcesRootPath))
+	{
+		if (ExistingEntry.is_regular_file() == false)
+		{
+			continue;
+		}
+
+		std::string FileExtension = ExistingEntry.path().extension().string();
+		std::transform(
+			FileExtension.begin(),
+			FileExtension.end(),
+			FileExtension.begin(),
+			[](unsigned char ExistingCharacter)
+			{
+				return static_cast<char>(std::tolower(ExistingCharacter));
+			});
+
+		const bool IsModelAsset = FileExtension == ".fbx";
+		const bool IsTextureAsset =
+			FileExtension == ".png" ||
+			FileExtension == ".jpg" ||
+			FileExtension == ".jpeg" ||
+			FileExtension == ".bmp" ||
+			FileExtension == ".tga" ||
+			FileExtension == ".tif" ||
+			FileExtension == ".tiff";
+		if (IsModelAsset == false && IsTextureAsset == false)
+		{
+			continue;
+		}
+
+		const std::string SourceAssetPath = ExistingEntry.path().string();
+		const std::string NormalizedSourceAssetPath = NormalizePath(SourceAssetPath);
+		const std::string CookedAssetPath = Cooker.ResolveCookedPath(
+			NormalizedSourceAssetPath,
+			IsModelAsset ? ".fbx" : ".dds");
+
+		std::error_code RemoveErrorCode;
+		FileSystem::remove(CookedAssetPath, RemoveErrorCode);
+
+		const bool IsCookSucceeded = IsModelAsset
+			? Cooker.EnsureCookedModel(NormalizedSourceAssetPath, CookedAssetPath)
+			: Cooker.EnsureCookedTexture(NormalizedSourceAssetPath, CookedAssetPath, Device);
+		HasAnyProcessedAsset = true;
+		if (IsCookSucceeded == false)
+		{
+			HasAnyFailedAsset = true;
+		}
+	}
+
+	TextureResourceCache.clear();
+	ModelResourceCache.clear();
+	return HasAnyProcessedAsset && HasAnyFailedAsset == false;
 }
 
 std::string ResourceManager::NormalizePath(const std::string& Path) const

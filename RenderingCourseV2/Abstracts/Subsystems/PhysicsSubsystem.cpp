@@ -279,6 +279,34 @@ void PhysicsSubsystem::UnregisterPhysicsActor(physx::PxRigidActor* PhysicsActor)
 	PhysicsActorToComponentMap.erase(PhysicsActor);
 }
 
+void PhysicsSubsystem::RebuildAllPhysicsComponents()
+{
+	if (GetIsInitialized() == false)
+	{
+		return;
+	}
+
+	for (PhysicsComponent* ExistingComponent : PhysicsComponents)
+	{
+		if (ExistingComponent != nullptr)
+		{
+			ExistingComponent->DestroyPhysicsActor();
+		}
+	}
+
+	PhysicsActorToComponentMap.clear();
+	ReleaseCachedConvexMeshes();
+	ReleaseCachedTriangleMeshes();
+
+	for (PhysicsComponent* ExistingComponent : PhysicsComponents)
+	{
+		if (ExistingComponent != nullptr)
+		{
+			ExistingComponent->CreatePhysicsActor(this);
+		}
+	}
+}
+
 void PhysicsSubsystem::SetFixedDeltaTime(float NewFixedDeltaTime)
 {
 	if (NewFixedDeltaTime > 0.0f)

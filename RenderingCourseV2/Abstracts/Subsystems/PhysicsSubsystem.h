@@ -38,6 +38,7 @@ public:
 
 	void RegisterPhysicsActor(PhysicsComponent* Component, physx::PxRigidActor* PhysicsActor);
 	void UnregisterPhysicsActor(physx::PxRigidActor* PhysicsActor);
+	void RebuildAllPhysicsComponents();
 
 	void SetFixedDeltaTime(float NewFixedDeltaTime);
 	float GetFixedDeltaTime() const;

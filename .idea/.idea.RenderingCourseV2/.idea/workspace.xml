@@ -10,7 +10,12 @@
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Physics/PhysXTypeConversion.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Physics/PhysXTypeConversion.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Resources/ResourceManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Resources/ResourceManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Resources/ResourceManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Resources/ResourceManager.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Cooked/InputResources/Meshes/Katamary/Tree.fbx" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Cooked/InputResources/Meshes/Katamary/Tree.fbx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,7 +116,8 @@
       <workItem from="1773868575289" duration="4108000" />
       <workItem from="1773908263007" duration="15336000" />
       <workItem from="1774005763954" duration="858000" />
-      <workItem from="1774011672600" duration="5865000" />
+      <workItem from="1774011672600" duration="6027000" />
+      <workItem from="1774024109040" duration="1152000" />
     </task>
     <servers />
   </component>
@@ -145,7 +151,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp</url>
-          <line>301</line>
+          <line>329</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
       </breakpoints>

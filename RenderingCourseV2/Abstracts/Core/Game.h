@@ -153,6 +153,7 @@ protected:
 	void UpdateInputHandlerActivationState();
 	void DrawCameraPossessionUserInterface();
 	void ToggleCameraPossessionFromUserInterface();
+	bool ForceRebuildInputResourcesAndReinitializeScene();
 	LightComponent* FindFirstDirectionalLightComponent() const;
 	void ApplyWorldBoundarySphereSettings();
 
@@ -175,6 +176,8 @@ protected:
 	bool IsExitRequested;
 	MouseInputMode CurrentMouseInputMode;
 	bool DefaultCameraSettingsWindowVisible;
+	bool HasInputResourcesRebuildResult;
+	bool LastInputResourcesRebuildSucceeded;
 	bool IsWorldBoundarySphereEnabled;
 	DirectX::XMFLOAT3 WorldBoundarySphereCenter;
 	float WorldBoundarySphereRadius;

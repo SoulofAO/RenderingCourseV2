@@ -18,6 +18,7 @@ public:
 
 	std::shared_ptr<TextureResource> LoadTextureResource(const std::string& SourcePath, ID3D11Device* Device);
 	std::shared_ptr<ModelResource> LoadModelResource(const std::string& SourcePath);
+	bool ForceRebuildInputResources(ID3D11Device* Device);
 
 private:
 	std::string NormalizePath(const std::string& Path) const;
