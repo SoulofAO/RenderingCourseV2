@@ -24,6 +24,8 @@ cbuffer DeferredLightBuffer : register(b1)
 	float ShadowStrength;
 	float ShadowMapTexelSize;
 	float4 CascadeSplitDepths;
+	float ShadowCascadeCountValue;
+	float3 ShadowCascadeCountValuePadding;
 	float4x4 CascadeViewProjectionMatrices[4];
 	float DeferredDebugBufferViewMode;
 	float3 DeferredDebugBufferViewModePadding;
@@ -46,7 +48,8 @@ VS_OUT VSMain(uint VertexId : SV_VertexID)
 
 float3 ReconstructWorldPosition(float2 TextureCoordinates, float DepthValue)
 {
-	float4 ClipPosition = float4(TextureCoordinates * 2.0f - 1.0f, DepthValue, 1.0f);
+	float2 ClipCoordinates = float2(TextureCoordinates.x * 2.0f - 1.0f, 1.0f - TextureCoordinates.y * 2.0f);
+	float4 ClipPosition = float4(ClipCoordinates, DepthValue, 1.0f);
 	float4 WorldPosition = mul(ClipPosition, InverseViewProjectionMatrix);
 	return WorldPosition.xyz / max(WorldPosition.w, 0.0001f);
 }
@@ -55,16 +58,22 @@ float CalculateShadowVisibility(float3 WorldPosition)
 {
 	float ViewSpaceDepth = mul(float4(WorldPosition, 1.0f), ViewMatrix).z;
 	ViewSpaceDepth = max(ViewSpaceDepth, 0.0f);
+	int MaximumCascadeIndex = clamp((int)ShadowCascadeCountValue - 1, 0, 3);
+	float MaximumShadowDepth = CascadeSplitDepths[MaximumCascadeIndex];
+	if (ViewSpaceDepth > MaximumShadowDepth)
+	{
+		return 1.0f;
+	}
 	int CascadeIndex = 0;
-	if (ViewSpaceDepth > CascadeSplitDepths.x)
+	if (MaximumCascadeIndex >= 1 && ViewSpaceDepth > CascadeSplitDepths.x)
 	{
 		CascadeIndex = 1;
 	}
-	if (ViewSpaceDepth > CascadeSplitDepths.y)
+	if (MaximumCascadeIndex >= 2 && ViewSpaceDepth > CascadeSplitDepths.y)
 	{
 		CascadeIndex = 2;
 	}
-	if (ViewSpaceDepth > CascadeSplitDepths.z)
+	if (MaximumCascadeIndex >= 3 && ViewSpaceDepth > CascadeSplitDepths.z)
 	{
 		CascadeIndex = 3;
 	}

@@ -102,7 +102,6 @@ void MeshUniversalDeferredRendererProxyObject::RenderDeferredShadowPass(const De
 		return;
 	}
 
-	DeviceContext->RSSetState(OwnerComponent->RasterState);
 	DeviceContext->IASetInputLayout(OwnerComponent->Layout);
 	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	DeviceContext->IASetIndexBuffer(OwnerComponent->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);

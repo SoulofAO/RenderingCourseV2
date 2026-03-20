@@ -121,6 +121,8 @@ struct DeferredLightBufferData
 	float ShadowStrength;
 	float ShadowMapTexelSize;
 	DirectX::XMFLOAT4 CascadeSplitDepths;
+	float ShadowCascadeCountValue;
+	DirectX::XMFLOAT3 ShadowCascadeCountValuePadding;
 	DirectX::XMFLOAT4X4 CascadeViewProjectionMatrices[ShadowCascadeCount];
 	float DeferredDebugBufferViewMode;
 	DirectX::XMFLOAT3 DeferredDebugBufferViewModePadding;
@@ -445,6 +447,7 @@ void DeferredRenderer::RenderLightingPass(
 	LightBufferData.ShadowStrength = ShadowStrength;
 	LightBufferData.ShadowMapTexelSize = 1.0f / static_cast<float>(ShadowMapResolution);
 	LightBufferData.CascadeSplitDepths = ShadowCascadeSplitDepths;
+	LightBufferData.ShadowCascadeCountValue = static_cast<float>(ShadowCascadeCountSetting);
 	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
 	{
 		LightBufferData.CascadeViewProjectionMatrices[CascadeIndex] = ShadowCascadeViewProjectionMatricesStorage[CascadeIndex];

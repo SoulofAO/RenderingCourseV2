@@ -77,6 +77,6 @@ int RunKatamaryTask()
 
 int main()
 {
-	RunLightingTest();
+	 RunKatamaryTask();
 }
 
