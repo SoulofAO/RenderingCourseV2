@@ -25,6 +25,34 @@ namespace
 		return OutputVector;
 	}
 
+	float GetShadowCascadeSplitFactor(int CascadeIndex, int ShadowCascadeCountSetting)
+	{
+		if (ShadowCascadeCountSetting <= 1)
+		{
+			return 1.0f;
+		}
+
+		if (ShadowCascadeCountSetting == 2)
+		{
+			return (CascadeIndex == 0) ? 0.25f : 1.0f;
+		}
+
+		if (ShadowCascadeCountSetting == 3)
+		{
+			if (CascadeIndex == 0)
+			{
+				return 0.15f;
+			}
+			if (CascadeIndex == 1)
+			{
+				return 0.4f;
+			}
+			return 1.0f;
+		}
+
+		return ShadowCascadeSplitFactors[CascadeIndex];
+	}
+
 	void CalculateCameraNearFar(
 		const DirectX::XMMATRIX& ProjectionMatrix,
 		float& OutNearPlaneDistance,
@@ -77,6 +105,7 @@ namespace
 
 struct DeferredCameraBufferData
 {
+	DirectX::XMFLOAT4X4 ViewMatrix;
 	DirectX::XMFLOAT4X4 InverseViewProjectionMatrix;
 	DirectX::XMFLOAT3 CameraWorldPosition;
 	float Padding0;
@@ -123,6 +152,8 @@ DeferredRenderer::DeferredRenderer()
 	, ShadowRasterizerState(nullptr)
 	, ShadowCascadeSplitDepths(10.0f, 30.0f, 60.0f, 120.0f)
 	, ShadowMapResolution(2048)
+	, ShadowCascadeCountSetting(ShadowCascadeCount)
+	, ShadowMaximumDistanceSetting(160.0f)
 	, CachedWidth(0)
 	, CachedHeight(0)
 {
@@ -382,12 +413,14 @@ void DeferredRenderer::EndGeometryPass(ID3D11DeviceContext* DeviceContext)
 void DeferredRenderer::RenderLightingPass(
 	ID3D11DeviceContext* DeviceContext,
 	ID3D11RenderTargetView* FinalRenderTargetView,
+	const DirectX::XMMATRIX& ViewMatrix,
 	const DirectX::XMMATRIX& InverseViewProjectionMatrix,
 	const DirectX::XMFLOAT3& CameraWorldPosition,
 	const DirectX::XMFLOAT3& DirectionalLightDirection,
 	const DirectX::XMFLOAT4& DirectionalLightColor,
 	float DirectionalLightIntensity,
 	float UseFullBrightnessWithoutLighting,
+	float ShadowStrength,
 	float DeferredDebugBufferViewMode)
 {
 	if (DeviceContext == nullptr || FinalRenderTargetView == nullptr || LightingVertexShader == nullptr || LightingPixelShader == nullptr)
@@ -398,6 +431,7 @@ void DeferredRenderer::RenderLightingPass(
 	DeviceContext->OMSetRenderTargets(1, &FinalRenderTargetView, nullptr);
 
 	DeferredCameraBufferData CameraBufferData = {};
+	DirectX::XMStoreFloat4x4(&CameraBufferData.ViewMatrix, DirectX::XMMatrixTranspose(ViewMatrix));
 	DirectX::XMStoreFloat4x4(&CameraBufferData.InverseViewProjectionMatrix, DirectX::XMMatrixTranspose(InverseViewProjectionMatrix));
 	CameraBufferData.CameraWorldPosition = CameraWorldPosition;
 	DeviceContext->UpdateSubresource(CameraConstantBuffer, 0, nullptr, &CameraBufferData, 0, 0);
@@ -408,7 +442,7 @@ void DeferredRenderer::RenderLightingPass(
 	LightBufferData.DirectionalLightIntensity = DirectionalLightIntensity;
 	LightBufferData.UseFullBrightnessWithoutLighting = UseFullBrightnessWithoutLighting;
 	LightBufferData.ShadowBias = 0.0015f;
-	LightBufferData.ShadowStrength = 1.0f;
+	LightBufferData.ShadowStrength = ShadowStrength;
 	LightBufferData.ShadowMapTexelSize = 1.0f / static_cast<float>(ShadowMapResolution);
 	LightBufferData.CascadeSplitDepths = ShadowCascadeSplitDepths;
 	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
@@ -451,12 +485,22 @@ void DeferredRenderer::PrepareCascadedShadowMaps(
 	float CameraFarPlaneDistance = 1000.0f;
 	CalculateCameraNearFar(CameraProjectionMatrix, CameraNearPlaneDistance, CameraFarPlaneDistance);
 
-	const float ShadowMaximumDistance = (std::min)(CameraFarPlaneDistance, 160.0f);
+	const int ActiveShadowCascadeCount = (std::max)(1, (std::min)(ShadowCascadeCountSetting, ShadowCascadeCount));
+	const float ClampedShadowMaximumDistance = (std::max)(10.0f, ShadowMaximumDistanceSetting);
+	const float ShadowMaximumDistance = (std::min)(CameraFarPlaneDistance, ClampedShadowMaximumDistance);
 	std::array<float, ShadowCascadeCount> CascadeSplitDepths = {};
 	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
 	{
-		const float NormalizedSplitDepth = ShadowCascadeSplitFactors[CascadeIndex];
-		CascadeSplitDepths[CascadeIndex] = CameraNearPlaneDistance + ((ShadowMaximumDistance - CameraNearPlaneDistance) * NormalizedSplitDepth);
+		if (CascadeIndex < ActiveShadowCascadeCount)
+		{
+			const float NormalizedSplitDepth = GetShadowCascadeSplitFactor(CascadeIndex, ActiveShadowCascadeCount);
+			CascadeSplitDepths[CascadeIndex] = CameraNearPlaneDistance + ((ShadowMaximumDistance - CameraNearPlaneDistance) * NormalizedSplitDepth);
+		}
+		else
+		{
+			const float InactiveCascadeDepthOffset = 10000.0f + (1000.0f * static_cast<float>(CascadeIndex));
+			CascadeSplitDepths[CascadeIndex] = CameraFarPlaneDistance + InactiveCascadeDepthOffset;
+		}
 	}
 	ShadowCascadeSplitDepths = DirectX::XMFLOAT4(
 		CascadeSplitDepths[0],
@@ -479,7 +523,7 @@ void DeferredRenderer::PrepareCascadedShadowMaps(
 	}
 
 	float PreviousSplitDepth = CameraNearPlaneDistance;
-	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	for (int CascadeIndex = 0; CascadeIndex < ActiveShadowCascadeCount; ++CascadeIndex)
 	{
 		const float CascadeSplitDepth = CascadeSplitDepths[CascadeIndex];
 		const float NearBlendFactor = (PreviousSplitDepth - CameraNearPlaneDistance) / (CameraFarPlaneDistance - CameraNearPlaneDistance);
@@ -543,6 +587,13 @@ void DeferredRenderer::PrepareCascadedShadowMaps(
 
 		PreviousSplitDepth = CascadeSplitDepth;
 	}
+
+	for (int CascadeIndex = ActiveShadowCascadeCount; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	{
+		DirectX::XMStoreFloat4x4(&ShadowCascadeViewMatricesStorage[CascadeIndex], DirectX::XMMatrixIdentity());
+		DirectX::XMStoreFloat4x4(&ShadowCascadeProjectionMatricesStorage[CascadeIndex], DirectX::XMMatrixIdentity());
+		DirectX::XMStoreFloat4x4(&ShadowCascadeViewProjectionMatricesStorage[CascadeIndex], DirectX::XMMatrixIdentity());
+	}
 }
 
 bool DeferredRenderer::BeginShadowCascadePass(ID3D11DeviceContext* DeviceContext, int CascadeIndex)
@@ -584,7 +635,23 @@ void DeferredRenderer::EndShadowPass(ID3D11DeviceContext* DeviceContext)
 
 int DeferredRenderer::GetShadowCascadeCount() const
 {
-	return ShadowCascadeCount;
+	return ShadowCascadeCountSetting;
+}
+
+void DeferredRenderer::SetShadowCascadeSettings(int NewShadowCascadeCount, float NewShadowMaximumDistance)
+{
+	ShadowCascadeCountSetting = (std::max)(1, (std::min)(NewShadowCascadeCount, ShadowCascadeCount));
+	ShadowMaximumDistanceSetting = (std::max)(10.0f, NewShadowMaximumDistance);
+}
+
+int DeferredRenderer::GetShadowCascadeCountSetting() const
+{
+	return ShadowCascadeCountSetting;
+}
+
+float DeferredRenderer::GetShadowMaximumDistanceSetting() const
+{
+	return ShadowMaximumDistanceSetting;
 }
 
 DirectX::XMMATRIX DeferredRenderer::GetShadowCascadeViewMatrix(int CascadeIndex) const

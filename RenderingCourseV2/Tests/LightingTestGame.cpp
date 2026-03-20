@@ -16,7 +16,7 @@ void LightingTestGame::BuildTestScene()
 {
 	std::unique_ptr<Actor> FloorActor = std::make_unique<Actor>();
 	Transform FloorTransform;
-	FloorTransform.Position = DirectX::XMFLOAT3(0.0f, -2.2f, 0.0f);
+	FloorTransform.Position = DirectX::XMFLOAT3(0.0f, -0.5f, 0.0f);
 	FloorTransform.Scale = DirectX::XMFLOAT3(28.0f, 1.0f, 28.0f);
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();

@@ -26,7 +26,8 @@ void DeferredRenderPipeline::RenderFrame(
 		SceneViewport->GetScreenWidth(),
 		SceneViewport->GetScreenHeight());
 
-	if (SceneViewport->GetDirectionalLightIntensity() > 0.0f)
+	const bool IsShadowRenderingEnabled = SceneViewport->GetIsShadowRenderingEnabled();
+	if (IsShadowRenderingEnabled && SceneViewport->GetDirectionalLightIntensity() > 0.0f)
 	{
 		const DirectX::XMMATRIX CameraViewMatrix = SceneViewport->GetViewMatrix();
 		const DirectX::XMMATRIX CameraProjectionMatrix = SceneViewport->GetProjectionMatrix();
@@ -110,11 +111,13 @@ void DeferredRenderPipeline::RenderFrame(
 	DeferredRendererInstance->RenderLightingPass(
 		DeviceContext,
 		RenderTargetView,
+		ViewMatrix,
 		InverseViewProjectionMatrix,
 		SceneViewport->GetCameraWorldPosition(),
 		SceneViewport->GetDirectionalLightDirection(),
 		SceneViewport->GetDirectionalLightColor(),
 		SceneViewport->GetDirectionalLightIntensity(),
 		SceneViewport->GetUseFullBrightnessWithoutLighting(),
+		IsShadowRenderingEnabled ? 1.0f : 0.0f,
 		static_cast<float>(SceneViewport->GetDeferredDebugBufferViewMode()));
 }

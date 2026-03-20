@@ -9,21 +9,17 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/RenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/RenderingComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/RenderingComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/RenderingComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/UIRenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/UIRenderingComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/UIRenderingComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/UIRenderingComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Tests/LightingTestGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Tests/LightingTestGame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Tests/TestsBaseGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Tests/TestsBaseGame.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +36,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://10" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://11" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" root0="FORCE_HIGHLIGHTING" />
@@ -63,7 +59,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "C/C++ Project.RenderingCourseV2.executor": "Debug",
+    "C/C++ Project.RenderingCourseV2.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -125,7 +121,7 @@
       <workItem from="1773908263007" duration="15336000" />
       <workItem from="1774005763954" duration="858000" />
       <workItem from="1774011672600" duration="6027000" />
-      <workItem from="1774024109040" duration="8582000" />
+      <workItem from="1774024109040" duration="10762000" />
     </task>
     <servers />
   </component>

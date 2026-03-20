@@ -31,6 +31,9 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, DirectionalLightColor(1.0f, 1.0f, 1.0f, 1.0f)
 	, DirectionalLightIntensity(1.0f)
 	, UseFullBrightnessWithoutLighting(0.0f)
+	, IsShadowRenderingEnabled(true)
+	, ShadowCascadeCountSetting(4)
+	, ShadowMaximumDistanceSetting(160.0f)
 	, CurrentDeferredDebugBufferViewMode(DeferredDebugBufferViewMode::FinalLighting)
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
 	, IsDearImGuiInitialized(false)
@@ -104,6 +107,7 @@ void SceneViewportSubsystem::Initialize()
 	DeferredRendererInstance = std::make_unique<DeferredRenderer>();
 	DeferredRendererInstance->Initialize(Device.Get());
 	DeferredRendererInstance->EnsureTargets(Device.Get(), GetScreenWidth(), GetScreenHeight());
+	DeferredRendererInstance->SetShadowCascadeSettings(ShadowCascadeCountSetting, ShadowMaximumDistanceSetting);
 	ForwardRenderPipelineInstance = std::make_unique<ForwardRenderPipeline>();
 	DeferredRenderPipelineInstance = std::make_unique<DeferredRenderPipeline>();
 
@@ -263,6 +267,21 @@ float SceneViewportSubsystem::GetUseFullBrightnessWithoutLighting() const
 	return UseFullBrightnessWithoutLighting;
 }
 
+bool SceneViewportSubsystem::GetIsShadowRenderingEnabled() const
+{
+	return IsShadowRenderingEnabled;
+}
+
+int SceneViewportSubsystem::GetShadowCascadeCountSetting() const
+{
+	return ShadowCascadeCountSetting;
+}
+
+float SceneViewportSubsystem::GetShadowMaximumDistanceSetting() const
+{
+	return ShadowMaximumDistanceSetting;
+}
+
 void SceneViewportSubsystem::SetFrameCameraData(const DirectX::XMMATRIX& NewViewMatrix, const DirectX::XMMATRIX& NewProjectionMatrix, const DirectX::XMFLOAT3& NewCameraWorldPosition)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, NewViewMatrix);
@@ -276,6 +295,25 @@ void SceneViewportSubsystem::SetDirectionalLightData(const DirectX::XMFLOAT3& Ne
 	DirectionalLightColor = NewLightColor;
 	DirectionalLightIntensity = NewLightIntensity;
 	UseFullBrightnessWithoutLighting = NewUseFullBrightnessWithoutLighting;
+}
+
+void SceneViewportSubsystem::SetIsShadowRenderingEnabled(bool NewIsShadowRenderingEnabled)
+{
+	IsShadowRenderingEnabled = NewIsShadowRenderingEnabled;
+}
+
+void SceneViewportSubsystem::SetShadowCascadeSettings(int NewShadowCascadeCount, float NewShadowMaximumDistance)
+{
+	const int ClampedShadowCascadeCount = (std::max)(1, (std::min)(NewShadowCascadeCount, 4));
+	const float ClampedShadowMaximumDistance = (std::max)(10.0f, NewShadowMaximumDistance);
+
+	ShadowCascadeCountSetting = ClampedShadowCascadeCount;
+	ShadowMaximumDistanceSetting = ClampedShadowMaximumDistance;
+
+	if (DeferredRendererInstance != nullptr)
+	{
+		DeferredRendererInstance->SetShadowCascadeSettings(ShadowCascadeCountSetting, ShadowMaximumDistanceSetting);
+	}
 }
 
 void SceneViewportSubsystem::SetRenderPipelineType(RenderPipelineType NewRenderPipelineType)

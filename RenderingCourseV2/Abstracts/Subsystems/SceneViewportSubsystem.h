@@ -57,9 +57,14 @@ public:
 	DirectX::XMFLOAT4 GetDirectionalLightColor() const;
 	float GetDirectionalLightIntensity() const;
 	float GetUseFullBrightnessWithoutLighting() const;
+	bool GetIsShadowRenderingEnabled() const;
+	int GetShadowCascadeCountSetting() const;
+	float GetShadowMaximumDistanceSetting() const;
 
 	void SetFrameCameraData(const DirectX::XMMATRIX& NewViewMatrix, const DirectX::XMMATRIX& NewProjectionMatrix, const DirectX::XMFLOAT3& NewCameraWorldPosition);
 	void SetDirectionalLightData(const DirectX::XMFLOAT3& NewLightDirection, const DirectX::XMFLOAT4& NewLightColor, float NewLightIntensity, float NewUseFullBrightnessWithoutLighting);
+	void SetIsShadowRenderingEnabled(bool NewIsShadowRenderingEnabled);
+	void SetShadowCascadeSettings(int NewShadowCascadeCount, float NewShadowMaximumDistance);
 	void SetRenderPipelineType(RenderPipelineType NewRenderPipelineType);
 	RenderPipelineType GetRenderPipelineType() const;
 	void SetDeferredDebugBufferViewMode(DeferredDebugBufferViewMode NewDeferredDebugBufferViewMode);
@@ -95,6 +100,9 @@ private:
 	DirectX::XMFLOAT4 DirectionalLightColor;
 	float DirectionalLightIntensity;
 	float UseFullBrightnessWithoutLighting;
+	bool IsShadowRenderingEnabled;
+	int ShadowCascadeCountSetting;
+	float ShadowMaximumDistanceSetting;
 	DeferredDebugBufferViewMode CurrentDeferredDebugBufferViewMode;
 	RenderPipelineType CurrentRenderPipelineType;
 	std::unique_ptr<DeferredRenderer> DeferredRendererInstance;

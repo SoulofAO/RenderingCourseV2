@@ -19,7 +19,6 @@ void MeshUniversalDeferredRendererProxyObject::RenderDeferredGeometryPass(const 
 		return;
 	}
 
-	DeviceContext->RSSetState(OwnerComponent->RasterState);
 	DeviceContext->IASetInputLayout(OwnerComponent->Layout);
 	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	DeviceContext->IASetIndexBuffer(OwnerComponent->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -115,17 +114,10 @@ void MeshUniversalDeferredRendererProxyObject::RenderDeferredShadowPass(const De
 	{
 		Transform WorldTransform = OwnerComponent->GetWorldTransform();
 		DirectX::XMMATRIX WorldMatrix = WorldTransform.ToMatrix();
-		DirectX::XMMATRIX ProjectionMatrix = DeferredShadowRenderPassStateValue.ProjectionMatrix;
-		if (OwnerComponent->UseOrthographicProjection)
-		{
-			ProjectionMatrix = DirectX::XMMatrixOrthographicLH(
-				OwnerComponent->OrthographicProjectionWidth,
-				OwnerComponent->OrthographicProjectionHeight,
-				0.1f,
-				1000.0f);
-		}
-
-		const DirectX::XMMATRIX WorldViewProjectionMatrix = WorldMatrix * DeferredShadowRenderPassStateValue.ViewMatrix * ProjectionMatrix;
+		const DirectX::XMMATRIX WorldViewProjectionMatrix =
+			WorldMatrix *
+			DeferredShadowRenderPassStateValue.ViewMatrix *
+			DeferredShadowRenderPassStateValue.ProjectionMatrix;
 		MeshUniversalTransformBufferData TransformBufferData = {};
 		DirectX::XMStoreFloat4x4(&TransformBufferData.WorldViewProjectionMatrix, DirectX::XMMatrixTranspose(WorldViewProjectionMatrix));
 		DirectX::XMStoreFloat4x4(&TransformBufferData.WorldMatrix, DirectX::XMMatrixTranspose(WorldMatrix));

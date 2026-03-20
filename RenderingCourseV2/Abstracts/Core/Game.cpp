@@ -682,8 +682,26 @@ void Game::DrawCameraPossessionUserInterface()
 		if (SceneViewportSubsystemInstance != nullptr)
 		{
 			ImGui::Separator();
-			ImGui::TextUnformatted("Deferred Debug Buffer");
+			bool IsShadowRenderingEnabled = SceneViewportSubsystemInstance->GetIsShadowRenderingEnabled();
+			if (ImGui::Checkbox("Enable Shadows", &IsShadowRenderingEnabled))
+			{
+				SceneViewportSubsystemInstance->SetIsShadowRenderingEnabled(IsShadowRenderingEnabled);
+			}
+
 			const bool IsDeferredRenderingEnabled = SceneViewportSubsystemInstance->IsDeferredRenderingEnabled();
+			ImGui::BeginDisabled(IsDeferredRenderingEnabled == false);
+			int ShadowCascadeCountSetting = SceneViewportSubsystemInstance->GetShadowCascadeCountSetting();
+			const bool IsShadowCascadeCountChanged = ImGui::SliderInt("Shadow Cascades", &ShadowCascadeCountSetting, 1, 4);
+			float ShadowMaximumDistanceSetting = SceneViewportSubsystemInstance->GetShadowMaximumDistanceSetting();
+			const bool IsShadowMaximumDistanceChanged = ImGui::DragFloat("Shadow Max Distance", &ShadowMaximumDistanceSetting, 1.0f, 10.0f, 1000.0f, "%.1f");
+			ImGui::EndDisabled();
+			if (IsShadowCascadeCountChanged || IsShadowMaximumDistanceChanged)
+			{
+				SceneViewportSubsystemInstance->SetShadowCascadeSettings(ShadowCascadeCountSetting, ShadowMaximumDistanceSetting);
+			}
+
+			ImGui::Separator();
+			ImGui::TextUnformatted("Deferred Debug Buffer");
 			if (IsDeferredRenderingEnabled == false)
 			{
 				ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Available only in Deferred pipeline");

@@ -19,12 +19,14 @@ public:
 	void RenderLightingPass(
 		ID3D11DeviceContext* DeviceContext,
 		ID3D11RenderTargetView* FinalRenderTargetView,
+		const DirectX::XMMATRIX& ViewMatrix,
 		const DirectX::XMMATRIX& InverseViewProjectionMatrix,
 		const DirectX::XMFLOAT3& CameraWorldPosition,
 		const DirectX::XMFLOAT3& DirectionalLightDirection,
 		const DirectX::XMFLOAT4& DirectionalLightColor,
 		float DirectionalLightIntensity,
 		float UseFullBrightnessWithoutLighting,
+		float ShadowStrength,
 		float DeferredDebugBufferViewMode);
 	void PrepareCascadedShadowMaps(
 		const DirectX::XMMATRIX& CameraViewMatrix,
@@ -34,6 +36,9 @@ public:
 	bool BeginShadowCascadePass(ID3D11DeviceContext* DeviceContext, int CascadeIndex);
 	void EndShadowPass(ID3D11DeviceContext* DeviceContext);
 	int GetShadowCascadeCount() const;
+	void SetShadowCascadeSettings(int NewShadowCascadeCount, float NewShadowMaximumDistance);
+	int GetShadowCascadeCountSetting() const;
+	float GetShadowMaximumDistanceSetting() const;
 	DirectX::XMMATRIX GetShadowCascadeViewMatrix(int CascadeIndex) const;
 	DirectX::XMMATRIX GetShadowCascadeProjectionMatrix(int CascadeIndex) const;
 
@@ -73,6 +78,8 @@ private:
 	std::array<DirectX::XMFLOAT4X4, 4> ShadowCascadeViewProjectionMatricesStorage;
 	DirectX::XMFLOAT4 ShadowCascadeSplitDepths;
 	int ShadowMapResolution;
+	int ShadowCascadeCountSetting;
+	float ShadowMaximumDistanceSetting;
 	int CachedWidth;
 	int CachedHeight;
 };

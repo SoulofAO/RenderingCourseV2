@@ -8,6 +8,7 @@ SamplerComparisonState ShadowComparisonSampler : register(s1);
 
 cbuffer DeferredCameraBuffer : register(b0)
 {
+	float4x4 ViewMatrix;
 	float4x4 InverseViewProjectionMatrix;
 	float3 CameraWorldPosition;
 	float Padding0;
@@ -52,17 +53,18 @@ float3 ReconstructWorldPosition(float2 TextureCoordinates, float DepthValue)
 
 float CalculateShadowVisibility(float3 WorldPosition)
 {
-	float CameraDistance = length(WorldPosition - CameraWorldPosition);
+	float ViewSpaceDepth = mul(float4(WorldPosition, 1.0f), ViewMatrix).z;
+	ViewSpaceDepth = max(ViewSpaceDepth, 0.0f);
 	int CascadeIndex = 0;
-	if (CameraDistance > CascadeSplitDepths.x)
+	if (ViewSpaceDepth > CascadeSplitDepths.x)
 	{
 		CascadeIndex = 1;
 	}
-	if (CameraDistance > CascadeSplitDepths.y)
+	if (ViewSpaceDepth > CascadeSplitDepths.y)
 	{
 		CascadeIndex = 2;
 	}
-	if (CameraDistance > CascadeSplitDepths.z)
+	if (ViewSpaceDepth > CascadeSplitDepths.z)
 	{
 		CascadeIndex = 3;
 	}
