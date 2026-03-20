@@ -29,7 +29,7 @@ void MeshTestGame::BuildTestScene()
 	FloorTransform.Scale = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/BlockArena.fbx";
+	FloorMeshComponent->ModelMeshPath = "InputResources/Meshes/BlockArena.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.18f, 0.2f, 0.22f, 1.0f);
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
 	FloorPhysicsComponent->SetIsStatic(true);
@@ -40,10 +40,10 @@ void MeshTestGame::BuildTestScene()
 
 	const char* MeshPaths[] =
 	{
-		"../../InputResources/Meshes/SimpleCube.fbx",
-		"../../InputResources/Meshes/SimpleSphere.fbx",
-		"../../InputResources/Meshes/SimpleCone.fbx",
-		"../../InputResources/Meshes/Test.fbx"
+		"InputResources/Meshes/SimpleCube.fbx",
+		"InputResources/Meshes/SimpleSphere.fbx",
+		"InputResources/Meshes/SimpleCone.fbx",
+		"InputResources/Meshes/Test.fbx"
 	};
 
 	for (int MeshIndex = 0; MeshIndex < 4; ++MeshIndex)

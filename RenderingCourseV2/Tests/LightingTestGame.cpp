@@ -19,7 +19,7 @@ void LightingTestGame::BuildTestScene()
 	FloorTransform.Scale = DirectX::XMFLOAT3(28.0f, 1.0f, 28.0f);
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleCube.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.08f, 0.08f, 0.09f, 1.0f);
 	FloorMeshComponent->SpecularPower = 10.0f;
 	FloorMeshComponent->SpecularIntensity = 0.25f;
@@ -35,7 +35,7 @@ void LightingTestGame::BuildTestScene()
 		SphereActor->SetTransform(SphereTransform);
 
 		std::unique_ptr<MeshUniversalComponent> SphereMeshComponent = std::make_unique<MeshUniversalComponent>();
-		SphereMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleSphere.fbx";
+		SphereMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleSphere.fbx";
 		SphereMeshComponent->BaseColor = DirectX::XMFLOAT4(
 			0.2f + static_cast<float>(ActorIndex) * 0.14f,
 			0.2f + static_cast<float>(ActorIndex) * 0.11f,
@@ -58,7 +58,7 @@ void LightingTestGame::BuildTestScene()
 		ConeActor->SetTransform(ConeTransform);
 
 		std::unique_ptr<MeshUniversalComponent> ConeMeshComponent = std::make_unique<MeshUniversalComponent>();
-		ConeMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCone.fbx";
+		ConeMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleCone.fbx";
 		ConeMeshComponent->BaseColor = DirectX::XMFLOAT4(
 			0.9f - static_cast<float>(ActorIndex) * 0.25f,
 			0.35f + static_cast<float>(ActorIndex) * 0.22f,

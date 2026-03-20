@@ -9,6 +9,7 @@
 
 ResourceManager::ResourceManager()
 	: Cooker()
+	, ProjectRootPath()
 	, TextureResourceCache()
 	, ModelResourceCache()
 {
@@ -16,6 +17,7 @@ ResourceManager::ResourceManager()
 
 void ResourceManager::Initialize(const std::string& NewProjectRootPath, const std::string& NewCookedRootPath)
 {
+	ProjectRootPath = NewProjectRootPath;
 	Cooker.SetProjectRootPath(NewProjectRootPath);
 	Cooker.SetCookedRootPath(NewCookedRootPath);
 }
@@ -36,7 +38,8 @@ std::shared_ptr<TextureResource> ResourceManager::LoadTextureResource(const std:
 
 	if (Device != nullptr)
 	{
-		std::wstring CookedTextureWidePath(CookedTexturePath.begin(), CookedTexturePath.end());
+		std::filesystem::path CookedTextureFilePath = std::filesystem::u8path(CookedTexturePath);
+		std::wstring CookedTextureWidePath = CookedTextureFilePath.wstring();
 		DirectX::ScratchImage LoadedImage;
 		HRESULT LoadResult = DirectX::LoadFromDDSFile(CookedTextureWidePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, LoadedImage);
 		if (SUCCEEDED(LoadResult))
@@ -148,10 +151,16 @@ std::string ResourceManager::NormalizePath(const std::string& Path) const
 {
 	namespace FileSystem = std::filesystem;
 	std::error_code ErrorCode;
-	FileSystem::path NormalizedPath = FileSystem::weakly_canonical(FileSystem::path(Path), ErrorCode);
+	FileSystem::path SourcePath = FileSystem::u8path(Path);
+	if (SourcePath.is_relative() && ProjectRootPath.empty() == false)
+	{
+		SourcePath = FileSystem::u8path(ProjectRootPath) / SourcePath;
+	}
+
+	FileSystem::path NormalizedPath = FileSystem::weakly_canonical(SourcePath, ErrorCode);
 	if (ErrorCode)
 	{
-		NormalizedPath = FileSystem::path(Path).lexically_normal();
+		NormalizedPath = SourcePath.lexically_normal();
 	}
 	return NormalizedPath.string();
 }

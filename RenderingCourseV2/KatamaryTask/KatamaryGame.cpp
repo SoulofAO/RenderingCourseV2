@@ -36,17 +36,17 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, SpawnedCollectibleCount(15)
 	,GlobalCollectibleMeshScale(0.5)
 {
-	/*
+	
 	CollectibleMeshPaths.push_back(MeshLocalData(
-		"../../InputResources/Meshes/Katamary/Crate.fbx",
-		"../../InputResources/Textures/Katamary/Crate/Crate_Albedo.png",
+		"InputResources/Meshes/Katamary/Crate.fbx",
+		"InputResources/Textures/Katamary/Crate/Crate_Albedo.png",
 		DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-		"../../InputResources/Textures/Katamary/Crate/Crate_Metalness.png",
-		"../../InputResources/Textures/Katamary/Crate/Crate_Roughness.png",
-		"../../InputResources/Textures/Katamary/Crate/Crate_Normal.png"));
+		"InputResources/Textures/Katamary/Crate/Crate_Metalness.png",
+		"InputResources/Textures/Katamary/Crate/Crate_Roughness.png",
+		"InputResources/Textures/Katamary/Crate/Crate_Normal.png"));
 
 	CollectibleMeshPaths.push_back(MeshLocalData(
-		"../../InputResources/Meshes/Katamary/grass.fbx",
+		"InputResources/Meshes/Katamary/grass.fbx",
 		"",
 		DirectX::XMFLOAT4(0.36f, 0.79f, 0.41f, 1.0f),
 		"",
@@ -54,15 +54,15 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 		""));
 
 	CollectibleMeshPaths.push_back(MeshLocalData(
-		"../../InputResources/Meshes/Katamary/Tree.FBX",
-		"../../InputResources/Textures/Katamary/Tree/Tree_Diffuse.png",
+		"InputResources/Meshes/Katamary/Tree.FBX",
+		"InputResources/Textures/Katamary/Tree/Tree_Diffuse.png",
 		DirectX::XMFLOAT4(0.65f, 0.64f, 0.58f, 1.0f),
-		"../../InputResources/Textures/Katamary/Tree/Tree_Metalness.png",
-		"../../InputResources/Textures/Katamary/Tree/Tree_Roughness.png",
-		"../../InputResources/Textures/Katamary/Tree/Tree_normal.png"));
-*/
+		"InputResources/Textures/Katamary/Tree/Tree_Metalness.png",
+		"InputResources/Textures/Katamary/Tree/Tree_Roughness.png",
+		"InputResources/Textures/Katamary/Tree/Tree_normal.png"));
+
 	CollectibleMeshPaths.push_back(MeshLocalData(
-		"../../InputResources/Meshes/SimpleSphere.fbx",
+		"InputResources/Meshes/SimpleSphere.fbx",
 		"",
 		DirectX::XMFLOAT4(0.79f, 0.37f, 0.96f, 1.0f),
 		"",
@@ -70,7 +70,7 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 		""));
 
 	CollectibleMeshPaths.push_back(MeshLocalData(
-		"../../InputResources/Meshes/SimpleCube.fbx",
+		"InputResources/Meshes/SimpleCube.fbx",
 		"",
 		DirectX::XMFLOAT4(0.74f, 0.83f, 0.91f, 1.0f),
 		"",
@@ -78,7 +78,7 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 		""));
 
 	CollectibleMeshPaths.push_back(MeshLocalData(
-		"../../InputResources/Meshes/SimpleCone.fbx",
+		"InputResources/Meshes/SimpleCone.fbx",
 		"",
 		DirectX::XMFLOAT4(0.93f, 0.73f, 0.39f, 1.0f),
 		"",
@@ -190,7 +190,7 @@ void KatamaryGame::SpawnFloor()
 	FloorActor->SetTransform(FloorTransform);
 
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/BlockArena.fbx";
+	FloorMeshComponent->ModelMeshPath = "InputResources/Meshes/BlockArena.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.2f, 0.25f, 0.3f, 1.0f);
 
 	std::unique_ptr<PhysicsComponent> FloorPhysicsComponent = std::make_unique<PhysicsComponent>();
@@ -212,7 +212,7 @@ void KatamaryGame::SpawnPlayer()
 	NewPlayerActor->SetTransform(PlayerTransform);
 
 	std::unique_ptr<MeshUniversalComponent> PlayerMeshComponent = std::make_unique<MeshUniversalComponent>();
-	PlayerMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleSphere.fbx";
+	PlayerMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleSphere.fbx";
 	PlayerMeshComponent->BaseColor = DirectX::XMFLOAT4(0.75f, 0.28f, 0.95f, 1.0f);
 
 	std::unique_ptr<PhysicsComponent> NewPlayerPhysicsComponent = std::make_unique<PhysicsComponent>();
@@ -496,7 +496,7 @@ void KatamaryGame::TryAttachCollectibleToPlayer(PhysicsComponent* CandidateColle
 	CandidateCollectiblePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Trigger);
 	//CandidateCollectiblePhysicsComponent->SetCollisionLayer(PhysicsCollisionLayerCollectibleCollected);
 	//CandidateCollectiblePhysicsComponent->SetCollisionMask(0u);
-	//CandidateCollectiblePhysicsComponent->SetIsStatic(true);
+	CandidateCollectiblePhysicsComponent->SetIsStatic(true);
 
 	const Transform CandidateCollectibleWorldTransform = CandidateCollectibleActor->GetTransform(ETransformSpace::World);
 	CandidateCollectibleActor->AttachToActor(PlayerActor);

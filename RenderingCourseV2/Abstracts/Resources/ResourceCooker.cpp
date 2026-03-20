@@ -94,8 +94,14 @@ bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const st
 
 	FileSystem::create_directories(FileSystem::path(CookedPath).parent_path());
 
+	FileSystem::path SourceFilePath = FileSystem::u8path(SourcePath);
+	if (FileSystem::exists(SourceFilePath) == false)
+	{
+		return false;
+	}
+
 	DirectX::ScratchImage LoadedImage;
-	std::wstring SourceWidePath(SourcePath.begin(), SourcePath.end());
+	std::wstring SourceWidePath = SourceFilePath.wstring();
 	HRESULT LoadResult = DirectX::LoadFromWICFile(SourceWidePath.c_str(), DirectX::WIC_FLAGS_FORCE_RGB, nullptr, LoadedImage);
 	if (FAILED(LoadResult))
 	{
@@ -152,7 +158,7 @@ bool ResourceCooker::EnsureCookedTexture(const std::string& SourcePath, const st
 		}
 	}
 
-	std::wstring CookedWidePath(CookedPath.begin(), CookedPath.end());
+	std::wstring CookedWidePath = FileSystem::u8path(CookedPath).wstring();
 	HRESULT SaveResult = DirectX::SaveToDDSFile(
 		CompressedImage.GetImages(),
 		CompressedImage.GetImageCount(),

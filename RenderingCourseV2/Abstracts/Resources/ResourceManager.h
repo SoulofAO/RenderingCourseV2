@@ -23,6 +23,7 @@ private:
 	std::string NormalizePath(const std::string& Path) const;
 
 	ResourceCooker Cooker;
+	std::string ProjectRootPath;
 	std::unordered_map<std::string, std::shared_ptr<TextureResource>> TextureResourceCache;
 	std::unordered_map<std::string, std::shared_ptr<ModelResource>> ModelResourceCache;
 };

@@ -19,9 +19,9 @@ void TexturingTestGame::BuildTestScene()
 	FloorTransform.Scale = DirectX::XMFLOAT3(25.0f, 1.0f, 25.0f);
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
-	FloorMeshComponent->ModelMeshPath = "../../InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleCube.fbx";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	FloorMeshComponent->AlbedoTexturePath = "../../InputResources/Textures/TestTexture.png";
+	FloorMeshComponent->AlbedoTexturePath = "InputResources/Textures/TestTexture.png";
 	FloorMeshComponent->SpecularPower = 24.0f;
 	FloorMeshComponent->SpecularIntensity = 0.3f;
 	FloorActor->AddComponent(std::move(FloorMeshComponent));
@@ -37,9 +37,9 @@ void TexturingTestGame::BuildTestScene()
 
 		std::unique_ptr<MeshUniversalComponent> MeshComponent = std::make_unique<MeshUniversalComponent>();
 		MeshComponent->ModelMeshPath = (ActorIndex % 2 == 0)
-			? "../../InputResources/Meshes/SimpleCube.fbx"
-			: "../../InputResources/Meshes/SimpleSphere.fbx";
-		MeshComponent->AlbedoTexturePath = "../../InputResources/Textures/TestTexture.png";
+			? "InputResources/Meshes/SimpleCube.fbx"
+			: "InputResources/Meshes/SimpleSphere.fbx";
+		MeshComponent->AlbedoTexturePath = "InputResources/Textures/TestTexture.png";
 		MeshComponent->BaseColor = DirectX::XMFLOAT4(
 			1.0f - static_cast<float>(ActorIndex) * 0.14f,
 			0.75f + static_cast<float>(ActorIndex) * 0.04f,
@@ -49,7 +49,7 @@ void TexturingTestGame::BuildTestScene()
 		MeshComponent->SpecularIntensity = 0.2f + static_cast<float>(ActorIndex) * 0.16f;
 		if (ActorIndex >= 3)
 		{
-			MeshComponent->NormalTexturePath = "../../InputResources/Textures/TestTexture.png";
+			MeshComponent->NormalTexturePath = "InputResources/Textures/TestTexture.png";
 		}
 
 		MeshActor->AddComponent(std::move(MeshComponent));
