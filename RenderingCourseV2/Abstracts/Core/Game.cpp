@@ -4,7 +4,6 @@
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Input/EngineHotkeyInputHandler.h"
 #include "Abstracts/Input/GameInputHandler.h"
-#include "Abstracts/Components/RenderingComponent.h"
 #include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Components/CameraComponent.h"
 #include "Abstracts/Components/MeshUniversalComponent.h"
@@ -14,7 +13,6 @@
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
 #include "Abstracts/Subsystems/DisplayWin32.h"
-#include "Abstracts/Rendering/DeferredRenderer.h"
 #include "Abstracts/Resources/ResourceManager.h"
 #include <imgui.h>
 #include <filesystem>
@@ -281,79 +279,7 @@ void Game::Draw()
 	SceneViewport->BeginFrame(TotalRunTimeSeconds);
 	SceneViewport->BeginDearImGuiFrame();
 	DrawCameraPossessionUserInterface();
-
-	std::vector<RenderingComponent*> RenderingComponents;
-	std::vector<LightComponent*> LightComponents;
-	for (std::unique_ptr<Actor>& ExistingActor : Actors)
-	{
-		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = ExistingActor->GetComponents();
-		for (const std::unique_ptr<ActorComponent>& ExistingComponent : ActorComponents)
-		{
-			RenderingComponent* Rendering = dynamic_cast<RenderingComponent*>(ExistingComponent.get());
-			if (Rendering != nullptr && Rendering->GetIsActive())
-			{
-				RenderingComponents.push_back(Rendering);
-			}
-
-			LightComponent* Light = dynamic_cast<LightComponent*>(ExistingComponent.get());
-			if (Light != nullptr && Light->GetIsActive())
-			{
-				LightComponents.push_back(Light);
-			}
-		}
-	}
-
-	bool HasDirectionalLight = false;
-	for (LightComponent* ExistingLightComponent : LightComponents)
-	{
-		if (ExistingLightComponent->GetLightType() == LightType::Directional)
-		{
-			SceneViewport->SetDirectionalLightData(
-				ExistingLightComponent->GetDirection(),
-				ExistingLightComponent->GetColor(),
-				ExistingLightComponent->GetIntensity(),
-				0.0f);
-			HasDirectionalLight = true;
-			break;
-		}
-	}
-	if (!HasDirectionalLight)
-	{
-		SceneViewport->SetDirectionalLightData(
-			DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f),
-			DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-			0.0f,
-			1.0f);
-	}
-
-	std::stable_sort(
-		RenderingComponents.begin(),
-		RenderingComponents.end(),
-		[](const RenderingComponent* LeftRenderingComponent, const RenderingComponent* RightRenderingComponent)
-		{
-			return LeftRenderingComponent->GetRenderOrder() < RightRenderingComponent->GetRenderOrder();
-		});
-
-	if (SceneViewport->IsDeferredRenderingEnabled())
-	{
-		SceneViewport->ExecuteDirectionalShadowPass(RenderingComponents);
-	}
-
-	SceneViewport->BeginGeometryPass();
-
-	for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
-	{
-		ExistingRenderingComponent->Render(SceneViewport);
-	}
-
-	SceneViewport->EndGeometryPass();
-	if (SceneViewport->IsDeferredRenderingEnabled())
-	{
-		SceneViewport->ExecuteDeferredLightingPass();
-	}
-	SceneViewport->EndDearImGuiFrame();
-
-	SceneViewport->EndFrame();
+	SceneViewport->RenderSceneFrame();
 }
 
 LPCWSTR Game::GetApplicationName() const
@@ -749,6 +675,51 @@ void Game::DrawCameraPossessionUserInterface()
 			else
 			{
 				ImGui::TextUnformatted("InputResources rebuild: failed");
+			}
+		}
+
+		SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+		if (SceneViewportSubsystemInstance != nullptr)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Deferred Debug Buffer");
+			const bool IsDeferredRenderingEnabled = SceneViewportSubsystemInstance->IsDeferredRenderingEnabled();
+			if (IsDeferredRenderingEnabled == false)
+			{
+				ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Available only in Deferred pipeline");
+			}
+
+			const char* DebugBufferViewModeItems[] =
+			{
+				"Final Lighting",
+				"Albedo",
+				"Normal",
+				"Material",
+				"Depth",
+				"Shadow Visibility"
+			};
+
+			int DebugBufferViewModeIndex = static_cast<int>(SceneViewportSubsystemInstance->GetDeferredDebugBufferViewMode());
+			ImGui::BeginDisabled(IsDeferredRenderingEnabled == false);
+			const bool IsDebugBufferViewModeChanged = ImGui::Combo(
+				"Buffer",
+				&DebugBufferViewModeIndex,
+				DebugBufferViewModeItems,
+				static_cast<int>(sizeof(DebugBufferViewModeItems) / sizeof(DebugBufferViewModeItems[0])));
+			ImGui::EndDisabled();
+			if (IsDebugBufferViewModeChanged)
+			{
+				if (DebugBufferViewModeIndex < 0)
+				{
+					DebugBufferViewModeIndex = 0;
+				}
+				if (DebugBufferViewModeIndex > 5)
+				{
+					DebugBufferViewModeIndex = 5;
+				}
+
+				SceneViewportSubsystemInstance->SetDeferredDebugBufferViewMode(
+					static_cast<DeferredDebugBufferViewMode>(DebugBufferViewModeIndex));
 			}
 		}
 

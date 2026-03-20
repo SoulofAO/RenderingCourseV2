@@ -52,7 +52,6 @@ public:
 
 	void Initialize() override;
 	void Update(float DeltaTime) override;
-	void Render(SceneViewportSubsystem* SceneViewport) override;
 	void Shutdown() override;
 	void SetUseOrthographicProjection(bool NewUseOrthographicProjection);
 	bool GetUseOrthographicProjection() const;
@@ -110,4 +109,7 @@ private:
 	bool UseOrthographicProjection;
 	float OrthographicProjectionWidth;
 	float OrthographicProjectionHeight;
+
+	friend class MeshUniversalForwardRendererProxyObject;
+	friend class MeshUniversalDeferredRendererProxyObject;
 };

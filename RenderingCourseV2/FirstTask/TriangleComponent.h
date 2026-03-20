@@ -3,8 +3,6 @@
 #include "Abstracts/Components/RenderingComponent.h"
 #include <d3d11.h>
 
-class SceneViewportSubsystem;
-
 class TriangleComponent : public RenderingComponent
 {
 public:
@@ -14,7 +12,6 @@ public:
 	void Initialize() override;
 	void Update(float DeltaTime) override;
 	void Shutdown() override;
-	void Render(SceneViewportSubsystem* SceneViewport) override;
 
 private:
 	ID3D11InputLayout* Layout;
@@ -26,4 +23,7 @@ private:
 	ID3D11Buffer* IndexBuffer;
 	ID3D11RasterizerState* RasterState;
 	UINT IndexCount;
+
+	friend class TriangleForwardRendererProxyObject;
+	friend class TriangleDeferredRendererProxyObject;
 };

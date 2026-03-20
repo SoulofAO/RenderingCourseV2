@@ -24,6 +24,8 @@ cbuffer DeferredLightBuffer : register(b1)
 	float ShadowMapTexelSize;
 	float4 CascadeSplitDepths;
 	float4x4 CascadeViewProjectionMatrices[4];
+	float DeferredDebugBufferViewMode;
+	float3 DeferredDebugBufferViewModePadding;
 };
 
 struct VS_OUT
@@ -125,12 +127,35 @@ float4 PSMain(VS_OUT Input) : SV_Target
 	float SpecularPower = Material.x;
 	float SpecularIntensity = Material.y;
 	float Specular = pow(max(dot(NormalDirection, HalfDirection), 0.0f), SpecularPower) * SpecularIntensity;
+
+	if (DeferredDebugBufferViewMode > 0.5f && DeferredDebugBufferViewMode < 1.5f)
+	{
+		return float4(Albedo.rgb, 1.0f);
+	}
+	if (DeferredDebugBufferViewMode > 1.5f && DeferredDebugBufferViewMode < 2.5f)
+	{
+		return float4(NormalDirection * 0.5f + 0.5f, 1.0f);
+	}
+	if (DeferredDebugBufferViewMode > 2.5f && DeferredDebugBufferViewMode < 3.5f)
+	{
+		float MaterialSpecularPowerNormalized = saturate(SpecularPower / 128.0f);
+		float MaterialSpecularIntensityNormalized = saturate(SpecularIntensity);
+		return float4(MaterialSpecularPowerNormalized, MaterialSpecularIntensityNormalized, 0.0f, 1.0f);
+	}
+	if (DeferredDebugBufferViewMode > 3.5f && DeferredDebugBufferViewMode < 4.5f)
+	{
+		return float4(DepthValue, DepthValue, DepthValue, 1.0f);
+	}
 	if (UseFullBrightnessWithoutLighting > 0.5f)
 	{
 		return Albedo;
 	}
 
 	float ShadowVisibility = CalculateShadowVisibility(WorldPosition);
+	if (DeferredDebugBufferViewMode > 4.5f && DeferredDebugBufferViewMode < 5.5f)
+	{
+		return float4(ShadowVisibility, ShadowVisibility, ShadowVisibility, 1.0f);
+	}
 	float3 AmbientColor = Albedo.rgb * 0.15f;
 	float3 DiffuseColor = Albedo.rgb * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
 	float3 SpecularColor = Specular * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;

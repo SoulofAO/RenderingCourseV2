@@ -1,10 +1,16 @@
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
-#include "Abstracts/Components/MeshUniversalComponent.h"
+#include "Abstracts/Components/RenderingComponent.h"
+#include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Subsystems/DisplayWin32.h"
 #include "Abstracts/Core/Game.h"
+#include "Abstracts/Core/Actor.h"
+#include "Abstracts/Rendering/AbstractRenderPipeline.h"
+#include "Abstracts/Rendering/ForwardRenderPipeline.h"
+#include "Abstracts/Rendering/DeferredRenderPipeline.h"
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
+#include <algorithm>
 #include <iostream>
 
 #pragma comment(lib, "d3d11.lib")
@@ -25,14 +31,12 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, DirectionalLightColor(1.0f, 1.0f, 1.0f, 1.0f)
 	, DirectionalLightIntensity(1.0f)
 	, UseFullBrightnessWithoutLighting(0.0f)
+	, CurrentDeferredDebugBufferViewMode(DeferredDebugBufferViewMode::FinalLighting)
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
 	, IsDearImGuiInitialized(false)
-	, IsShadowPassActive(false)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, DirectX::XMMatrixIdentity());
 	DirectX::XMStoreFloat4x4(&ProjectionMatrixStorage, DirectX::XMMatrixIdentity());
-	DirectX::XMStoreFloat4x4(&ShadowPassViewMatrixStorage, DirectX::XMMatrixIdentity());
-	DirectX::XMStoreFloat4x4(&ShadowPassProjectionMatrixStorage, DirectX::XMMatrixIdentity());
 }
 
 SceneViewportSubsystem::~SceneViewportSubsystem()
@@ -100,6 +104,8 @@ void SceneViewportSubsystem::Initialize()
 	DeferredRendererInstance = std::make_unique<DeferredRenderer>();
 	DeferredRendererInstance->Initialize(Device.Get());
 	DeferredRendererInstance->EnsureTargets(Device.Get(), GetScreenWidth(), GetScreenHeight());
+	ForwardRenderPipelineInstance = std::make_unique<ForwardRenderPipeline>();
+	DeferredRenderPipelineInstance = std::make_unique<DeferredRenderPipeline>();
 
 	InitializeDearImGui();
 }
@@ -141,14 +147,6 @@ void SceneViewportSubsystem::BeginFrame(float TotalTimeSeconds)
 	}
 
 	Context->ClearState();
-	if (CurrentRenderPipelineType == RenderPipelineType::Forward)
-	{
-		RestoreTargets();
-	}
-	else if (DeferredRendererInstance != nullptr)
-	{
-		DeferredRendererInstance->EnsureTargets(Device.Get(), GetScreenWidth(), GetScreenHeight());
-	}
 
 	D3D11_VIEWPORT Viewport = {};
 	Viewport.Width = static_cast<float>(GetOwningGame()->GetScreenWidth());
@@ -188,6 +186,21 @@ IDXGISwapChain* SceneViewportSubsystem::GetSwapChain() const
 	return SwapChain;
 }
 
+ID3D11RenderTargetView* SceneViewportSubsystem::GetRenderTargetView() const
+{
+	return RenderView;
+}
+
+ID3D11DepthStencilView* SceneViewportSubsystem::GetDepthStencilView() const
+{
+	return DepthStencilView;
+}
+
+DeferredRenderer* SceneViewportSubsystem::GetDeferredRenderer() const
+{
+	return DeferredRendererInstance.get();
+}
+
 DisplayWin32* SceneViewportSubsystem::GetDisplay() const
 {
 	return Display.get();
@@ -217,21 +230,11 @@ int SceneViewportSubsystem::GetScreenHeight() const
 
 DirectX::XMMATRIX SceneViewportSubsystem::GetViewMatrix() const
 {
-	if (IsShadowPassActive)
-	{
-		return DirectX::XMLoadFloat4x4(&ShadowPassViewMatrixStorage);
-	}
-
 	return DirectX::XMLoadFloat4x4(&ViewMatrixStorage);
 }
 
 DirectX::XMMATRIX SceneViewportSubsystem::GetProjectionMatrix() const
 {
-	if (IsShadowPassActive)
-	{
-		return DirectX::XMLoadFloat4x4(&ShadowPassProjectionMatrixStorage);
-	}
-
 	return DirectX::XMLoadFloat4x4(&ProjectionMatrixStorage);
 }
 
@@ -285,105 +288,104 @@ RenderPipelineType SceneViewportSubsystem::GetRenderPipelineType() const
 	return CurrentRenderPipelineType;
 }
 
+void SceneViewportSubsystem::SetDeferredDebugBufferViewMode(DeferredDebugBufferViewMode NewDeferredDebugBufferViewMode)
+{
+	CurrentDeferredDebugBufferViewMode = NewDeferredDebugBufferViewMode;
+}
+
+DeferredDebugBufferViewMode SceneViewportSubsystem::GetDeferredDebugBufferViewMode() const
+{
+	return CurrentDeferredDebugBufferViewMode;
+}
+
 bool SceneViewportSubsystem::IsDeferredRenderingEnabled() const
 {
 	return CurrentRenderPipelineType == RenderPipelineType::Deferred;
 }
 
-void SceneViewportSubsystem::BeginGeometryPass()
+void SceneViewportSubsystem::RenderSceneFrame()
 {
-	if (CurrentRenderPipelineType == RenderPipelineType::Deferred && DeferredRendererInstance != nullptr)
-	{
-		DeferredRendererInstance->BeginGeometryPass(Context);
-	}
-	else
-	{
-		RestoreTargets();
-	}
-}
-
-void SceneViewportSubsystem::EndGeometryPass()
-{
-	if (CurrentRenderPipelineType == RenderPipelineType::Deferred && DeferredRendererInstance != nullptr)
-	{
-		DeferredRendererInstance->EndGeometryPass(Context);
-	}
-}
-
-void SceneViewportSubsystem::ExecuteDirectionalShadowPass(const std::vector<RenderingComponent*>& RenderingComponents)
-{
-	if (
-		CurrentRenderPipelineType != RenderPipelineType::Deferred ||
-		DeferredRendererInstance == nullptr ||
-		Context == nullptr ||
-		DirectionalLightIntensity <= 0.0f)
+	Game* GameInstance = GetOwningGame();
+	if (GameInstance == nullptr)
 	{
 		return;
 	}
 
-	const DirectX::XMMATRIX CameraViewMatrix = DirectX::XMLoadFloat4x4(&ViewMatrixStorage);
-	const DirectX::XMMATRIX CameraProjectionMatrix = DirectX::XMLoadFloat4x4(&ProjectionMatrixStorage);
-	DeferredRendererInstance->PrepareCascadedShadowMaps(
-		CameraViewMatrix,
-		CameraProjectionMatrix,
-		CameraWorldPosition,
-		DirectionalLightDirection);
-
-	const int ShadowCascadeCount = DeferredRendererInstance->GetShadowCascadeCount();
-	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
+	std::vector<RenderingComponent*> RenderingComponents;
+	std::vector<LightComponent*> LightComponents;
+	const std::vector<Actor*> AllActors = GameInstance->GetAllActorsByClass<Actor>();
+	for (Actor* ExistingActor : AllActors)
 	{
-		if (DeferredRendererInstance->BeginShadowCascadePass(Context, CascadeIndex) == false)
+		if (ExistingActor == nullptr)
 		{
 			continue;
 		}
 
-		IsShadowPassActive = true;
-		DirectX::XMStoreFloat4x4(&ShadowPassViewMatrixStorage, DeferredRendererInstance->GetShadowCascadeViewMatrix(CascadeIndex));
-		DirectX::XMStoreFloat4x4(&ShadowPassProjectionMatrixStorage, DeferredRendererInstance->GetShadowCascadeProjectionMatrix(CascadeIndex));
-		for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
+		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = ExistingActor->GetComponents();
+		for (const std::unique_ptr<ActorComponent>& ExistingComponent : ActorComponents)
 		{
-			MeshUniversalComponent* ExistingMeshUniversalComponent = dynamic_cast<MeshUniversalComponent*>(ExistingRenderingComponent);
-			if (ExistingMeshUniversalComponent != nullptr)
+			RenderingComponent* ExistingRenderingComponent = dynamic_cast<RenderingComponent*>(ExistingComponent.get());
+			if (ExistingRenderingComponent != nullptr && ExistingRenderingComponent->GetIsActive())
 			{
-				ExistingMeshUniversalComponent->Render(this);
+				RenderingComponents.push_back(ExistingRenderingComponent);
+			}
+
+			LightComponent* ExistingLightComponent = dynamic_cast<LightComponent*>(ExistingComponent.get());
+			if (ExistingLightComponent != nullptr && ExistingLightComponent->GetIsActive())
+			{
+				LightComponents.push_back(ExistingLightComponent);
 			}
 		}
-		IsShadowPassActive = false;
 	}
 
-	DeferredRendererInstance->EndShadowPass(Context);
-
-	D3D11_VIEWPORT ScreenViewport = {};
-	ScreenViewport.Width = static_cast<float>(GetScreenWidth());
-	ScreenViewport.Height = static_cast<float>(GetScreenHeight());
-	ScreenViewport.TopLeftX = 0.0f;
-	ScreenViewport.TopLeftY = 0.0f;
-	ScreenViewport.MinDepth = 0.0f;
-	ScreenViewport.MaxDepth = 1.0f;
-	Context->RSSetViewports(1, &ScreenViewport);
-}
-
-void SceneViewportSubsystem::ExecuteDeferredLightingPass()
-{
-	if (CurrentRenderPipelineType != RenderPipelineType::Deferred || DeferredRendererInstance == nullptr)
+	bool HasDirectionalLight = false;
+	for (LightComponent* ExistingLightComponent : LightComponents)
 	{
-		return;
+		if (ExistingLightComponent->GetLightType() == LightType::Directional)
+		{
+			SetDirectionalLightData(
+				ExistingLightComponent->GetDirection(),
+				ExistingLightComponent->GetColor(),
+				ExistingLightComponent->GetIntensity(),
+				0.0f);
+			HasDirectionalLight = true;
+			break;
+		}
+	}
+	if (HasDirectionalLight == false)
+	{
+		SetDirectionalLightData(
+			DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f),
+			DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+			0.0f,
+			1.0f);
 	}
 
-	const DirectX::XMMATRIX ViewMatrix = GetViewMatrix();
-	const DirectX::XMMATRIX ProjectionMatrix = GetProjectionMatrix();
-	const DirectX::XMMATRIX ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
-	const DirectX::XMMATRIX InverseViewProjectionMatrix = DirectX::XMMatrixInverse(nullptr, ViewProjectionMatrix);
+	std::stable_sort(
+		RenderingComponents.begin(),
+		RenderingComponents.end(),
+		[](const RenderingComponent* LeftRenderingComponent, const RenderingComponent* RightRenderingComponent)
+		{
+			return LeftRenderingComponent->GetRenderOrder() < RightRenderingComponent->GetRenderOrder();
+		});
 
-	DeferredRendererInstance->RenderLightingPass(
-		Context,
-		RenderView,
-		InverseViewProjectionMatrix,
-		CameraWorldPosition,
-		DirectionalLightDirection,
-		DirectionalLightColor,
-		DirectionalLightIntensity,
-		UseFullBrightnessWithoutLighting);
+	AbstractRenderPipeline* ActiveRenderPipeline = nullptr;
+	if (CurrentRenderPipelineType == RenderPipelineType::Deferred)
+	{
+		ActiveRenderPipeline = DeferredRenderPipelineInstance.get();
+	}
+	else
+	{
+		ActiveRenderPipeline = ForwardRenderPipelineInstance.get();
+	}
+
+	if (ActiveRenderPipeline != nullptr)
+	{
+		ActiveRenderPipeline->RenderFrame(this, RenderingComponents);
+	}
+
+	EndDearImGuiFrame();
+	EndFrame();
 }
 
 void SceneViewportSubsystem::BeginDearImGuiFrame()
@@ -422,11 +424,6 @@ bool SceneViewportSubsystem::HandleDearImGuiMessage(HWND WindowHandle, UINT Mess
 bool SceneViewportSubsystem::GetIsDearImGuiInitialized() const
 {
 	return IsDearImGuiInitialized;
-}
-
-bool SceneViewportSubsystem::GetIsShadowPassActive() const
-{
-	return IsShadowPassActive;
 }
 
 void SceneViewportSubsystem::CreateBackBuffer()
@@ -507,6 +504,9 @@ void SceneViewportSubsystem::DestroyResources()
 		DeferredRendererInstance->Shutdown();
 		DeferredRendererInstance.reset();
 	}
+
+	ForwardRenderPipelineInstance.reset();
+	DeferredRenderPipelineInstance.reset();
 }
 
 void SceneViewportSubsystem::InitializeDearImGui()

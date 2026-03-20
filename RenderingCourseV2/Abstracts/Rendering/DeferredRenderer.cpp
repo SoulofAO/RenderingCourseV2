@@ -93,6 +93,8 @@ struct DeferredLightBufferData
 	float ShadowMapTexelSize;
 	DirectX::XMFLOAT4 CascadeSplitDepths;
 	DirectX::XMFLOAT4X4 CascadeViewProjectionMatrices[ShadowCascadeCount];
+	float DeferredDebugBufferViewMode;
+	DirectX::XMFLOAT3 DeferredDebugBufferViewModePadding;
 };
 
 DeferredRenderer::DeferredRenderer()
@@ -385,7 +387,8 @@ void DeferredRenderer::RenderLightingPass(
 	const DirectX::XMFLOAT3& DirectionalLightDirection,
 	const DirectX::XMFLOAT4& DirectionalLightColor,
 	float DirectionalLightIntensity,
-	float UseFullBrightnessWithoutLighting)
+	float UseFullBrightnessWithoutLighting,
+	float DeferredDebugBufferViewMode)
 {
 	if (DeviceContext == nullptr || FinalRenderTargetView == nullptr || LightingVertexShader == nullptr || LightingPixelShader == nullptr)
 	{
@@ -412,6 +415,7 @@ void DeferredRenderer::RenderLightingPass(
 	{
 		LightBufferData.CascadeViewProjectionMatrices[CascadeIndex] = ShadowCascadeViewProjectionMatricesStorage[CascadeIndex];
 	}
+	LightBufferData.DeferredDebugBufferViewMode = DeferredDebugBufferViewMode;
 	DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
 
 	ID3D11ShaderResourceView* ShaderResourceViews[5] = {
@@ -486,30 +490,37 @@ void DeferredRenderer::PrepareCascadedShadowMaps(
 		{
 			const DirectX::XMVECTOR BaseNearCorner = BaseFrustumCorners[CornerIndex];
 			const DirectX::XMVECTOR BaseFarCorner = BaseFrustumCorners[CornerIndex + 4];
-			const DirectX::XMVECTOR FrustumSegmentVector = BaseFarCorner - BaseNearCorner;
-			CascadeCorners[CornerIndex] = BaseNearCorner + (FrustumSegmentVector * NearBlendFactor);
-			CascadeCorners[CornerIndex + 4] = BaseNearCorner + (FrustumSegmentVector * FarBlendFactor);
+			const DirectX::XMVECTOR FrustumSegmentVector = DirectX::XMVectorSubtract(BaseFarCorner, BaseNearCorner);
+			CascadeCorners[CornerIndex] = DirectX::XMVectorAdd(
+				BaseNearCorner,
+				DirectX::XMVectorScale(FrustumSegmentVector, NearBlendFactor));
+			CascadeCorners[CornerIndex + 4] = DirectX::XMVectorAdd(
+				BaseNearCorner,
+				DirectX::XMVectorScale(FrustumSegmentVector, FarBlendFactor));
 		}
 
 		DirectX::XMVECTOR CascadeCenter = DirectX::XMVectorZero();
 		for (const DirectX::XMVECTOR ExistingCascadeCorner : CascadeCorners)
 		{
-			CascadeCenter += ExistingCascadeCorner;
+			CascadeCenter = DirectX::XMVectorAdd(CascadeCenter, ExistingCascadeCorner);
 		}
-		CascadeCenter = CascadeCenter / static_cast<float>(CascadeCorners.size());
+		CascadeCenter = DirectX::XMVectorScale(CascadeCenter, 1.0f / static_cast<float>(CascadeCorners.size()));
 
 		float CascadeRadius = 0.0f;
 		for (const DirectX::XMVECTOR ExistingCascadeCorner : CascadeCorners)
 		{
-			const DirectX::XMVECTOR CornerOffset = ExistingCascadeCorner - CascadeCenter;
+			const DirectX::XMVECTOR CornerOffset = DirectX::XMVectorSubtract(ExistingCascadeCorner, CascadeCenter);
 			const float CornerDistance = DirectX::XMVectorGetX(DirectX::XMVector3Length(CornerOffset));
 			CascadeRadius = (std::max)(CascadeRadius, CornerDistance);
 		}
 		CascadeRadius = std::ceil(CascadeRadius * 16.0f) / 16.0f;
 
-		const float CameraToCascadeDistance = DirectX::XMVectorGetX(DirectX::XMVector3Length(CascadeCenter - CameraWorldPositionVector));
+		const DirectX::XMVECTOR CameraToCascadeVector = DirectX::XMVectorSubtract(CascadeCenter, CameraWorldPositionVector);
+		const float CameraToCascadeDistance = DirectX::XMVectorGetX(DirectX::XMVector3Length(CameraToCascadeVector));
 		const float LightPullbackDistance = (std::max)(CascadeRadius + 120.0f, CameraToCascadeDistance + 50.0f);
-		const DirectX::XMVECTOR LightPosition = CascadeCenter - (DirectX::XMVector3Normalize(LightDirectionVector) * LightPullbackDistance);
+		const DirectX::XMVECTOR LightDirectionNormalizedVector = DirectX::XMVector3Normalize(LightDirectionVector);
+		const DirectX::XMVECTOR LightOffset = DirectX::XMVectorScale(LightDirectionNormalizedVector, LightPullbackDistance);
+		const DirectX::XMVECTOR LightPosition = DirectX::XMVectorSubtract(CascadeCenter, LightOffset);
 		const DirectX::XMMATRIX LightViewMatrix = DirectX::XMMatrixLookAtLH(LightPosition, CascadeCenter, UpDirection);
 		const float MinimumBoundX = -CascadeRadius;
 		const float MaximumBoundX = CascadeRadius;

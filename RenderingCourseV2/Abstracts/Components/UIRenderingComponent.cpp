@@ -1,11 +1,16 @@
 #include "Abstracts/Components/UIRenderingComponent.h"
 #include "Abstracts/Core/Game.h"
+#include "Abstracts/Rendering/RenderProxy/UIRenderingDeferredRendererProxyObject.h"
+#include "Abstracts/Rendering/RenderProxy/UIRenderingForwardRendererProxyObject.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
+#include <memory>
 
 UIRenderingComponent::UIRenderingComponent()
 	: RenderingComponent()
 {
 	SetRenderOrder(1000);
+	SetForwardRendererProxyObject(std::make_unique<UIRenderingForwardRendererProxyObject>(this));
+	SetDeferredRendererProxyObject(std::make_unique<UIRenderingDeferredRendererProxyObject>(this));
 }
 
 UIRenderingComponent::~UIRenderingComponent()
@@ -26,19 +31,6 @@ void UIRenderingComponent::Initialize()
 void UIRenderingComponent::Update(float DeltaTime)
 {
 	RenderingComponent::Update(DeltaTime);
-}
-
-void UIRenderingComponent::Render(SceneViewportSubsystem* SceneViewport)
-{
-	if (SceneViewport == nullptr)
-	{
-		return;
-	}
-
-	if (SceneViewport->GetIsDearImGuiInitialized())
-	{
-		RenderUI();
-	}
 }
 
 void UIRenderingComponent::Shutdown()

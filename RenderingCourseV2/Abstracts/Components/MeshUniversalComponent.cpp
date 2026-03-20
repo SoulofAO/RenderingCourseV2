@@ -1,12 +1,15 @@
 #include "Abstracts/Components/MeshUniversalComponent.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Game.h"
+#include "Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.h"
+#include "Abstracts/Rendering/RenderProxy/MeshUniversalForwardRendererProxyObject.h"
 #include "Abstracts/Resources/MeshResourceBindingHelper.h"
 #include "Abstracts/Resources/ModelResource.h"
 #include "Abstracts/Resources/ResourceManager.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include <d3dcompiler.h>
 #include <iostream>
+#include <memory>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -61,6 +64,9 @@ MeshUniversalComponent::MeshUniversalComponent()
 	};
 
 	Indices = { 0, 1, 2, 1, 0, 3 };
+
+	SetForwardRendererProxyObject(std::make_unique<MeshUniversalForwardRendererProxyObject>(this));
+	SetDeferredRendererProxyObject(std::make_unique<MeshUniversalDeferredRendererProxyObject>(this));
 }
 
 MeshUniversalComponent::~MeshUniversalComponent()
@@ -303,105 +309,6 @@ void MeshUniversalComponent::SetOrthographicProjectionSize(float NewOrthographic
 	{
 		OrthographicProjectionHeight = NewOrthographicProjectionHeight;
 	}
-}
-
-void MeshUniversalComponent::Render(SceneViewportSubsystem* SceneViewport)
-{
-	ID3D11DeviceContext* DeviceContext = SceneViewport != nullptr ? SceneViewport->GetDeviceContext() : nullptr;
-	if (DeviceContext == nullptr || VertexBuffer == nullptr || IndexBuffer == nullptr)
-	{
-		return;
-	}
-
-	DeviceContext->RSSetState(RasterState);
-	DeviceContext->IASetInputLayout(Layout);
-	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	UINT Strides[] = { static_cast<UINT>(sizeof(MeshUniversalVertex)) };
-	UINT Offsets[] = { 0 };
-	DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, Strides, Offsets);
-
-	if (TransformConstantBuffer != nullptr)
-	{
-		Transform WorldTransform = GetWorldTransform();
-		DirectX::XMMATRIX WorldMatrix = WorldTransform.ToMatrix();
-		DirectX::XMMATRIX ViewMatrix = SceneViewport->GetViewMatrix();
-		DirectX::XMMATRIX ProjectionMatrix = SceneViewport->GetProjectionMatrix();
-
-		if (UseOrthographicProjection)
-		{
-			ProjectionMatrix = DirectX::XMMatrixOrthographicLH(
-				OrthographicProjectionWidth,
-				OrthographicProjectionHeight,
-				0.1f,
-				1000.0f);
-		}
-
-		DirectX::XMMATRIX WorldViewProjectionMatrix = WorldMatrix * ViewMatrix * ProjectionMatrix;
-		MeshUniversalTransformBufferData TransformBufferData = {};
-		DirectX::XMStoreFloat4x4(
-			&TransformBufferData.WorldViewProjectionMatrix,
-			DirectX::XMMatrixTranspose(WorldViewProjectionMatrix));
-		DirectX::XMStoreFloat4x4(&TransformBufferData.WorldMatrix, DirectX::XMMatrixTranspose(WorldMatrix));
-		TransformBufferData.CameraWorldPosition = SceneViewport->GetCameraWorldPosition();
-
-		DeviceContext->UpdateSubresource(TransformConstantBuffer, 0, nullptr, &TransformBufferData, 0, 0);
-		DeviceContext->VSSetConstantBuffers(0, 1, &TransformConstantBuffer);
-		DeviceContext->PSSetConstantBuffers(0, 1, &TransformConstantBuffer);
-	}
-
-	const bool IsShadowPassActive = SceneViewport->GetIsShadowPassActive();
-
-	if (LightConstantBuffer != nullptr && IsShadowPassActive == false)
-	{
-		MeshUniversalLightBufferData LightBufferData = {};
-		LightBufferData.DirectionalLightDirection = SceneViewport->GetDirectionalLightDirection();
-		LightBufferData.DirectionalLightColor = SceneViewport->GetDirectionalLightColor();
-		LightBufferData.DirectionalLightIntensity = SceneViewport->GetDirectionalLightIntensity();
-		LightBufferData.UseFullBrightnessWithoutLighting = SceneViewport->GetUseFullBrightnessWithoutLighting();
-		DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
-		DeviceContext->PSSetConstantBuffers(1, 1, &LightConstantBuffer);
-	}
-
-	if (MaterialConstantBuffer != nullptr && IsShadowPassActive == false)
-	{
-		MeshUniversalMaterialBufferData MaterialBufferData = {};
-		MaterialBufferData.BaseColor = BaseColor;
-		MaterialBufferData.SpecularPower = SpecularPower;
-		MaterialBufferData.SpecularIntensity = SpecularIntensity;
-		MaterialBufferData.UseAlbedoTexture = AlbedoTexture ? 1.0f : 0.0f;
-		MaterialBufferData.UseNormalTexture = NormalTexture ? 1.0f : 0.0f;
-		DeviceContext->UpdateSubresource(MaterialConstantBuffer, 0, nullptr, &MaterialBufferData, 0, 0);
-		DeviceContext->PSSetConstantBuffers(2, 1, &MaterialConstantBuffer);
-	}
-
-	if (IsShadowPassActive)
-	{
-		if (DeferredVertexShader != nullptr)
-		{
-			DeviceContext->VSSetShader(DeferredVertexShader, nullptr, 0);
-		}
-		else
-		{
-			DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-		}
-		DeviceContext->PSSetShader(nullptr, nullptr, 0);
-	}
-	else if (SceneViewport->IsDeferredRenderingEnabled() && DeferredVertexShader != nullptr && DeferredPixelShader != nullptr)
-	{
-		BindMaterialResources(DeviceContext);
-		DeviceContext->VSSetShader(DeferredVertexShader, nullptr, 0);
-		DeviceContext->PSSetShader(DeferredPixelShader, nullptr, 0);
-	}
-	else
-	{
-		BindMaterialResources(DeviceContext);
-		DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-		DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-	}
-
-	DeviceContext->DrawIndexed(IndexCount, 0, 0);
 }
 
 bool MeshUniversalComponent::CompileShaderFromFile(

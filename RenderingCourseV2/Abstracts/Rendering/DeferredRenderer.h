@@ -24,7 +24,8 @@ public:
 		const DirectX::XMFLOAT3& DirectionalLightDirection,
 		const DirectX::XMFLOAT4& DirectionalLightColor,
 		float DirectionalLightIntensity,
-		float UseFullBrightnessWithoutLighting);
+		float UseFullBrightnessWithoutLighting,
+		float DeferredDebugBufferViewMode);
 	void PrepareCascadedShadowMaps(
 		const DirectX::XMMATRIX& CameraViewMatrix,
 		const DirectX::XMMATRIX& CameraProjectionMatrix,

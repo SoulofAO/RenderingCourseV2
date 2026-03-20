@@ -1,10 +1,13 @@
 #include "TriangleComponent.h"
 #include "Abstracts/Core/Game.h"
+#include "FirstTask/Render/RenderProxy/TriangleDeferredRendererProxyObject.h"
+#include "FirstTask/Render/RenderProxy/TriangleForwardRendererProxyObject.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include "Abstracts/Subsystems/DisplayWin32.h"
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <iostream>
+#include <memory>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -20,6 +23,8 @@ TriangleComponent::TriangleComponent()
 	, RasterState(nullptr)
 	, IndexCount(0)
 {
+	SetForwardRendererProxyObject(std::make_unique<TriangleForwardRendererProxyObject>(this));
+	SetDeferredRendererProxyObject(std::make_unique<TriangleDeferredRendererProxyObject>(this));
 }
 
 TriangleComponent::~TriangleComponent()
@@ -185,29 +190,6 @@ void TriangleComponent::Initialize()
 void TriangleComponent::Update(float DeltaTime)
 {
 	RenderingComponent::Update(DeltaTime);
-}
-
-void TriangleComponent::Render(SceneViewportSubsystem* SceneViewport)
-{
-	ID3D11DeviceContext* DeviceContext = SceneViewport->GetDeviceContext();
-	if (DeviceContext == nullptr)
-	{
-		return;
-	}
-
-	DeviceContext->RSSetState(RasterState);
-	DeviceContext->IASetInputLayout(Layout);
-	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	UINT Strides[] = { 32 };
-	UINT Offsets[] = { 0 };
-	DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, Strides, Offsets);
-
-	DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-	DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-
-	DeviceContext->DrawIndexed(IndexCount, 0, 0);
 }
 
 void TriangleComponent::Shutdown()

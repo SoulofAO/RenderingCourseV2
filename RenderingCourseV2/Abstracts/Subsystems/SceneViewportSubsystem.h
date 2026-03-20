@@ -11,11 +11,22 @@
 
 class DisplayWin32;
 class RenderingComponent;
+class AbstractRenderPipeline;
 
 enum class RenderPipelineType
 {
 	Forward,
 	Deferred
+};
+
+enum class DeferredDebugBufferViewMode
+{
+	FinalLighting = 0,
+	Albedo = 1,
+	Normal = 2,
+	Material = 3,
+	Depth = 4,
+	ShadowVisibility = 5
 };
 
 class SceneViewportSubsystem : public Subsystem
@@ -33,6 +44,9 @@ public:
 	ID3D11Device* GetDevice() const;
 	ID3D11DeviceContext* GetDeviceContext() const;
 	IDXGISwapChain* GetSwapChain() const;
+	ID3D11RenderTargetView* GetRenderTargetView() const;
+	ID3D11DepthStencilView* GetDepthStencilView() const;
+	DeferredRenderer* GetDeferredRenderer() const;
 	DisplayWin32* GetDisplay() const;
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
@@ -48,16 +62,14 @@ public:
 	void SetDirectionalLightData(const DirectX::XMFLOAT3& NewLightDirection, const DirectX::XMFLOAT4& NewLightColor, float NewLightIntensity, float NewUseFullBrightnessWithoutLighting);
 	void SetRenderPipelineType(RenderPipelineType NewRenderPipelineType);
 	RenderPipelineType GetRenderPipelineType() const;
+	void SetDeferredDebugBufferViewMode(DeferredDebugBufferViewMode NewDeferredDebugBufferViewMode);
+	DeferredDebugBufferViewMode GetDeferredDebugBufferViewMode() const;
 	bool IsDeferredRenderingEnabled() const;
-	void BeginGeometryPass();
-	void EndGeometryPass();
-	void ExecuteDirectionalShadowPass(const std::vector<RenderingComponent*>& RenderingComponents);
-	void ExecuteDeferredLightingPass();
+	void RenderSceneFrame();
 	void BeginDearImGuiFrame();
 	void EndDearImGuiFrame();
 	bool HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 	bool GetIsDearImGuiInitialized() const;
-	bool GetIsShadowPassActive() const;
 
 	bool bDisplayChangedColor = false;
 
@@ -78,15 +90,15 @@ private:
 	ID3D11DepthStencilView* DepthStencilView;
 	DirectX::XMFLOAT4X4 ViewMatrixStorage;
 	DirectX::XMFLOAT4X4 ProjectionMatrixStorage;
-	DirectX::XMFLOAT4X4 ShadowPassViewMatrixStorage;
-	DirectX::XMFLOAT4X4 ShadowPassProjectionMatrixStorage;
 	DirectX::XMFLOAT3 CameraWorldPosition;
 	DirectX::XMFLOAT3 DirectionalLightDirection;
 	DirectX::XMFLOAT4 DirectionalLightColor;
 	float DirectionalLightIntensity;
 	float UseFullBrightnessWithoutLighting;
+	DeferredDebugBufferViewMode CurrentDeferredDebugBufferViewMode;
 	RenderPipelineType CurrentRenderPipelineType;
 	std::unique_ptr<DeferredRenderer> DeferredRendererInstance;
+	std::unique_ptr<AbstractRenderPipeline> ForwardRenderPipelineInstance;
+	std::unique_ptr<AbstractRenderPipeline> DeferredRenderPipelineInstance;
 	bool IsDearImGuiInitialized;
-	bool IsShadowPassActive;
 };

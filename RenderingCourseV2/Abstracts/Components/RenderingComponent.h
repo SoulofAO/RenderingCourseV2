@@ -1,8 +1,12 @@
 #pragma once
 
 #include "Abstracts/Components/ActorComponent.h"
+#include <memory>
 
-class SceneViewportSubsystem;
+class RenderingProxyObject;
+class ForwardRendererProxyObject;
+class DeferredRendererProxyObject;
+enum class RenderPipelineType;
 
 class RenderingComponent : public ActorComponent
 {
@@ -12,9 +16,16 @@ public:
 
 	void SetRenderOrder(int NewRenderOrder);
 	int GetRenderOrder() const;
+	ForwardRendererProxyObject* GetForwardRendererProxyObject() const;
+	DeferredRendererProxyObject* GetDeferredRendererProxyObject() const;
+	RenderingProxyObject* GetRendererProxyObject(RenderPipelineType RenderPipelineTypeValue) const;
 
-	virtual void Render(SceneViewportSubsystem* SceneViewport) = 0;
+protected:
+	void SetForwardRendererProxyObject(std::unique_ptr<ForwardRendererProxyObject> NewForwardRendererProxyObject);
+	void SetDeferredRendererProxyObject(std::unique_ptr<DeferredRendererProxyObject> NewDeferredRendererProxyObject);
 
 private:
 	int RenderOrder;
+	std::unique_ptr<ForwardRendererProxyObject> ForwardRendererProxyObjectInstance;
+	std::unique_ptr<DeferredRendererProxyObject> DeferredRendererProxyObjectInstance;
 };
