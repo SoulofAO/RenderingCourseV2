@@ -26,7 +26,7 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, GameplayCameraComponent(nullptr)
 	, KatamaryUIRenderingComponentInstance(nullptr)
 	, RandomNumberGenerator(std::random_device{}())
-	, BasePlayerSphereColliderRadius(0.5f)
+	, BasePlayerSphereColliderRadius(1.0f)
 	, PlayerSphereColliderGrowthPerCollectible(0.08f)
 	, PlayerMoveForce(120.0f)
 	, PlayerMaximumPlanarSpeed(9.0f)
@@ -238,7 +238,7 @@ void KatamaryGame::SpawnPlayer()
 	NewPlayerPhysicsComponent->SetUseGravity(true);
 	NewPlayerPhysicsComponent->EnableAutoConvexColliderFromMesh(false);
 	NewPlayerPhysicsComponent->EnableAutoTriangleMeshColliderFromMesh(false);
-	NewPlayerPhysicsComponent->SetSphereCollider(0.5f);
+	NewPlayerPhysicsComponent->SetSphereCollider(1.0f);
 	NewPlayerPhysicsComponent->SetLinearDamping(0.45f);
 	NewPlayerPhysicsComponent->SetAngularDamping(0.1f);
 	NewPlayerPhysicsComponent->SetRestitution(0.05f);
