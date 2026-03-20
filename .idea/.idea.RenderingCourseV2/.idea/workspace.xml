@@ -9,7 +9,8 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Physics/PhysXTypeConversion.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Physics/PhysXTypeConversion.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,7 +27,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://24" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://32" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" root0="FORCE_HIGHLIGHTING" />
@@ -49,7 +50,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "C/C++ Project.RenderingCourseV2.executor": "Run",
+    "C/C++ Project.RenderingCourseV2.executor": "Debug",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -110,7 +111,7 @@
       <workItem from="1773868575289" duration="4108000" />
       <workItem from="1773908263007" duration="15336000" />
       <workItem from="1774005763954" duration="858000" />
-      <workItem from="1774011672600" duration="5204000" />
+      <workItem from="1774011672600" duration="5865000" />
     </task>
     <servers />
   </component>

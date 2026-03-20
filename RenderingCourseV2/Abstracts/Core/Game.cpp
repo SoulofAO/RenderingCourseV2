@@ -76,14 +76,32 @@ Game::~Game()
 	ClipCursor(nullptr);
 	SetMouseCursorVisibleState(true);
 
-	for (std::unique_ptr<Actor>& ExistingActor : Actors)
+	std::vector<Actor*> ActorsToShutdown;
+	ActorsToShutdown.reserve(Actors.size());
+	for (const std::unique_ptr<Actor>& ExistingActor : Actors)
 	{
-		ExistingActor->Shutdown();
+		ActorsToShutdown.push_back(ExistingActor.get());
+	}
+	for (Actor* ExistingActor : ActorsToShutdown)
+	{
+		if (ExistingActor != nullptr)
+		{
+			ExistingActor->Shutdown();
+		}
 	}
 
-	for (std::unique_ptr<Subsystem>& ExistingSubsystem : Subsystems)
+	std::vector<Subsystem*> SubsystemsToShutdown;
+	SubsystemsToShutdown.reserve(Subsystems.size());
+	for (const std::unique_ptr<Subsystem>& ExistingSubsystem : Subsystems)
 	{
-		ExistingSubsystem->Shutdown();
+		SubsystemsToShutdown.push_back(ExistingSubsystem.get());
+	}
+	for (Subsystem* ExistingSubsystem : SubsystemsToShutdown)
+	{
+		if (ExistingSubsystem != nullptr)
+		{
+			ExistingSubsystem->Shutdown();
+		}
 	}
 
 	InputHandlers.clear();

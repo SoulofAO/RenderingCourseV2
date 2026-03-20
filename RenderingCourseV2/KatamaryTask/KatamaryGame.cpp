@@ -6,6 +6,7 @@
 #include "Abstracts/Components/PhysicsComponent.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Transform.h"
+#include "Abstracts/Others/PhysicsLibrary.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include <algorithm>
@@ -161,7 +162,7 @@ void KatamaryGame::BuildScene()
 	SpawnDirectionalLight();
 	SpawnPlayer();
 	SpawnGameplayCamera();
-	//SpawnCollectibles();
+	SpawnCollectibles();
 	SpawnUserInterface();
 }
 
@@ -262,6 +263,8 @@ void KatamaryGame::SpawnCollectibles()
 	}
 	
 	CollectiblePhysicsComponents.reserve(SpawnedCollectibleCount);
+	std::vector<std::unique_ptr<Actor>> CollectibleActorsToSpawn;
+	CollectibleActorsToSpawn.reserve(SpawnedCollectibleCount);
 	for (int SpawnedCollectibleIndex = 0; SpawnedCollectibleIndex < SpawnedCollectibleCount; ++SpawnedCollectibleIndex)
 	{
 		const int RandomMeshPathIndex = static_cast<int>(GetRandomValueInRange(0.0f, static_cast<float>(CollectibleMeshPaths.size())));
@@ -284,7 +287,16 @@ void KatamaryGame::SpawnCollectibles()
 
 		std::unique_ptr<Actor> CollectibleActor = std::make_unique<Actor>();
 		Transform CollectibleTransform;
-		CollectibleTransform.Position = DirectX::XMFLOAT3(SpawnPositionX, -0.9f, SpawnPositionZ);
+		DirectX::XMFLOAT3 CollectibleSpawnPosition(SpawnPositionX, -0.9f, SpawnPositionZ);
+		const DirectX::XMFLOAT3 TraceStart(SpawnPositionX, 50.0f, SpawnPositionZ);
+		const DirectX::XMFLOAT3 TraceDirection(0.0f, -1.0f, 0.0f);
+		PhysicsLineTraceHitResult SurfaceTraceHitResult = {};
+		if (PhysicsLibrary::LineTrace(TraceStart, TraceDirection, 200.0f, SurfaceTraceHitResult) && SurfaceTraceHitResult.HasBlockingHit)
+		{
+			CollectibleSpawnPosition = SurfaceTraceHitResult.HitLocation;
+		}
+
+		CollectibleTransform.Position = CollectibleSpawnPosition;
 		CollectibleTransform.Scale = DirectX::XMFLOAT3(GlobalCollectibleMeshScale, GlobalCollectibleMeshScale, GlobalCollectibleMeshScale);
 		CollectibleActor->SetTransform(CollectibleTransform);
 
@@ -310,7 +322,12 @@ void KatamaryGame::SpawnCollectibles()
 
 		CollectibleActor->AddComponent(std::move(CollectibleMeshComponent));
 		CollectibleActor->AddComponent(std::move(CollectiblePhysicsComponent));
-		AddActor(std::move(CollectibleActor));
+		CollectibleActorsToSpawn.push_back(std::move(CollectibleActor));
+	}
+
+	for (std::unique_ptr<Actor>& ExistingCollectibleActor : CollectibleActorsToSpawn)
+	{
+		AddActor(std::move(ExistingCollectibleActor));
 	}
 }
 

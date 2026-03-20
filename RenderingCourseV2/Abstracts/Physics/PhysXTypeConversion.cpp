@@ -25,27 +25,31 @@ physx::PxQuat PhysXTypeConversion::ToPxQuaternionFromEuler(const DirectX::XMFLOA
 
 DirectX::XMFLOAT3 PhysXTypeConversion::ToDirectXEulerFromPxQuaternion(const physx::PxQuat& SourceQuaternion)
 {
-	const float ValueXX = SourceQuaternion.x * SourceQuaternion.x;
-	const float ValueYY = SourceQuaternion.y * SourceQuaternion.y;
-	const float ValueZZ = SourceQuaternion.z * SourceQuaternion.z;
-	const float ValueXY = SourceQuaternion.x * SourceQuaternion.y;
-	const float ValueXZ = SourceQuaternion.x * SourceQuaternion.z;
-	const float ValueYZ = SourceQuaternion.y * SourceQuaternion.z;
-	const float ValueWX = SourceQuaternion.w * SourceQuaternion.x;
-	const float ValueWY = SourceQuaternion.w * SourceQuaternion.y;
-	const float ValueWZ = SourceQuaternion.w * SourceQuaternion.z;
+	const DirectX::XMVECTOR RotationQuaternionVector = DirectX::XMVectorSet(
+		SourceQuaternion.x,
+		SourceQuaternion.y,
+		SourceQuaternion.z,
+		SourceQuaternion.w);
+	const DirectX::XMMATRIX RotationMatrix = DirectX::XMMatrixRotationQuaternion(RotationQuaternionVector);
 
-	const float SinPitch = 2.0f * (ValueWX + ValueYZ);
-	const float CosPitch = 1.0f - 2.0f * (ValueXX + ValueYY);
-	const float PitchValue = std::atan2(SinPitch, CosPitch);
+	DirectX::XMFLOAT4X4 RotationMatrixValues;
+	DirectX::XMStoreFloat4x4(&RotationMatrixValues, RotationMatrix);
 
-	const float SinYaw = 2.0f * (ValueWY - ValueXZ);
-	const float ClampedSinYaw = std::clamp(SinYaw, -1.0f, 1.0f);
-	const float YawValue = std::asin(ClampedSinYaw);
+	const float ClampedPitchInput = std::clamp(-RotationMatrixValues._32, -1.0f, 1.0f);
+	const float PitchValue = std::asin(ClampedPitchInput);
+	const float CosPitchValue = std::cos(PitchValue);
 
-	const float SinRoll = 2.0f * (ValueWZ + ValueXY);
-	const float CosRoll = 1.0f - 2.0f * (ValueYY + ValueZZ);
-	const float RollValue = std::atan2(SinRoll, CosRoll);
+	float YawValue = 0.0f;
+	float RollValue = 0.0f;
+	if (std::fabs(CosPitchValue) > 0.0001f)
+	{
+		YawValue = std::atan2(RotationMatrixValues._31, RotationMatrixValues._33);
+		RollValue = std::atan2(RotationMatrixValues._12, RotationMatrixValues._22);
+	}
+	else
+	{
+		YawValue = std::atan2(-RotationMatrixValues._13, RotationMatrixValues._11);
+	}
 
 	return DirectX::XMFLOAT3(PitchValue, YawValue, RollValue);
 }
