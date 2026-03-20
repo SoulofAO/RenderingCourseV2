@@ -1,17 +1,19 @@
 #pragma once
 
 #include "Abstracts/Subsystems/Subsystem.h"
+#include "Abstracts/Core/Actor.h"
 #include <windows.h>
+#include <directxmath.h>
 #include <vector>
 #include <memory>
 #include <chrono>
 
 class InputDevice;
-class Actor;
 class SceneViewportSubsystem;
 class ResourceManager;
 class GameInputHandler;
 class CameraComponent;
+class LightComponent;
 
 enum class MouseInputMode
 {
@@ -50,6 +52,16 @@ public:
 	void ToggleDefaultCameraSettingsWindowVisible();
 	bool GetDefaultCameraSettingsWindowVisible() const;
 	bool GetIsFallbackCameraPossessed() const;
+	void SetWorldBoundarySphereEnabled(bool NewIsEnabled);
+	bool GetWorldBoundarySphereEnabled() const;
+	void SetWorldBoundarySphereCenter(const DirectX::XMFLOAT3& NewWorldBoundarySphereCenter);
+	const DirectX::XMFLOAT3& GetWorldBoundarySphereCenter() const;
+	void SetWorldBoundarySphereRadius(float NewWorldBoundarySphereRadius);
+	float GetWorldBoundarySphereRadius() const;
+	void SetWorldBoundarySphereSettings(
+		bool NewIsEnabled,
+		const DirectX::XMFLOAT3& NewWorldBoundarySphereCenter,
+		float NewWorldBoundarySphereRadius);
 
 	template<typename TSubsystem>
 	TSubsystem* GetSubsystem() const
@@ -66,6 +78,70 @@ public:
 		return nullptr;
 	}
 
+	template<typename ActorType>
+	std::vector<ActorType*> GetAllActorsByClass() const
+	{
+		std::vector<ActorType*> FoundActors;
+
+		for (const std::unique_ptr<Actor>& ExistingActor : Actors)
+		{
+			if (ExistingActor == nullptr)
+			{
+				continue;
+			}
+
+			ActorType* FoundActor = dynamic_cast<ActorType*>(ExistingActor.get());
+			if (FoundActor != nullptr)
+			{
+				FoundActors.push_back(FoundActor);
+			}
+		}
+
+		return FoundActors;
+	}
+
+	template<typename ComponentType>
+	ComponentType* GetFirstComponentByClass(bool RequireActiveComponent = false) const
+	{
+		for (const std::unique_ptr<Actor>& ExistingActor : Actors)
+		{
+			if (ExistingActor == nullptr)
+			{
+				continue;
+			}
+
+			ComponentType* FoundComponent = ExistingActor->GetFirstComponentByClass<ComponentType>(RequireActiveComponent);
+			if (FoundComponent != nullptr)
+			{
+				return FoundComponent;
+			}
+		}
+
+		return nullptr;
+	}
+
+	template<typename ComponentType>
+	std::vector<Actor*> GetAllActorsWithComponentByClass(bool RequireActiveComponent = false) const
+	{
+		std::vector<Actor*> FoundActors;
+
+		for (const std::unique_ptr<Actor>& ExistingActor : Actors)
+		{
+			if (ExistingActor == nullptr)
+			{
+				continue;
+			}
+
+			ComponentType* FoundComponent = ExistingActor->GetFirstComponentByClass<ComponentType>(RequireActiveComponent);
+			if (FoundComponent != nullptr)
+			{
+				FoundActors.push_back(ExistingActor.get());
+			}
+		}
+
+		return FoundActors;
+	}
+
 	virtual LRESULT MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 
 protected:
@@ -77,6 +153,8 @@ protected:
 	void UpdateInputHandlerActivationState();
 	void DrawCameraPossessionUserInterface();
 	void ToggleCameraPossessionFromUserInterface();
+	LightComponent* FindFirstDirectionalLightComponent() const;
+	void ApplyWorldBoundarySphereSettings();
 
 	LPCWSTR Name;
 	int ScreenWidth;
@@ -97,6 +175,9 @@ protected:
 	bool IsExitRequested;
 	MouseInputMode CurrentMouseInputMode;
 	bool DefaultCameraSettingsWindowVisible;
+	bool IsWorldBoundarySphereEnabled;
+	DirectX::XMFLOAT3 WorldBoundarySphereCenter;
+	float WorldBoundarySphereRadius;
 };
 
 extern Game* GlobalGame;

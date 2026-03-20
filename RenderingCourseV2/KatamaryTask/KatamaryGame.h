@@ -61,6 +61,7 @@ protected:
 private:
 	void BuildScene();
 	void SpawnGameplayCamera();
+	void SpawnDirectionalLight();
 	void SpawnFloor();
 	void SpawnPlayer();
 	void SpawnCollectibles();

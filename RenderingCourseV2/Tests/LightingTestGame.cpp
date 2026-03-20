@@ -7,6 +7,7 @@
 LightingTestGame::LightingTestGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: TestsBaseGame(ApplicationName, ScreenWidth, ScreenHeight)
 {
+	bSpawnDirectionalLightActor = true;
 }
 
 LightingTestGame::~LightingTestGame() = default;

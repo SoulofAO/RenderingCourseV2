@@ -1,6 +1,7 @@
 #include "KatamaryTask/KatamaryGame.h"
 #include "KatamaryTask/KatamaryUIRenderingComponent.h"
 #include "KatamaryTask/KatamaryOrbitCameraComponent.h"
+#include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Components/MeshUniversalComponent.h"
 #include "Abstracts/Components/PhysicsComponent.h"
 #include "Abstracts/Core/Actor.h"
@@ -148,7 +149,6 @@ void KatamaryGame::BuildScene()
 	if (PhysicsSubsystemInstance != nullptr)
 	{
 		PhysicsSubsystemInstance->SetFixedDeltaTime(1.0f / 90.0f);
-		PhysicsSubsystemInstance->SetWorldBoundarySphere(DirectX::XMFLOAT3(0.0f, 3.0f, 0.0f), 28.0f);
 		if (CollisionDetectedDelegateHandle.IsValid())
 		{
 			PhysicsSubsystemInstance->GetOnCollisionDetectedDelegate().Remove(CollisionDetectedDelegateHandle);
@@ -158,10 +158,27 @@ void KatamaryGame::BuildScene()
 	}
 
 	SpawnFloor();
+	SpawnDirectionalLight();
 	SpawnPlayer();
 	SpawnGameplayCamera();
-	SpawnCollectibles();
+	//SpawnCollectibles();
 	SpawnUserInterface();
+}
+
+void KatamaryGame::SpawnDirectionalLight()
+{
+	std::unique_ptr<Actor> DirectionalLightActor = std::make_unique<Actor>();
+	Transform DirectionalLightTransform;
+	DirectionalLightTransform.RotationEuler = DirectX::XMFLOAT3(1.0f, 0.5f, 0.0f);
+	DirectionalLightActor->SetTransform(DirectionalLightTransform);
+
+	std::unique_ptr<LightComponent> DirectionalLightComponent = std::make_unique<LightComponent>();
+	DirectionalLightComponent->SetLightType(LightType::Directional);
+	DirectionalLightComponent->SetColor(DirectX::XMFLOAT4(1.0f, 0.96f, 0.9f, 1.0f));
+	DirectionalLightComponent->SetIntensity(2.2f);
+
+	DirectionalLightActor->AddComponent(std::move(DirectionalLightComponent));
+	AddActor(std::move(DirectionalLightActor));
 }
 
 void KatamaryGame::SpawnGameplayCamera()
@@ -169,7 +186,7 @@ void KatamaryGame::SpawnGameplayCamera()
 	std::unique_ptr<Actor> CameraActor = std::make_unique<Actor>();
 	Transform CameraTransform;
 	CameraTransform.Position = DirectX::XMFLOAT3(-8.0f, 7.0f, -8.0f);
-	CameraTransform.RotationEuler = DirectX::XMFLOAT3(0.45f, 0.78f, 0.0f);
+	CameraTransform.RotationEuler = DirectX::XMFLOAT3(75.0f, 15.78f, 0.0f);
 	CameraActor->SetTransform(CameraTransform);
 
 	std::unique_ptr<KatamaryOrbitCameraComponent> CameraComponentInstance = std::make_unique<KatamaryOrbitCameraComponent>();
@@ -213,11 +230,14 @@ void KatamaryGame::SpawnPlayer()
 
 	std::unique_ptr<MeshUniversalComponent> PlayerMeshComponent = std::make_unique<MeshUniversalComponent>();
 	PlayerMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleSphere.fbx";
+	PlayerMeshComponent->AlbedoTexturePath = "InputResources/Textures/NoiseTexture.png";
 	PlayerMeshComponent->BaseColor = DirectX::XMFLOAT4(0.75f, 0.28f, 0.95f, 1.0f);
 
 	std::unique_ptr<PhysicsComponent> NewPlayerPhysicsComponent = std::make_unique<PhysicsComponent>();
 	NewPlayerPhysicsComponent->SetMass(6.0f);
 	NewPlayerPhysicsComponent->SetUseGravity(true);
+	NewPlayerPhysicsComponent->EnableAutoConvexColliderFromMesh(false);
+	NewPlayerPhysicsComponent->EnableAutoTriangleMeshColliderFromMesh(false);
 	NewPlayerPhysicsComponent->SetSphereCollider(0.5f);
 	NewPlayerPhysicsComponent->SetLinearDamping(0.45f);
 	NewPlayerPhysicsComponent->SetAngularDamping(0.1f);

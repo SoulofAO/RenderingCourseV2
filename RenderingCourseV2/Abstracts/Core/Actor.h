@@ -2,11 +2,11 @@
 
 #include "Abstracts/Core/Object.h"
 #include "Abstracts/Core/Transform.h"
+#include "Abstracts/Components/ActorComponent.h"
 #include <memory>
 #include <vector>
 
 class Game;
-class ActorComponent;
 
 class Actor : public Object
 {
@@ -23,6 +23,61 @@ public:
 
 	void AddComponent(std::unique_ptr<ActorComponent> Component);
 	const std::vector<std::unique_ptr<ActorComponent>>& GetComponents() const;
+	template<typename ComponentType>
+	ComponentType* GetFirstComponentByClass(bool RequireActiveComponent = false) const
+	{
+		for (const std::unique_ptr<ActorComponent>& ExistingComponent : Components)
+		{
+			if (ExistingComponent == nullptr)
+			{
+				continue;
+			}
+
+			ComponentType* FoundComponent = dynamic_cast<ComponentType*>(ExistingComponent.get());
+			if (FoundComponent == nullptr)
+			{
+				continue;
+			}
+
+			if (RequireActiveComponent && FoundComponent->GetIsActive() == false)
+			{
+				continue;
+			}
+
+			return FoundComponent;
+		}
+
+		return nullptr;
+	}
+
+	template<typename ComponentType>
+	std::vector<ComponentType*> GetAllComponentsByClass(bool RequireActiveComponent = false) const
+	{
+		std::vector<ComponentType*> FoundComponents;
+
+		for (const std::unique_ptr<ActorComponent>& ExistingComponent : Components)
+		{
+			if (ExistingComponent == nullptr)
+			{
+				continue;
+			}
+
+			ComponentType* FoundComponent = dynamic_cast<ComponentType*>(ExistingComponent.get());
+			if (FoundComponent == nullptr)
+			{
+				continue;
+			}
+
+			if (RequireActiveComponent && FoundComponent->GetIsActive() == false)
+			{
+				continue;
+			}
+
+			FoundComponents.push_back(FoundComponent);
+		}
+
+		return FoundComponents;
+	}
 
 	void SetTransform(const Transform& NewTransform, ETransformSpace TransformSpace = ETransformSpace::World);
 	Transform GetTransform(ETransformSpace TransformSpace = ETransformSpace::World) const;

@@ -56,6 +56,9 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, FallbackCameraComponentInstance(nullptr)
 	, CurrentMouseInputMode(MouseInputMode::GameAndUI)
 	, DefaultCameraSettingsWindowVisible(true)
+	, IsWorldBoundarySphereEnabled(false)
+	, WorldBoundarySphereCenter(0.0f, 0.0f, 0.0f)
+	, WorldBoundarySphereRadius(4000.0f)
 {
 	GlobalGame = this;
 }
@@ -131,6 +134,8 @@ void Game::Initialize()
 		ExistingSubsystem->Initialize();
 	}
 
+	ApplyWorldBoundarySphereSettings();
+
 	for (std::unique_ptr<Actor>& ExistingActor : Actors)
 	{
 		ExistingActor->Initialize();
@@ -138,6 +143,7 @@ void Game::Initialize()
 
 	ApplyMouseInputMode();
 	UpdateInputHandlerActivationState();
+	SetWorldBoundarySphereEnabled(IsWorldBoundarySphereEnabled);
 }
 
 void Game::Run()
@@ -611,6 +617,59 @@ bool Game::GetIsFallbackCameraPossessed() const
 	return CameraSystem->GetActiveCamera() == FallbackCameraComponentInstance;
 }
 
+void Game::SetWorldBoundarySphereEnabled(bool NewIsEnabled)
+{
+	IsWorldBoundarySphereEnabled = NewIsEnabled;
+	ApplyWorldBoundarySphereSettings();
+}
+
+bool Game::GetWorldBoundarySphereEnabled() const
+{
+	return IsWorldBoundarySphereEnabled;
+}
+
+void Game::SetWorldBoundarySphereCenter(const DirectX::XMFLOAT3& NewWorldBoundarySphereCenter)
+{
+	WorldBoundarySphereCenter = NewWorldBoundarySphereCenter;
+	ApplyWorldBoundarySphereSettings();
+}
+
+const DirectX::XMFLOAT3& Game::GetWorldBoundarySphereCenter() const
+{
+	return WorldBoundarySphereCenter;
+}
+
+void Game::SetWorldBoundarySphereRadius(float NewWorldBoundarySphereRadius)
+{
+	if (NewWorldBoundarySphereRadius <= 0.0f)
+	{
+		return;
+	}
+
+	WorldBoundarySphereRadius = NewWorldBoundarySphereRadius;
+	ApplyWorldBoundarySphereSettings();
+}
+
+float Game::GetWorldBoundarySphereRadius() const
+{
+	return WorldBoundarySphereRadius;
+}
+
+void Game::SetWorldBoundarySphereSettings(
+	bool NewIsEnabled,
+	const DirectX::XMFLOAT3& NewWorldBoundarySphereCenter,
+	float NewWorldBoundarySphereRadius)
+{
+	IsWorldBoundarySphereEnabled = NewIsEnabled;
+	WorldBoundarySphereCenter = NewWorldBoundarySphereCenter;
+	if (NewWorldBoundarySphereRadius > 0.0f)
+	{
+		WorldBoundarySphereRadius = NewWorldBoundarySphereRadius;
+	}
+
+	ApplyWorldBoundarySphereSettings();
+}
+
 void Game::DrawCameraPossessionUserInterface()
 {
 	ImGuiViewport* MainViewport = ImGui::GetMainViewport();
@@ -648,6 +707,34 @@ void Game::DrawCameraPossessionUserInterface()
 		{
 			ImGui::TextUnformatted("Gameplay camera");
 		}
+
+		LightComponent* DirectionalLightComponent = FindFirstDirectionalLightComponent();
+		if (DirectionalLightComponent != nullptr)
+		{
+			Actor* DirectionalLightActor = DirectionalLightComponent->GetOwningActor();
+			if (DirectionalLightActor != nullptr)
+			{
+				ImGui::Separator();
+				ImGui::TextUnformatted("Directional Light");
+
+				const DirectX::XMFLOAT3 DirectionalLightRotationRadians = DirectionalLightActor->GetRotation(ETransformSpace::World);
+				float DirectionalLightRotationDegrees[3] =
+				{
+					DirectX::XMConvertToDegrees(DirectionalLightRotationRadians.x),
+					DirectX::XMConvertToDegrees(DirectionalLightRotationRadians.y),
+					DirectX::XMConvertToDegrees(DirectionalLightRotationRadians.z)
+				};
+
+				if (ImGui::DragFloat3("Direction (deg)", DirectionalLightRotationDegrees, 0.5f, -180.0f, 180.0f, "%.1f"))
+				{
+					const DirectX::XMFLOAT3 NewDirectionalLightRotationRadians(
+						DirectX::XMConvertToRadians(DirectionalLightRotationDegrees[0]),
+						DirectX::XMConvertToRadians(DirectionalLightRotationDegrees[1]),
+						DirectX::XMConvertToRadians(DirectionalLightRotationDegrees[2]));
+					DirectionalLightActor->SetRotation(NewDirectionalLightRotationRadians, ETransformSpace::World);
+				}
+			}
+		}
 	}
 	ImGui::End();
 }
@@ -662,6 +749,48 @@ void Game::ToggleCameraPossessionFromUserInterface()
 
 	const bool IsFallbackCameraCurrentlyPossessed = GetIsFallbackCameraPossessed();
 	CameraSystem->SetIsFallbackCameraForced(!IsFallbackCameraCurrentlyPossessed);
+}
+
+LightComponent* Game::FindFirstDirectionalLightComponent() const
+{
+	for (const std::unique_ptr<Actor>& ExistingActor : Actors)
+	{
+		if (ExistingActor == nullptr)
+		{
+			continue;
+		}
+
+		const std::vector<LightComponent*> ActorLightComponents = ExistingActor->GetAllComponentsByClass<LightComponent>(true);
+		for (LightComponent* ExistingLightComponent : ActorLightComponents)
+		{
+			if (
+				ExistingLightComponent != nullptr &&
+				ExistingLightComponent->GetLightType() == LightType::Directional)
+			{
+				return ExistingLightComponent;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+void Game::ApplyWorldBoundarySphereSettings()
+{
+	PhysicsSubsystem* PhysicsSubsystemInstance = GetSubsystem<PhysicsSubsystem>();
+	if (PhysicsSubsystemInstance == nullptr)
+	{
+		return;
+	}
+
+	if (IsWorldBoundarySphereEnabled)
+	{
+		PhysicsSubsystemInstance->SetWorldBoundarySphere(WorldBoundarySphereCenter, WorldBoundarySphereRadius);
+	}
+	else
+	{
+		PhysicsSubsystemInstance->DisableWorldBoundarySphere();
+	}
 }
 
 void Game::ApplyMouseInputMode()
