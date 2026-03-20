@@ -1,7 +1,9 @@
 #include "Tests/LightingTestGame.h"
+#include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Components/MeshUniversalComponent.h"
 #include "Abstracts/Core/Actor.h"
 #include "Abstracts/Core/Transform.h"
+#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include <memory>
 
 LightingTestGame::LightingTestGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
@@ -14,6 +16,12 @@ LightingTestGame::~LightingTestGame() = default;
 
 void LightingTestGame::BuildTestScene()
 {
+	SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewportSubsystemInstance != nullptr)
+	{
+		SceneViewportSubsystemInstance->SetRenderPipelineType(RenderPipelineType::Deferred);
+	}
+
 	std::unique_ptr<Actor> FloorActor = std::make_unique<Actor>();
 	Transform FloorTransform;
 	FloorTransform.Position = DirectX::XMFLOAT3(0.0f, -0.5f, 0.0f);
@@ -70,4 +78,68 @@ void LightingTestGame::BuildTestScene()
 		ConeActor->AddComponent(std::move(ConeMeshComponent));
 		AddActor(std::move(ConeActor));
 	}
+
+	SpawnPointLightActor(
+		DirectX::XMFLOAT3(-8.0f, 3.5f, 3.0f),
+		DirectX::XMFLOAT4(1.0f, 0.35f, 0.25f, 1.0f),
+		4.0f,
+		16.0f);
+	SpawnPointLightActor(
+		DirectX::XMFLOAT3(8.0f, 2.5f, -3.5f),
+		DirectX::XMFLOAT4(0.2f, 0.45f, 1.0f, 1.0f),
+		3.6f,
+		14.0f);
+	SpawnSpotLightActor(
+		DirectX::XMFLOAT3(0.0f, 5.5f, -9.0f),
+		DirectX::XMFLOAT3(0.45f, 0.0f, 0.0f),
+		DirectX::XMFLOAT4(0.95f, 1.0f, 0.75f, 1.0f),
+		5.0f,
+		22.0f,
+		14.0f,
+		26.0f);
+}
+
+void LightingTestGame::SpawnPointLightActor(
+	const DirectX::XMFLOAT3& Position,
+	const DirectX::XMFLOAT4& LightColor,
+	float LightIntensity,
+	float LightRange)
+{
+	std::unique_ptr<Actor> NewPointLightActor = std::make_unique<Actor>();
+	Transform PointLightTransform;
+	PointLightTransform.Position = Position;
+	NewPointLightActor->SetTransform(PointLightTransform);
+
+	std::unique_ptr<LightComponent> NewPointLightComponent = std::make_unique<LightComponent>();
+	NewPointLightComponent->SetLightType(LightType::Point);
+	NewPointLightComponent->SetColor(LightColor);
+	NewPointLightComponent->SetIntensity(LightIntensity);
+	NewPointLightComponent->SetRange(LightRange);
+	NewPointLightActor->AddComponent(std::move(NewPointLightComponent));
+	AddActor(std::move(NewPointLightActor));
+}
+
+void LightingTestGame::SpawnSpotLightActor(
+	const DirectX::XMFLOAT3& Position,
+	const DirectX::XMFLOAT3& RotationEuler,
+	const DirectX::XMFLOAT4& LightColor,
+	float LightIntensity,
+	float LightRange,
+	float InnerConeAngleDegrees,
+	float OuterConeAngleDegrees)
+{
+	std::unique_ptr<Actor> NewSpotLightActor = std::make_unique<Actor>();
+	Transform SpotLightTransform;
+	SpotLightTransform.Position = Position;
+	SpotLightTransform.RotationEuler = RotationEuler;
+	NewSpotLightActor->SetTransform(SpotLightTransform);
+
+	std::unique_ptr<LightComponent> NewSpotLightComponent = std::make_unique<LightComponent>();
+	NewSpotLightComponent->SetLightType(LightType::Spot);
+	NewSpotLightComponent->SetColor(LightColor);
+	NewSpotLightComponent->SetIntensity(LightIntensity);
+	NewSpotLightComponent->SetRange(LightRange);
+	NewSpotLightComponent->SetSpotConeAnglesDegrees(InnerConeAngleDegrees, OuterConeAngleDegrees);
+	NewSpotLightActor->AddComponent(std::move(NewSpotLightComponent));
+	AddActor(std::move(NewSpotLightActor));
 }

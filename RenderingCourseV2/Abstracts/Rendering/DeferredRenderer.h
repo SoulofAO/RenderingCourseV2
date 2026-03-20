@@ -4,6 +4,31 @@
 #include <d3d11.h>
 #include <array>
 #include <string>
+#include <vector>
+
+constexpr int MaximumDeferredPointLightCount = 16;
+constexpr int MaximumDeferredSpotLightCount = 16;
+
+struct DeferredPointLightData
+{
+	DirectX::XMFLOAT3 Position;
+	float Intensity;
+	DirectX::XMFLOAT4 Color;
+	float Range;
+	DirectX::XMFLOAT3 Padding0;
+};
+
+struct DeferredSpotLightData
+{
+	DirectX::XMFLOAT3 Position;
+	float Intensity;
+	DirectX::XMFLOAT4 Color;
+	DirectX::XMFLOAT3 Direction;
+	float Range;
+	float InnerConeAngleCosine;
+	float OuterConeAngleCosine;
+	DirectX::XMFLOAT2 Padding0;
+};
 
 class DeferredRenderer
 {
@@ -25,6 +50,8 @@ public:
 		const DirectX::XMFLOAT3& DirectionalLightDirection,
 		const DirectX::XMFLOAT4& DirectionalLightColor,
 		float DirectionalLightIntensity,
+		const std::vector<DeferredPointLightData>& PointLights,
+		const std::vector<DeferredSpotLightData>& SpotLights,
 		float UseFullBrightnessWithoutLighting,
 		float ShadowStrength,
 		float DeferredDebugBufferViewMode);

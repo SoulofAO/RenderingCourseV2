@@ -56,6 +56,8 @@ public:
 	DirectX::XMFLOAT3 GetDirectionalLightDirection() const;
 	DirectX::XMFLOAT4 GetDirectionalLightColor() const;
 	float GetDirectionalLightIntensity() const;
+	const std::vector<DeferredPointLightData>& GetPointLights() const;
+	const std::vector<DeferredSpotLightData>& GetSpotLights() const;
 	float GetUseFullBrightnessWithoutLighting() const;
 	bool GetIsShadowRenderingEnabled() const;
 	int GetShadowCascadeCountSetting() const;
@@ -99,6 +101,8 @@ private:
 	DirectX::XMFLOAT3 DirectionalLightDirection;
 	DirectX::XMFLOAT4 DirectionalLightColor;
 	float DirectionalLightIntensity;
+	std::vector<DeferredPointLightData> PointLights;
+	std::vector<DeferredSpotLightData> SpotLights;
 	float UseFullBrightnessWithoutLighting;
 	bool IsShadowRenderingEnabled;
 	int ShadowCascadeCountSetting;

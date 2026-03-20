@@ -682,6 +682,14 @@ void Game::DrawCameraPossessionUserInterface()
 		if (SceneViewportSubsystemInstance != nullptr)
 		{
 			ImGui::Separator();
+			bool IsDeferredLightingEnabled = SceneViewportSubsystemInstance->GetRenderPipelineType() == RenderPipelineType::Deferred;
+			if (ImGui::Checkbox("Use Deferred Lighting", &IsDeferredLightingEnabled))
+			{
+				const RenderPipelineType NewRenderPipelineType =
+					IsDeferredLightingEnabled ? RenderPipelineType::Deferred : RenderPipelineType::Forward;
+				SceneViewportSubsystemInstance->SetRenderPipelineType(NewRenderPipelineType);
+			}
+
 			bool IsShadowRenderingEnabled = SceneViewportSubsystemInstance->GetIsShadowRenderingEnabled();
 			if (ImGui::Checkbox("Enable Shadows", &IsShadowRenderingEnabled))
 			{

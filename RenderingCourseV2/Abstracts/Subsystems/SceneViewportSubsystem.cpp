@@ -11,6 +11,7 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 #pragma comment(lib, "d3d11.lib")
@@ -262,6 +263,16 @@ float SceneViewportSubsystem::GetDirectionalLightIntensity() const
 	return DirectionalLightIntensity;
 }
 
+const std::vector<DeferredPointLightData>& SceneViewportSubsystem::GetPointLights() const
+{
+	return PointLights;
+}
+
+const std::vector<DeferredSpotLightData>& SceneViewportSubsystem::GetSpotLights() const
+{
+	return SpotLights;
+}
+
 float SceneViewportSubsystem::GetUseFullBrightnessWithoutLighting() const
 {
 	return UseFullBrightnessWithoutLighting;
@@ -377,9 +388,14 @@ void SceneViewportSubsystem::RenderSceneFrame()
 	}
 
 	bool HasDirectionalLight = false;
+	PointLights.clear();
+	SpotLights.clear();
+	PointLights.reserve(MaximumDeferredPointLightCount);
+	SpotLights.reserve(MaximumDeferredSpotLightCount);
 	for (LightComponent* ExistingLightComponent : LightComponents)
 	{
-		if (ExistingLightComponent->GetLightType() == LightType::Directional)
+		const LightType ExistingLightType = ExistingLightComponent->GetLightType();
+		if (ExistingLightType == LightType::Directional && HasDirectionalLight == false)
 		{
 			SetDirectionalLightData(
 				ExistingLightComponent->GetDirection(),
@@ -387,7 +403,42 @@ void SceneViewportSubsystem::RenderSceneFrame()
 				ExistingLightComponent->GetIntensity(),
 				0.0f);
 			HasDirectionalLight = true;
-			break;
+		}
+
+		if (ExistingLightType == LightType::Point)
+		{
+			if (static_cast<int>(PointLights.size()) >= MaximumDeferredPointLightCount)
+			{
+				continue;
+			}
+
+			const Transform ExistingLightTransform = ExistingLightComponent->GetWorldTransform();
+			DeferredPointLightData PointLightData = {};
+			PointLightData.Position = ExistingLightTransform.Position;
+			PointLightData.Intensity = ExistingLightComponent->GetIntensity();
+			PointLightData.Color = ExistingLightComponent->GetColor();
+			PointLightData.Range = ExistingLightComponent->GetRange();
+			PointLights.push_back(PointLightData);
+			continue;
+		}
+
+		if (ExistingLightType == LightType::Spot)
+		{
+			if (static_cast<int>(SpotLights.size()) >= MaximumDeferredSpotLightCount)
+			{
+				continue;
+			}
+
+			const Transform ExistingLightTransform = ExistingLightComponent->GetWorldTransform();
+			DeferredSpotLightData SpotLightData = {};
+			SpotLightData.Position = ExistingLightTransform.Position;
+			SpotLightData.Intensity = ExistingLightComponent->GetIntensity();
+			SpotLightData.Color = ExistingLightComponent->GetColor();
+			SpotLightData.Direction = ExistingLightComponent->GetDirection();
+			SpotLightData.Range = ExistingLightComponent->GetRange();
+			SpotLightData.InnerConeAngleCosine = std::cos(DirectX::XMConvertToRadians(ExistingLightComponent->GetSpotInnerConeAngleDegrees()));
+			SpotLightData.OuterConeAngleCosine = std::cos(DirectX::XMConvertToRadians(ExistingLightComponent->GetSpotOuterConeAngleDegrees()));
+			SpotLights.push_back(SpotLightData);
 		}
 	}
 	if (HasDirectionalLight == false)

@@ -117,6 +117,8 @@ void DeferredRenderPipeline::RenderFrame(
 		SceneViewport->GetDirectionalLightDirection(),
 		SceneViewport->GetDirectionalLightColor(),
 		SceneViewport->GetDirectionalLightIntensity(),
+		SceneViewport->GetPointLights(),
+		SceneViewport->GetSpotLights(),
 		SceneViewport->GetUseFullBrightnessWithoutLighting(),
 		IsShadowRenderingEnabled ? 1.0f : 0.0f,
 		static_cast<float>(SceneViewport->GetDeferredDebugBufferViewMode()));

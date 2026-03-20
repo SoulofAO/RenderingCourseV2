@@ -24,6 +24,11 @@ public:
 
 	void SetIntensity(float NewIntensity);
 	float GetIntensity() const;
+	void SetRange(float NewRange);
+	float GetRange() const;
+	void SetSpotConeAnglesDegrees(float NewInnerConeAngleDegrees, float NewOuterConeAngleDegrees);
+	float GetSpotInnerConeAngleDegrees() const;
+	float GetSpotOuterConeAngleDegrees() const;
 
 	DirectX::XMFLOAT3 GetDirection() const;
 
@@ -31,4 +36,7 @@ private:
 	LightType Type;
 	DirectX::XMFLOAT4 Color;
 	float Intensity;
+	float Range;
+	float SpotInnerConeAngleDegrees;
+	float SpotOuterConeAngleDegrees;
 };

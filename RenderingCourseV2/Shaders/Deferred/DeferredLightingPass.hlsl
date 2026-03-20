@@ -14,11 +14,37 @@ cbuffer DeferredCameraBuffer : register(b0)
 	float Padding0;
 };
 
+struct DeferredPointLightData
+{
+	float3 Position;
+	float Intensity;
+	float4 Color;
+	float Range;
+	float3 Padding0;
+};
+
+struct DeferredSpotLightData
+{
+	float3 Position;
+	float Intensity;
+	float4 Color;
+	float3 Direction;
+	float Range;
+	float InnerConeAngleCosine;
+	float OuterConeAngleCosine;
+	float2 Padding0;
+};
+
 cbuffer DeferredLightBuffer : register(b1)
 {
 	float3 DirectionalLightDirection;
 	float DirectionalLightIntensity;
 	float4 DirectionalLightColor;
+	float PointLightCountValue;
+	float SpotLightCountValue;
+	float2 LightCountPadding0;
+	DeferredPointLightData PointLights[16];
+	DeferredSpotLightData SpotLights[16];
 	float UseFullBrightnessWithoutLighting;
 	float ShadowBias;
 	float ShadowStrength;
@@ -121,6 +147,72 @@ float CalculateShadowVisibility(float3 WorldPosition)
 	return lerp(1.0f, ShadowVisibility, ShadowStrength);
 }
 
+float3 CalculatePointLightContribution(
+	float3 WorldPosition,
+	float3 NormalDirection,
+	float3 ViewDirection,
+	float3 AlbedoColor,
+	float SpecularPower,
+	float SpecularIntensity,
+	DeferredPointLightData PointLightData)
+{
+	float3 SurfaceToLightVector = PointLightData.Position - WorldPosition;
+	float SurfaceToLightDistance = length(SurfaceToLightVector);
+	float SafeRange = max(PointLightData.Range, 0.001f);
+	if (SurfaceToLightDistance >= SafeRange)
+	{
+		return float3(0.0f, 0.0f, 0.0f);
+	}
+
+	float3 LightDirection = SurfaceToLightVector / max(SurfaceToLightDistance, 0.0001f);
+	float3 HalfDirection = normalize(LightDirection + ViewDirection);
+	float Diffuse = max(dot(NormalDirection, LightDirection), 0.0f);
+	float Specular = pow(max(dot(NormalDirection, HalfDirection), 0.0f), SpecularPower) * SpecularIntensity;
+	float RangeAttenuation = saturate(1.0f - (SurfaceToLightDistance / SafeRange));
+	RangeAttenuation *= RangeAttenuation;
+	float3 DiffuseColor = AlbedoColor * Diffuse * PointLightData.Color.rgb * PointLightData.Intensity * RangeAttenuation;
+	float3 SpecularColor = Specular * PointLightData.Color.rgb * PointLightData.Intensity * RangeAttenuation;
+	return DiffuseColor + SpecularColor;
+}
+
+float3 CalculateSpotLightContribution(
+	float3 WorldPosition,
+	float3 NormalDirection,
+	float3 ViewDirection,
+	float3 AlbedoColor,
+	float SpecularPower,
+	float SpecularIntensity,
+	DeferredSpotLightData SpotLightData)
+{
+	float3 SurfaceToLightVector = SpotLightData.Position - WorldPosition;
+	float SurfaceToLightDistance = length(SurfaceToLightVector);
+	float SafeRange = max(SpotLightData.Range, 0.001f);
+	if (SurfaceToLightDistance >= SafeRange)
+	{
+		return float3(0.0f, 0.0f, 0.0f);
+	}
+
+	float3 LightDirection = SurfaceToLightVector / max(SurfaceToLightDistance, 0.0001f);
+	float3 SpotDirection = normalize(SpotLightData.Direction);
+	float3 LightToSurfaceDirection = normalize(WorldPosition - SpotLightData.Position);
+	float ConeCosine = dot(SpotDirection, LightToSurfaceDirection);
+	float ConeAttenuation = smoothstep(SpotLightData.OuterConeAngleCosine, SpotLightData.InnerConeAngleCosine, ConeCosine);
+	if (ConeAttenuation <= 0.0001f)
+	{
+		return float3(0.0f, 0.0f, 0.0f);
+	}
+
+	float3 HalfDirection = normalize(LightDirection + ViewDirection);
+	float Diffuse = max(dot(NormalDirection, LightDirection), 0.0f);
+	float Specular = pow(max(dot(NormalDirection, HalfDirection), 0.0f), SpecularPower) * SpecularIntensity;
+	float RangeAttenuation = saturate(1.0f - (SurfaceToLightDistance / SafeRange));
+	RangeAttenuation *= RangeAttenuation;
+	float Attenuation = RangeAttenuation * ConeAttenuation;
+	float3 DiffuseColor = AlbedoColor * Diffuse * SpotLightData.Color.rgb * SpotLightData.Intensity * Attenuation;
+	float3 SpecularColor = Specular * SpotLightData.Color.rgb * SpotLightData.Intensity * Attenuation;
+	return DiffuseColor + SpecularColor;
+}
+
 float4 PSMain(VS_OUT Input) : SV_Target
 {
 	float4 Albedo = GBufferAlbedo.Sample(GBufferSampler, Input.TextureCoordinates);
@@ -168,7 +260,34 @@ float4 PSMain(VS_OUT Input) : SV_Target
 		return float4(ShadowVisibility, ShadowVisibility, ShadowVisibility, 1.0f);
 	}
 	float3 AmbientColor = Albedo.rgb * 0.15f;
-	float3 DiffuseColor = Albedo.rgb * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
-	float3 SpecularColor = Specular * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
-	return float4(AmbientColor + DiffuseColor + SpecularColor, Albedo.a);
+	float3 DirectionalDiffuseColor = Albedo.rgb * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
+	float3 DirectionalSpecularColor = Specular * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
+	float3 AdditionalLightsColor = float3(0.0f, 0.0f, 0.0f);
+	int PointLightCount = clamp((int)PointLightCountValue, 0, 16);
+	[loop]
+	for (int PointLightIndex = 0; PointLightIndex < PointLightCount; ++PointLightIndex)
+	{
+		AdditionalLightsColor += CalculatePointLightContribution(
+			WorldPosition,
+			NormalDirection,
+			ViewDirection,
+			Albedo.rgb,
+			SpecularPower,
+			SpecularIntensity,
+			PointLights[PointLightIndex]);
+	}
+	int SpotLightCount = clamp((int)SpotLightCountValue, 0, 16);
+	[loop]
+	for (int SpotLightIndex = 0; SpotLightIndex < SpotLightCount; ++SpotLightIndex)
+	{
+		AdditionalLightsColor += CalculateSpotLightContribution(
+			WorldPosition,
+			NormalDirection,
+			ViewDirection,
+			Albedo.rgb,
+			SpecularPower,
+			SpecularIntensity,
+			SpotLights[SpotLightIndex]);
+	}
+	return float4(AmbientColor + DirectionalDiffuseColor + DirectionalSpecularColor + AdditionalLightsColor, Albedo.a);
 }

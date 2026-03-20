@@ -9,6 +9,7 @@
 #include "Abstracts/Others/PhysicsLibrary.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
+#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -135,6 +136,11 @@ void KatamaryGame::BeginPlay()
 {
 	SetMouseInputMode(MouseInputMode::UIOnly);
 	BuildScene();
+	SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewportSubsystemInstance != nullptr)
+	{
+		SceneViewportSubsystemInstance->SetRenderPipelineType(RenderPipelineType::Deferred);
+	}
 	Game::BeginPlay();
 }
 

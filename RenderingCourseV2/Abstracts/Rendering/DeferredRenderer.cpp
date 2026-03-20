@@ -116,6 +116,11 @@ struct DeferredLightBufferData
 	DirectX::XMFLOAT3 DirectionalLightDirection;
 	float DirectionalLightIntensity;
 	DirectX::XMFLOAT4 DirectionalLightColor;
+	float PointLightCountValue;
+	float SpotLightCountValue;
+	DirectX::XMFLOAT2 LightCountPadding0;
+	DeferredPointLightData PointLights[MaximumDeferredPointLightCount];
+	DeferredSpotLightData SpotLights[MaximumDeferredSpotLightCount];
 	float UseFullBrightnessWithoutLighting;
 	float ShadowBias;
 	float ShadowStrength;
@@ -421,6 +426,8 @@ void DeferredRenderer::RenderLightingPass(
 	const DirectX::XMFLOAT3& DirectionalLightDirection,
 	const DirectX::XMFLOAT4& DirectionalLightColor,
 	float DirectionalLightIntensity,
+	const std::vector<DeferredPointLightData>& PointLights,
+	const std::vector<DeferredSpotLightData>& SpotLights,
 	float UseFullBrightnessWithoutLighting,
 	float ShadowStrength,
 	float DeferredDebugBufferViewMode)
@@ -442,6 +449,18 @@ void DeferredRenderer::RenderLightingPass(
 	LightBufferData.DirectionalLightDirection = DirectionalLightDirection;
 	LightBufferData.DirectionalLightColor = DirectionalLightColor;
 	LightBufferData.DirectionalLightIntensity = DirectionalLightIntensity;
+	const int PointLightCount = (std::min)(static_cast<int>(PointLights.size()), MaximumDeferredPointLightCount);
+	LightBufferData.PointLightCountValue = static_cast<float>(PointLightCount);
+	for (int PointLightIndex = 0; PointLightIndex < PointLightCount; ++PointLightIndex)
+	{
+		LightBufferData.PointLights[PointLightIndex] = PointLights[PointLightIndex];
+	}
+	const int SpotLightCount = (std::min)(static_cast<int>(SpotLights.size()), MaximumDeferredSpotLightCount);
+	LightBufferData.SpotLightCountValue = static_cast<float>(SpotLightCount);
+	for (int SpotLightIndex = 0; SpotLightIndex < SpotLightCount; ++SpotLightIndex)
+	{
+		LightBufferData.SpotLights[SpotLightIndex] = SpotLights[SpotLightIndex];
+	}
 	LightBufferData.UseFullBrightnessWithoutLighting = UseFullBrightnessWithoutLighting;
 	LightBufferData.ShadowBias = 0.0015f;
 	LightBufferData.ShadowStrength = ShadowStrength;

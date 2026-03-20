@@ -8,10 +8,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/LightComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/LightComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/LightComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/LightComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/KatamaryTask/KatamaryGame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Tests/LightingTestGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Tests/LightingTestGame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Tests/LightingTestGame.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Tests/LightingTestGame.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +47,10 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="cidr-memory-view://11" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -113,7 +134,7 @@
       <workItem from="1773908263007" duration="15336000" />
       <workItem from="1774005763954" duration="858000" />
       <workItem from="1774011672600" duration="6027000" />
-      <workItem from="1774024109040" duration="12038000" />
+      <workItem from="1774024109040" duration="14038000" />
     </task>
     <servers />
   </component>

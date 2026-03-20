@@ -138,6 +138,7 @@
     <ClCompile Include="Abstracts\Components\GameComponent.cpp" />
     <ClCompile Include="Abstracts\Components\LightComponent.cpp" />
     <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\ParticleRenderingComponent.cpp" />
     <ClCompile Include="Abstracts\Components\PhysicsComponent.cpp" />
     <ClCompile Include="Abstracts\Physics\PhysXTypeConversion.cpp" />
     <ClCompile Include="Abstracts\Components\RenderingComponent.cpp" />
@@ -149,6 +150,8 @@
     <ClCompile Include="Abstracts\Others\PhysicsLibrary.cpp" />
     <ClCompile Include="Abstracts\Input\EngineHotkeyInputHandler.cpp" />
     <ClCompile Include="Abstracts\Input\FreeCameraInputHandler.cpp" />
+    <ClCompile Include="Abstracts\Rendering\RenderProxy\ParticleDeferredRenderProxyObject.cpp" />
+    <ClCompile Include="Abstracts\Rendering\RenderProxy\ParticleForwardRenderProxyObject.cpp" />
     <ClCompile Include="Abstracts\Subsystems\DisplayWin32.cpp" />
     <ClCompile Include="Abstracts\Subsystems\InputDevice.cpp" />
     <ClCompile Include="Abstracts\Subsystems\PhysicsSubsystem.cpp" />
@@ -199,6 +202,7 @@
     <ClInclude Include="Abstracts\Components\GameComponent.h" />
     <ClInclude Include="Abstracts\Components\LightComponent.h" />
     <ClInclude Include="Abstracts\Components\MeshUniversalComponent.h" />
+    <ClInclude Include="Abstracts\Components\ParticleRenderingComponent.h" />
     <ClInclude Include="Abstracts\Rendering\AbstractRenderPipeline.h" />
     <ClInclude Include="Abstracts\Rendering\RenderProxy\DeferredRendererProxyObject.h" />
     <ClInclude Include="Abstracts\Rendering\DeferredRenderPipeline.h" />
@@ -207,6 +211,8 @@
     <ClInclude Include="Abstracts\Rendering\ForwardRenderPipeline.h" />
     <ClInclude Include="Abstracts\Rendering\RenderProxy\MeshUniversalDeferredRendererProxyObject.h" />
     <ClInclude Include="Abstracts\Rendering\RenderProxy\MeshUniversalForwardRendererProxyObject.h" />
+    <ClInclude Include="Abstracts\Rendering\RenderProxy\ParticleDeferredRenderProxyObject.h" />
+    <ClInclude Include="Abstracts\Rendering\RenderProxy\ParticleForwardRenderProxyObject.h" />
     <ClInclude Include="Abstracts\Rendering\RenderProxy\RenderingProxyObject.h" />
     <ClInclude Include="Abstracts\Rendering\RenderProxy\RenderingProxyPassState.h" />
     <ClInclude Include="FirstTask\Render\RenderProxy\TriangleDeferredRendererProxyObject.h" />
