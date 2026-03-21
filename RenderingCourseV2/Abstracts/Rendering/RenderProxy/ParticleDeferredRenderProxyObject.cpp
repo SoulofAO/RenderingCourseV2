@@ -1,12 +1,19 @@
-#include "ParticleDeferredRenderProxyObject.h"
+#include "Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.h"
+#include "Abstracts/Components/ParticleRenderingComponent.h"
+
+ParticleDeferredRenderProxyObject::ParticleDeferredRenderProxyObject(ParticleRenderingComponent* NewOwnerComponent)
+	: OwnerComponent(NewOwnerComponent)
+{
+}
 
 void ParticleDeferredRenderProxyObject::RenderDeferredGeometryPass(
-    const DeferredGeometryRenderPassState& DeferredGeometryRenderPassStateValue)
+	const DeferredGeometryRenderPassState& DeferredGeometryRenderPassStateValue)
 {
-    
+	(void)DeferredGeometryRenderPassStateValue;
 }
 
 void ParticleDeferredRenderProxyObject::RenderDeferredShadowPass(
-    const DeferredShadowRenderPassState& DeferredShadowRenderPassStateValue)
+	const DeferredShadowRenderPassState& DeferredShadowRenderPassStateValue)
 {
+	(void)DeferredShadowRenderPassStateValue;
 }

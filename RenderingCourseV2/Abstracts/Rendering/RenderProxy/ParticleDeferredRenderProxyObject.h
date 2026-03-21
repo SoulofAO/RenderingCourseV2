@@ -1,10 +1,17 @@
 #pragma once
 
-#include "DeferredRendererProxyObject.h"
+#include "Abstracts/Rendering/RenderProxy/DeferredRendererProxyObject.h"
+
+class ParticleRenderingComponent;
 
 class ParticleDeferredRenderProxyObject : public DeferredRendererProxyObject
 {
 public:
-    virtual void RenderDeferredGeometryPass(const DeferredGeometryRenderPassState& DeferredGeometryRenderPassStateValue) override;
-    virtual void RenderDeferredShadowPass(const DeferredShadowRenderPassState& DeferredShadowRenderPassStateValue) override;
+	explicit ParticleDeferredRenderProxyObject(ParticleRenderingComponent* NewOwnerComponent);
+
+	void RenderDeferredGeometryPass(const DeferredGeometryRenderPassState& DeferredGeometryRenderPassStateValue) override;
+	void RenderDeferredShadowPass(const DeferredShadowRenderPassState& DeferredShadowRenderPassStateValue) override;
+
+private:
+	ParticleRenderingComponent* OwnerComponent;
 };

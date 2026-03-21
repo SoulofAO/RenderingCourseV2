@@ -9,6 +9,7 @@
 #include "Abstracts/Components/MeshUniversalComponent.h"
 #include "Abstracts/Components/FPSSpectateCameraComponent.h"
 #include "Abstracts/Components/UIRenderingComponent.h"
+#include "Abstracts/Components/ParticleRenderingComponent.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
@@ -279,6 +280,18 @@ void Game::Draw()
 	SceneViewport->BeginFrame(TotalRunTimeSeconds);
 	SceneViewport->BeginDearImGuiFrame();
 	DrawCameraPossessionUserInterface();
+	for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
+	{
+		if (ExistingActor == nullptr)
+		{
+			continue;
+		}
+		ParticleRenderingComponent* ParticleRendering = ExistingActor->GetFirstComponentByClass<ParticleRenderingComponent>();
+		if (ParticleRendering != nullptr)
+		{
+			ParticleRendering->DrawDearImGuiParticlePanels();
+		}
+	}
 	SceneViewport->RenderSceneFrame();
 }
 

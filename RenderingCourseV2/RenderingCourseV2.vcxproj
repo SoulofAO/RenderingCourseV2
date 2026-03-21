@@ -78,6 +78,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,6 +109,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,6 +141,13 @@
     <ClCompile Include="Abstracts\Components\LightComponent.cpp" />
     <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp" />
     <ClCompile Include="Abstracts\Components\ParticleRenderingComponent.cpp" />
+    <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticleSimulationObject.cpp" />
+    <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticleDefaultObject.cpp" />
+    <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticleGravityObject.cpp" />
+    <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticleLinearForceObject.cpp" />
+    <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticleFrictionObject.cpp" />
+    <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticlePointForceObject.cpp" />
+    <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticleCollisionObject.cpp" />
     <ClCompile Include="Abstracts\Components\PhysicsComponent.cpp" />
     <ClCompile Include="Abstracts\Physics\PhysXTypeConversion.cpp" />
     <ClCompile Include="Abstracts\Components\RenderingComponent.cpp" />
@@ -512,6 +521,13 @@
     <ClInclude Include="Abstracts\Components\LightComponent.h" />
     <ClInclude Include="Abstracts\Components\MeshUniversalComponent.h" />
     <ClInclude Include="Abstracts\Components\ParticleRenderingComponent.h" />
+    <ClInclude Include="Abstracts\Rendering\ParticleSimulation\ParticleSimulationObject.h" />
+    <ClInclude Include="Abstracts\Rendering\ParticleSimulation\ParticleDefaultObject.h" />
+    <ClInclude Include="Abstracts\Rendering\ParticleSimulation\ParticleGravityObject.h" />
+    <ClInclude Include="Abstracts\Rendering\ParticleSimulation\ParticleLinearForceObject.h" />
+    <ClInclude Include="Abstracts\Rendering\ParticleSimulation\ParticleFrictionObject.h" />
+    <ClInclude Include="Abstracts\Rendering\ParticleSimulation\ParticlePointForceObject.h" />
+    <ClInclude Include="Abstracts\Rendering\ParticleSimulation\ParticleCollisionObject.h" />
     <ClInclude Include="Abstracts\Rendering\AbstractRenderPipeline.h" />
     <ClInclude Include="Abstracts\Rendering\RenderProxy\DeferredRendererProxyObject.h" />
     <ClInclude Include="Abstracts\Rendering\DeferredRenderPipeline.h" />

@@ -2,8 +2,15 @@
 
 #include "Abstracts/Rendering/RenderProxy/ForwardRendererProxyObject.h"
 
+class ParticleRenderingComponent;
+
 class ParticleForwardRenderProxyObject : public ForwardRendererProxyObject
 {
 public:
-    virtual void RenderForwardMainPass(const ForwardMainRenderPassState& ForwardMainRenderPassStateValue) override;
+	explicit ParticleForwardRenderProxyObject(ParticleRenderingComponent* NewOwnerComponent);
+
+	void RenderForwardMainPass(const ForwardMainRenderPassState& ForwardMainRenderPassStateValue) override;
+
+private:
+	ParticleRenderingComponent* OwnerComponent;
 };
