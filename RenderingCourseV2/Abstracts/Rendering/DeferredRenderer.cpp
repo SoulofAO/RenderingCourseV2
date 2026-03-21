@@ -701,6 +701,11 @@ ID3D11DepthStencilView* DeferredRenderer::GetDepthStencilView() const
 	return GBufferDepthDSV;
 }
 
+ID3D11ShaderResourceView* DeferredRenderer::GetGBufferDepthShaderResourceView() const
+{
+	return GBufferDepthSRV;
+}
+
 void DeferredRenderer::ReleaseTargets()
 {
 	if (GBufferAlbedoRTV != nullptr)

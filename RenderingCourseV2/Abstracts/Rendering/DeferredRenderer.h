@@ -70,6 +70,7 @@ public:
 	DirectX::XMMATRIX GetShadowCascadeProjectionMatrix(int CascadeIndex) const;
 
 	ID3D11DepthStencilView* GetDepthStencilView() const;
+	ID3D11ShaderResourceView* GetGBufferDepthShaderResourceView() const;
 
 private:
 	void ReleaseTargets();
