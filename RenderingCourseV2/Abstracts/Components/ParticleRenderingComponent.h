@@ -5,6 +5,7 @@
 #include <d3d11.h>
 #include <directxmath.h>
 #include <memory>
+#include <string>
 #include <vector>
 
 struct ParticleStructData
@@ -15,7 +16,9 @@ struct ParticleStructData
 	float VelocityPadding;
 	DirectX::XMFLOAT4 Color;
 	float AgeTime;
+	float SizeWorld;
 	UINT Active;
+	UINT PaddingTail;
 };
 
 class SceneViewportSubsystem;
@@ -38,7 +41,10 @@ public:
 
 	void BindParticleSimulationCommonComputeState(ID3D11ComputeShader* ComputeShader);
 	void DispatchParticleSimulationThreadGroups();
+	void DispatchParticleSpawnThreadGroups(UINT TotalSpawnThreads);
 	void UnbindParticleSimulationCompute();
+
+	float GetLastSimulationDeltaTime() const;
 
 	DirectX::XMFLOAT3 GetGravityDirectionSimulation() const;
 	void SetGravityDirectionSimulation(const DirectX::XMFLOAT3& NewGravityDirectionSimulation);
@@ -92,6 +98,8 @@ private:
 	ID3D11RasterizerState* ParticleRasterizerState;
 
 	UINT ParticleSimulationThreadGroupCount;
+
+	std::string ShaderContentRootDirectory;
 
 	std::vector<std::unique_ptr<ParticleSimulationObject>> SimulationStages;
 };

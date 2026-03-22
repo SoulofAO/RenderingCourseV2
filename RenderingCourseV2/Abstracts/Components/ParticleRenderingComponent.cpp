@@ -1,6 +1,8 @@
 #include "Abstracts/Components/ParticleRenderingComponent.h"
+#include "Abstracts/Resources/ResourceManager.h"
 #include "Abstracts/Rendering/ParticleSimulation/ParticleCollisionObject.h"
 #include "Abstracts/Rendering/ParticleSimulation/ParticleDefaultObject.h"
+#include "Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.h"
 #include "Abstracts/Rendering/ParticleSimulation/ParticleFrictionObject.h"
 #include "Abstracts/Rendering/ParticleSimulation/ParticleGravityObject.h"
 #include "Abstracts/Rendering/ParticleSimulation/ParticleLinearForceObject.h"
@@ -10,9 +12,11 @@
 #include "Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include <d3dcompiler.h>
+#include <filesystem>
 #include <imgui.h>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -60,6 +64,7 @@ ParticleRenderingComponent::ParticleRenderingComponent(int NewMaxParticleCount)
 	, ParticleDepthStencilState(nullptr)
 	, ParticleRasterizerState(nullptr)
 	, ParticleSimulationThreadGroupCount(0)
+	, ShaderContentRootDirectory()
 {
 	SetRenderOrder(50);
 	SetForwardRendererProxyObject(std::make_unique<ParticleForwardRenderProxyObject>(this));
@@ -83,7 +88,22 @@ bool ParticleRenderingComponent::CompileShaderFromFile(
 		return false;
 	}
 
-	std::wstring ShaderFilePath(ShaderPath.begin(), ShaderPath.end());
+	std::filesystem::path AbsoluteShaderPath;
+	if (ShaderContentRootDirectory.empty())
+	{
+		AbsoluteShaderPath = ShaderPath;
+	}
+	else
+	{
+		std::string RelativeShaderPath = ShaderPath;
+		if (RelativeShaderPath.size() >= 2 && RelativeShaderPath[0] == '.' && RelativeShaderPath[1] == '/')
+		{
+			RelativeShaderPath = RelativeShaderPath.substr(2);
+		}
+		AbsoluteShaderPath = std::filesystem::path(ShaderContentRootDirectory) / RelativeShaderPath;
+	}
+
+	const std::wstring ShaderFilePath = AbsoluteShaderPath.wstring();
 	ID3DBlob* ErrorCode = nullptr;
 	HRESULT Result = D3DCompileFromFile(
 		ShaderFilePath.c_str(),
@@ -196,7 +216,9 @@ bool ParticleRenderingComponent::CreateParticleSimulationResources(ID3D11Device*
 	BufferDescription.StructureByteStride = StructureByteStride;
 
 	std::vector<ParticleStructData> InitialParticles(static_cast<size_t>(MaxParticleCount));
-	HRESULT CreateBufferResult = Device->CreateBuffer(&BufferDescription, nullptr, &ParticleStateBuffer);
+	D3D11_SUBRESOURCE_DATA InitialBufferData = {};
+	InitialBufferData.pSysMem = InitialParticles.data();
+	HRESULT CreateBufferResult = Device->CreateBuffer(&BufferDescription, &InitialBufferData, &ParticleStateBuffer);
 	if (FAILED(CreateBufferResult))
 	{
 		return false;
@@ -389,6 +411,7 @@ void ParticleRenderingComponent::ReleaseParticleSimulationResources()
 void ParticleRenderingComponent::BuildDefaultSimulationPipeline(ID3D11Device* Device)
 {
 	SimulationStages.clear();
+	SimulationStages.push_back(std::make_unique<ParticleSpawnRateObject>());
 	SimulationStages.push_back(std::make_unique<ParticleGravityObject>());
 	SimulationStages.push_back(std::make_unique<ParticleLinearForceObject>());
 	SimulationStages.push_back(std::make_unique<ParticleFrictionObject>());
@@ -402,6 +425,7 @@ void ParticleRenderingComponent::BuildDefaultSimulationPipeline(ID3D11Device* De
 		{
 			continue;
 		}
+		ExistingStage->SetShaderContentRootDirectory(ShaderContentRootDirectory);
 		if (ExistingStage->CreateGpuResources(Device) == false)
 		{
 			std::cout << "Particle simulation stage failed to create GPU resources." << std::endl;
@@ -427,6 +451,11 @@ void ParticleRenderingComponent::Initialize()
 	}
 
 	CachedSceneViewport = SceneViewport;
+	ResourceManager* Resources = OwningGame->GetResourceManager();
+	if (Resources != nullptr)
+	{
+		ShaderContentRootDirectory = Resources->GetProjectRootPath();
+	}
 	ID3D11Device* Device = SceneViewport->GetDevice();
 	if (Device == nullptr)
 	{
@@ -530,11 +559,12 @@ void ParticleRenderingComponent::DrawDearImGuiParticlePanels()
 			continue;
 		}
 
-		std::string HeaderLabel = "Stage" + std::to_string(StageIndex);
-		if (ImGui::CollapsingHeader(HeaderLabel.c_str()))
+		ImGui::PushID(static_cast<int>(StageIndex));
+		if (ImGui::CollapsingHeader(ExistingStage->GetStageDisplayName()))
 		{
 			ExistingStage->DrawDearImGui(this);
 		}
+		ImGui::PopID();
 	}
 	ImGui::End();
 }
@@ -601,6 +631,33 @@ void ParticleRenderingComponent::DispatchParticleSimulationThreadGroups()
 	}
 
 	DeviceContext->Dispatch(ParticleSimulationThreadGroupCount, 1, 1);
+}
+
+void ParticleRenderingComponent::DispatchParticleSpawnThreadGroups(UINT TotalSpawnThreads)
+{
+	if (CachedSceneViewport == nullptr)
+	{
+		return;
+	}
+
+	ID3D11DeviceContext* DeviceContext = CachedSceneViewport->GetDeviceContext();
+	if (DeviceContext == nullptr)
+	{
+		return;
+	}
+
+	if (TotalSpawnThreads == 0)
+	{
+		return;
+	}
+
+	const UINT GroupCount = (TotalSpawnThreads + ParticleSimulationThreadGroupSize - 1) / ParticleSimulationThreadGroupSize;
+	DeviceContext->Dispatch(GroupCount, 1, 1);
+}
+
+float ParticleRenderingComponent::GetLastSimulationDeltaTime() const
+{
+	return LastDeltaTime;
 }
 
 void ParticleRenderingComponent::UnbindParticleSimulationCompute()

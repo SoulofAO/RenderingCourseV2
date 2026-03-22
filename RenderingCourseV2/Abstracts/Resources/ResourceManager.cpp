@@ -24,6 +24,11 @@ void ResourceManager::Initialize(const std::string& NewProjectRootPath, const st
 	Cooker.SetCookedRootPath(NewCookedRootPath);
 }
 
+const std::string& ResourceManager::GetProjectRootPath() const
+{
+	return ProjectRootPath;
+}
+
 std::shared_ptr<TextureResource> ResourceManager::LoadTextureResource(const std::string& SourcePath, ID3D11Device* Device)
 {
 	const std::string NormalizedSourcePath = NormalizePath(SourcePath);

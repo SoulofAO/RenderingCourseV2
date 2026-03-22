@@ -11,8 +11,7 @@ ParticleGravityObject::ParticleGravityObject()
 bool ParticleGravityObject::CreateGpuResources(ID3D11Device* Device)
 {
 	ReleaseGpuResources();
-	const std::wstring ShaderPath = L"./Shaders/ParticleSystem/ParticleGravity.hlsl";
-	return CompileComputeShaderFromFile(ShaderPath, "Main", Device, &ComputeShader, &ComputeShaderByteCode);
+	return CompileComputeShaderFromFile("Shaders/ParticleSystem/ParticleGravity.hlsl", "Main", Device, &ComputeShader, &ComputeShaderByteCode);
 }
 
 void ParticleGravityObject::ReleaseGpuResources()
@@ -52,4 +51,9 @@ void ParticleGravityObject::DrawDearImGui(ParticleRenderingComponent* OwnerCompo
 		OwnerComponent->SetGravityDirectionSimulation(
 			DirectX::XMFLOAT3(GravityDirectionArray[0], GravityDirectionArray[1], GravityDirectionArray[2]));
 	}
+}
+
+const char* ParticleGravityObject::GetStageDisplayName() const
+{
+	return "ParticleGravity";
 }

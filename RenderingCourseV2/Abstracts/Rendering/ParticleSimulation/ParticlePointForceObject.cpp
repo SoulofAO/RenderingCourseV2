@@ -41,8 +41,7 @@ bool ParticlePointForceObject::CreateGpuResources(ID3D11Device* Device)
 		return false;
 	}
 
-	const std::wstring ShaderPath = L"./Shaders/ParticleSystem/ParticlePointForce.hlsl";
-	return CompileComputeShaderFromFile(ShaderPath, "Main", Device, &ComputeShader, &ComputeShaderByteCode);
+	return CompileComputeShaderFromFile("Shaders/ParticleSystem/ParticlePointForce.hlsl", "Main", Device, &ComputeShader, &ComputeShaderByteCode);
 }
 
 void ParticlePointForceObject::ReleaseGpuResources()
@@ -110,4 +109,9 @@ void ParticlePointForceObject::DrawDearImGui(ParticleRenderingComponent*)
 	ImGui::DragFloat("Strength", &WorldPointPositionAndStrength.w, 0.1f);
 	ImGui::DragFloat("MinimumDistance", &FalloffConfiguration.x, 0.01f, 0.0001f, 1000.0f);
 	ImGui::DragFloat("FalloffPower", &FalloffConfiguration.y, 0.01f, 0.01f, 10.0f);
+}
+
+const char* ParticlePointForceObject::GetStageDisplayName() const
+{
+	return "ParticlePointForce";
 }

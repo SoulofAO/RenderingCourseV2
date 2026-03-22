@@ -16,13 +16,19 @@ public:
 	virtual void Dispatch(ParticleRenderingComponent* OwnerComponent) = 0;
 	virtual void DrawDearImGui(ParticleRenderingComponent* OwnerComponent) = 0;
 
+	virtual const char* GetStageDisplayName() const = 0;
+
 	void Shutdown() override;
 
+	void SetShaderContentRootDirectory(const std::string& NewShaderContentRootDirectory);
+
 protected:
-	static bool CompileComputeShaderFromFile(
-		const std::wstring& ShaderFilePath,
+	bool CompileComputeShaderFromFile(
+		const std::string& ShaderPathRelativeToProjectRoot,
 		const char* EntryPoint,
 		ID3D11Device* Device,
 		ID3D11ComputeShader** OutComputeShader,
 		ID3DBlob** OutByteCode);
+
+	std::string ShaderContentRootDirectory;
 };

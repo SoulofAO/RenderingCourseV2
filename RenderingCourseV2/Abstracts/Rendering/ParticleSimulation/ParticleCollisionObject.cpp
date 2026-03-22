@@ -53,8 +53,7 @@ bool ParticleCollisionObject::CreateGpuResources(ID3D11Device* Device)
 		return false;
 	}
 
-	const std::wstring ShaderPath = L"./Shaders/ParticleSystem/ParticleCollision.hlsl";
-	return CompileComputeShaderFromFile(ShaderPath, "Main", Device, &ComputeShader, &ComputeShaderByteCode);
+	return CompileComputeShaderFromFile("Shaders/ParticleSystem/ParticleCollision.hlsl", "Main", Device, &ComputeShader, &ComputeShaderByteCode);
 }
 
 void ParticleCollisionObject::ReleaseGpuResources()
@@ -158,4 +157,9 @@ void ParticleCollisionObject::DrawDearImGui(ParticleRenderingComponent*)
 	ImGui::DragFloat("SurfaceOffset", &SurfaceOffset, 0.001f, 0.0f, 10.0f);
 	ImGui::DragFloat("BounceRestitution", &BounceRestitution, 0.01f, 0.0f, 2.0f);
 	ImGui::DragFloat("NormalSampleDistanceScale", &NormalSampleDistanceScale, 0.1f, 0.1f, 16.0f);
+}
+
+const char* ParticleCollisionObject::GetStageDisplayName() const
+{
+	return "ParticleCollision";
 }

@@ -39,8 +39,7 @@ bool ParticleFrictionObject::CreateGpuResources(ID3D11Device* Device)
 		return false;
 	}
 
-	const std::wstring ShaderPath = L"./Shaders/ParticleSystem/ParticleFriction.hlsl";
-	return CompileComputeShaderFromFile(ShaderPath, "Main", Device, &ComputeShader, &ComputeShaderByteCode);
+	return CompileComputeShaderFromFile("Shaders/ParticleSystem/ParticleFriction.hlsl", "Main", Device, &ComputeShader, &ComputeShaderByteCode);
 }
 
 void ParticleFrictionObject::ReleaseGpuResources()
@@ -94,4 +93,9 @@ void ParticleFrictionObject::Dispatch(ParticleRenderingComponent* OwnerComponent
 void ParticleFrictionObject::DrawDearImGui(ParticleRenderingComponent*)
 {
 	ImGui::DragFloat("LinearFriction", &LinearFriction, 0.01f, 0.0f, 1000.0f);
+}
+
+const char* ParticleFrictionObject::GetStageDisplayName() const
+{
+	return "ParticleFriction";
 }

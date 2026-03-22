@@ -11,8 +11,7 @@ ParticleDefaultObject::ParticleDefaultObject()
 bool ParticleDefaultObject::CreateGpuResources(ID3D11Device* Device)
 {
 	ReleaseGpuResources();
-	const std::wstring ShaderPath = L"./Shaders/ParticleSystem/ParticleDefault.hlsl";
-	return CompileComputeShaderFromFile(ShaderPath, "Main", Device, &ComputeShader, &ComputeShaderByteCode);
+	return CompileComputeShaderFromFile("Shaders/ParticleSystem/ParticleDefault.hlsl", "Main", Device, &ComputeShader, &ComputeShaderByteCode);
 }
 
 void ParticleDefaultObject::ReleaseGpuResources()
@@ -42,4 +41,9 @@ void ParticleDefaultObject::Dispatch(ParticleRenderingComponent* OwnerComponent)
 void ParticleDefaultObject::DrawDearImGui(ParticleRenderingComponent*)
 {
 	ImGui::TextUnformatted("Integrates position and age from velocity.");
+}
+
+const char* ParticleDefaultObject::GetStageDisplayName() const
+{
+	return "ParticleDefault";
 }

@@ -14,6 +14,7 @@ public:
 	void ReleaseGpuResources() override;
 	void Dispatch(ParticleRenderingComponent* OwnerComponent) override;
 	void DrawDearImGui(ParticleRenderingComponent* OwnerComponent) override;
+	const char* GetStageDisplayName() const override;
 
 private:
 	ID3D11ComputeShader* ComputeShader;

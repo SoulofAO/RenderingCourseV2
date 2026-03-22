@@ -4,6 +4,7 @@
 #include "PingPongTask/PingPongGame.h"
 #include "Tests/LightingTestGame.h"
 #include "Tests/MeshTestGame.h"
+#include "Tests/ParticleTestGame.h"
 #include "Tests/PhysicsTestGame.h"
 #include "Tests/TexturingTestGame.h"
 #include <memory>
@@ -67,6 +68,14 @@ int RunLightingTest()
 	return 0;
 }
 
+int RunParticleTest()
+{
+	ParticleTestGame MyGame(L"My3DApp ParticleTest", 1280, 720);
+	MyGame.Initialize();
+	MyGame.Run();
+	return 0;
+}
+
 int RunKatamaryTask()
 {
 	KatamaryGame MyGame(L"My3DApp KatamaryTask", 1280, 720);
@@ -77,6 +86,6 @@ int RunKatamaryTask()
 
 int main()
 {
-	RunLightingTest();
+	RunParticleTest();
 }
 

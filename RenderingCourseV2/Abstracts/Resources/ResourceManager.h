@@ -16,6 +16,8 @@ public:
 
 	void Initialize(const std::string& NewProjectRootPath, const std::string& NewCookedRootPath);
 
+	const std::string& GetProjectRootPath() const;
+
 	std::shared_ptr<TextureResource> LoadTextureResource(const std::string& SourcePath, ID3D11Device* Device);
 	std::shared_ptr<ModelResource> LoadModelResource(const std::string& SourcePath);
 	bool ForceRebuildInputResources(ID3D11Device* Device);

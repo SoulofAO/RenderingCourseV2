@@ -1,5 +1,6 @@
 #include "Abstracts/Rendering/ParticleSimulation/ParticleSimulationObject.h"
 #include <d3dcompiler.h>
+#include <filesystem>
 #include <iostream>
 
 #pragma comment(lib, "d3dcompiler.lib")
@@ -12,8 +13,13 @@ void ParticleSimulationObject::Shutdown()
 	Object::Shutdown();
 }
 
+void ParticleSimulationObject::SetShaderContentRootDirectory(const std::string& NewShaderContentRootDirectory)
+{
+	ShaderContentRootDirectory = NewShaderContentRootDirectory;
+}
+
 bool ParticleSimulationObject::CompileComputeShaderFromFile(
-	const std::wstring& ShaderFilePath,
+	const std::string& ShaderPathRelativeToProjectRoot,
 	const char* EntryPoint,
 	ID3D11Device* Device,
 	ID3D11ComputeShader** OutComputeShader,
@@ -24,9 +30,21 @@ bool ParticleSimulationObject::CompileComputeShaderFromFile(
 		return false;
 	}
 
+	std::filesystem::path AbsoluteShaderPath;
+	if (ShaderContentRootDirectory.empty())
+	{
+		AbsoluteShaderPath = ShaderPathRelativeToProjectRoot;
+	}
+	else
+	{
+		AbsoluteShaderPath = std::filesystem::path(ShaderContentRootDirectory) / ShaderPathRelativeToProjectRoot;
+	}
+
+	const std::wstring WideShaderPath = AbsoluteShaderPath.wstring();
+
 	ID3DBlob* ErrorCode = nullptr;
 	HRESULT Result = D3DCompileFromFile(
-		ShaderFilePath.c_str(),
+		WideShaderPath.c_str(),
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		EntryPoint,

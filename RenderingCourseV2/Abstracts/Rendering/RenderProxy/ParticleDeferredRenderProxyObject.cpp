@@ -9,11 +9,9 @@ ParticleDeferredRenderProxyObject::ParticleDeferredRenderProxyObject(ParticleRen
 void ParticleDeferredRenderProxyObject::RenderDeferredGeometryPass(
 	const DeferredGeometryRenderPassState& DeferredGeometryRenderPassStateValue)
 {
-	(void)DeferredGeometryRenderPassStateValue;
 }
 
 void ParticleDeferredRenderProxyObject::RenderDeferredShadowPass(
 	const DeferredShadowRenderPassState& DeferredShadowRenderPassStateValue)
 {
-	(void)DeferredShadowRenderPassStateValue;
 }

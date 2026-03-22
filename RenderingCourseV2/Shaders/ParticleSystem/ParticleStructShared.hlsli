@@ -6,5 +6,6 @@ struct ParticleStructData
     float VelocityPadding;
     float4 Color;
     float AgeTime;
+    float SizeWorld;
     uint Active;
 };

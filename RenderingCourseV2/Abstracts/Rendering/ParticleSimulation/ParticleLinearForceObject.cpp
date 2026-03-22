@@ -40,8 +40,7 @@ bool ParticleLinearForceObject::CreateGpuResources(ID3D11Device* Device)
 		return false;
 	}
 
-	const std::wstring ShaderPath = L"./Shaders/ParticleSystem/ParticleLinearForce.hlsl";
-	return CompileComputeShaderFromFile(ShaderPath, "Main", Device, &ComputeShader, &ComputeShaderByteCode);
+	return CompileComputeShaderFromFile("Shaders/ParticleSystem/ParticleLinearForce.hlsl", "Main", Device, &ComputeShader, &ComputeShaderByteCode);
 }
 
 void ParticleLinearForceObject::ReleaseGpuResources()
@@ -107,4 +106,9 @@ void ParticleLinearForceObject::DrawDearImGui(ParticleRenderingComponent*)
 			AccelerationArray[1],
 			AccelerationArray[2]);
 	}
+}
+
+const char* ParticleLinearForceObject::GetStageDisplayName() const
+{
+	return "ParticleLinearForce";
 }
