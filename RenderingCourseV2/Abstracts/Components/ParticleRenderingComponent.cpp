@@ -38,10 +38,44 @@ namespace
 		DirectX::XMFLOAT3 CameraUpWorld;
 		float Padding0;
 		UINT ParticleDrawCount;
-		UINT Padding1[3];
+		UINT UseParticleSort;
+		UINT Padding1[2];
+	};
+
+	struct FillParticleSortConstantsBufferData
+	{
+		DirectX::XMFLOAT3 CameraWorldPosition;
+		float PaddingFill0;
+		UINT MaxParticleCount;
+		UINT PaddedParticleCount;
+		UINT PaddingFill1[2];
+	};
+
+	struct BitonicSortConstantsBufferData
+	{
+		UINT ElementCount;
+		UINT PhaseK;
+		UINT PhaseJ;
+		UINT PaddingBitonic;
 	};
 
 	constexpr UINT ParticleSimulationThreadGroupSize = 256;
+
+	UINT ComputeNextPowerOfTwo(UINT Value)
+	{
+		if (Value <= 1u)
+		{
+			return 1u;
+		}
+		Value--;
+		Value |= Value >> 1u;
+		Value |= Value >> 2u;
+		Value |= Value >> 4u;
+		Value |= Value >> 8u;
+		Value |= Value >> 16u;
+		Value++;
+		return Value;
+	}
 }
 
 ParticleRenderingComponent::ParticleRenderingComponent(int NewMaxParticleCount)
@@ -51,7 +85,6 @@ ParticleRenderingComponent::ParticleRenderingComponent(int NewMaxParticleCount)
 	, ParticleSizeWorld(0.5f)
 	, CachedSceneViewport(nullptr)
 	, ParticleStateBuffer(nullptr)
-	, ParticleStateStagingReadbackBuffer(nullptr)
 	, ParticleStateUnorderedAccessView(nullptr)
 	, ParticleStateShaderResourceView(nullptr)
 	, ParticleSimulationConstantsBuffer(nullptr)
@@ -65,9 +98,16 @@ ParticleRenderingComponent::ParticleRenderingComponent(int NewMaxParticleCount)
 	, ParticleDepthStencilState(nullptr)
 	, ParticleRasterizerState(nullptr)
 	, ParticleSimulationThreadGroupCount(0)
+	, PaddedParticleCount(0)
+	, ParticleSortDispatchThreadGroupCount(0)
 	, ShaderContentRootDirectory()
-	, ParticlePositionLoggingEnabled(true)
-	, ParticlePositionLoggingMaxParticles(32)
+	, ParticleSortBuffer(nullptr)
+	, ParticleSortUnorderedAccessView(nullptr)
+	, ParticleSortShaderResourceView(nullptr)
+	, FillParticleSortConstantsBuffer(nullptr)
+	, BitonicSortConstantsBuffer(nullptr)
+	, FillParticleSortKeysComputeShader(nullptr)
+	, BitonicSortStepComputeShader(nullptr)
 {
 	SetRenderOrder(50);
 	SetForwardRendererProxyObject(std::make_unique<ParticleForwardRenderProxyObject>(this));
@@ -227,18 +267,6 @@ bool ParticleRenderingComponent::CreateParticleSimulationResources(ID3D11Device*
 		return false;
 	}
 
-	D3D11_BUFFER_DESC StagingReadbackDescription = {};
-	StagingReadbackDescription.ByteWidth = static_cast<UINT>(BufferByteCount);
-	StagingReadbackDescription.Usage = D3D11_USAGE_STAGING;
-	StagingReadbackDescription.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-
-	HRESULT CreateStagingReadbackResult = Device->CreateBuffer(&StagingReadbackDescription, nullptr, &ParticleStateStagingReadbackBuffer);
-	if (FAILED(CreateStagingReadbackResult))
-	{
-		ReleaseParticleSimulationResources();
-		return false;
-	}
-
 	D3D11_SHADER_RESOURCE_VIEW_DESC ShaderResourceViewDescription = {};
 	ShaderResourceViewDescription.Format = DXGI_FORMAT_UNKNOWN;
 	ShaderResourceViewDescription.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
@@ -361,12 +389,19 @@ bool ParticleRenderingComponent::CreateParticleSimulationResources(ID3D11Device*
 		return false;
 	}
 
+	if (CreateParticleSortResources(Device) == false)
+	{
+		ReleaseParticleSimulationResources();
+		return false;
+	}
+
 	return CreateDrawShaderProgram(Device);
 }
 
 void ParticleRenderingComponent::ReleaseParticleSimulationResources()
 {
 	ReleaseDrawShaderProgram();
+	ReleaseParticleSortResources();
 
 	if (ParticleRasterizerState != nullptr)
 	{
@@ -410,12 +445,6 @@ void ParticleRenderingComponent::ReleaseParticleSimulationResources()
 		ParticleStateUnorderedAccessView = nullptr;
 	}
 
-	if (ParticleStateStagingReadbackBuffer != nullptr)
-	{
-		ParticleStateStagingReadbackBuffer->Release();
-		ParticleStateStagingReadbackBuffer = nullptr;
-	}
-
 	if (ParticleStateShaderResourceView != nullptr)
 	{
 		ParticleStateShaderResourceView->Release();
@@ -427,6 +456,297 @@ void ParticleRenderingComponent::ReleaseParticleSimulationResources()
 		ParticleStateBuffer->Release();
 		ParticleStateBuffer = nullptr;
 	}
+}
+
+void ParticleRenderingComponent::ReleaseParticleSortResources()
+{
+	if (FillParticleSortKeysComputeShader != nullptr)
+	{
+		FillParticleSortKeysComputeShader->Release();
+		FillParticleSortKeysComputeShader = nullptr;
+	}
+
+	if (BitonicSortStepComputeShader != nullptr)
+	{
+		BitonicSortStepComputeShader->Release();
+		BitonicSortStepComputeShader = nullptr;
+	}
+
+	if (FillParticleSortConstantsBuffer != nullptr)
+	{
+		FillParticleSortConstantsBuffer->Release();
+		FillParticleSortConstantsBuffer = nullptr;
+	}
+
+	if (BitonicSortConstantsBuffer != nullptr)
+	{
+		BitonicSortConstantsBuffer->Release();
+		BitonicSortConstantsBuffer = nullptr;
+	}
+
+	if (ParticleSortShaderResourceView != nullptr)
+	{
+		ParticleSortShaderResourceView->Release();
+		ParticleSortShaderResourceView = nullptr;
+	}
+
+	if (ParticleSortUnorderedAccessView != nullptr)
+	{
+		ParticleSortUnorderedAccessView->Release();
+		ParticleSortUnorderedAccessView = nullptr;
+	}
+
+	if (ParticleSortBuffer != nullptr)
+	{
+		ParticleSortBuffer->Release();
+		ParticleSortBuffer = nullptr;
+	}
+
+	PaddedParticleCount = 0;
+	ParticleSortDispatchThreadGroupCount = 0;
+}
+
+bool ParticleRenderingComponent::CreateParticleSortResources(ID3D11Device* Device)
+{
+	ReleaseParticleSortResources();
+
+	if (Device == nullptr)
+	{
+		return false;
+	}
+
+	PaddedParticleCount = ComputeNextPowerOfTwo(static_cast<UINT>(MaxParticleCount));
+	if (PaddedParticleCount == 0u)
+	{
+		PaddedParticleCount = 1u;
+	}
+	ParticleSortDispatchThreadGroupCount = (PaddedParticleCount + ParticleSimulationThreadGroupSize - 1) / ParticleSimulationThreadGroupSize;
+
+	const UINT SortStructureByteStride = static_cast<UINT>(sizeof(ParticleSortData));
+	const UINT SortBufferByteCount = PaddedParticleCount * SortStructureByteStride;
+
+	D3D11_BUFFER_DESC SortBufferDescription = {};
+	SortBufferDescription.ByteWidth = SortBufferByteCount;
+	SortBufferDescription.Usage = D3D11_USAGE_DEFAULT;
+	SortBufferDescription.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+	SortBufferDescription.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	SortBufferDescription.StructureByteStride = SortStructureByteStride;
+
+	HRESULT CreateSortBufferResult = Device->CreateBuffer(&SortBufferDescription, nullptr, &ParticleSortBuffer);
+	if (FAILED(CreateSortBufferResult))
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC SortShaderResourceViewDescription = {};
+	SortShaderResourceViewDescription.Format = DXGI_FORMAT_UNKNOWN;
+	SortShaderResourceViewDescription.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	SortShaderResourceViewDescription.Buffer.FirstElement = 0;
+	SortShaderResourceViewDescription.Buffer.NumElements = PaddedParticleCount;
+
+	HRESULT CreateSortShaderResourceViewResult = Device->CreateShaderResourceView(
+		ParticleSortBuffer,
+		&SortShaderResourceViewDescription,
+		&ParticleSortShaderResourceView);
+	if (FAILED(CreateSortShaderResourceViewResult))
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	D3D11_UNORDERED_ACCESS_VIEW_DESC SortUnorderedAccessViewDescription = {};
+	SortUnorderedAccessViewDescription.Format = DXGI_FORMAT_UNKNOWN;
+	SortUnorderedAccessViewDescription.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	SortUnorderedAccessViewDescription.Buffer.FirstElement = 0;
+	SortUnorderedAccessViewDescription.Buffer.NumElements = PaddedParticleCount;
+	SortUnorderedAccessViewDescription.Buffer.Flags = 0;
+
+	HRESULT CreateSortUnorderedAccessViewResult = Device->CreateUnorderedAccessView(
+		ParticleSortBuffer,
+		&SortUnorderedAccessViewDescription,
+		&ParticleSortUnorderedAccessView);
+	if (FAILED(CreateSortUnorderedAccessViewResult))
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	D3D11_BUFFER_DESC FillConstantBufferDescription = {};
+	FillConstantBufferDescription.ByteWidth = sizeof(FillParticleSortConstantsBufferData);
+	if (FillConstantBufferDescription.ByteWidth % 16 != 0)
+	{
+		FillConstantBufferDescription.ByteWidth = (FillConstantBufferDescription.ByteWidth + 15u) & ~15u;
+	}
+	FillConstantBufferDescription.Usage = D3D11_USAGE_DYNAMIC;
+	FillConstantBufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	FillConstantBufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+	HRESULT CreateFillConstantBufferResult = Device->CreateBuffer(&FillConstantBufferDescription, nullptr, &FillParticleSortConstantsBuffer);
+	if (FAILED(CreateFillConstantBufferResult))
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	D3D11_BUFFER_DESC BitonicConstantBufferDescription = {};
+	BitonicConstantBufferDescription.ByteWidth = sizeof(BitonicSortConstantsBufferData);
+	if (BitonicConstantBufferDescription.ByteWidth % 16 != 0)
+	{
+		BitonicConstantBufferDescription.ByteWidth = (BitonicConstantBufferDescription.ByteWidth + 15u) & ~15u;
+	}
+	BitonicConstantBufferDescription.Usage = D3D11_USAGE_DYNAMIC;
+	BitonicConstantBufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	BitonicConstantBufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+	HRESULT CreateBitonicConstantBufferResult = Device->CreateBuffer(&BitonicConstantBufferDescription, nullptr, &BitonicSortConstantsBuffer);
+	if (FAILED(CreateBitonicConstantBufferResult))
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	ID3DBlob* FillParticleSortKeysByteCode = nullptr;
+	if (CompileShaderFromFile("./Shaders/ParticleSystem/ParticleSort.hlsl", "FillParticleSortKeys", "cs_5_0", &FillParticleSortKeysByteCode) == false)
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	HRESULT CreateFillComputeResult = Device->CreateComputeShader(
+		FillParticleSortKeysByteCode->GetBufferPointer(),
+		FillParticleSortKeysByteCode->GetBufferSize(),
+		nullptr,
+		&FillParticleSortKeysComputeShader);
+	FillParticleSortKeysByteCode->Release();
+	if (FAILED(CreateFillComputeResult))
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	ID3DBlob* BitonicSortStepByteCode = nullptr;
+	if (CompileShaderFromFile("./Shaders/ParticleSystem/ParticleSort.hlsl", "BitonicSortStep", "cs_5_0", &BitonicSortStepByteCode) == false)
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	HRESULT CreateBitonicComputeResult = Device->CreateComputeShader(
+		BitonicSortStepByteCode->GetBufferPointer(),
+		BitonicSortStepByteCode->GetBufferSize(),
+		nullptr,
+		&BitonicSortStepComputeShader);
+	BitonicSortStepByteCode->Release();
+	if (FAILED(CreateBitonicComputeResult))
+	{
+		ReleaseParticleSortResources();
+		return false;
+	}
+
+	return true;
+}
+
+void ParticleRenderingComponent::DispatchParticleDistanceSort()
+{
+	if (CachedSceneViewport == nullptr)
+	{
+		return;
+	}
+
+	if (CachedSceneViewport->GetParticleDistanceSortEnabled() == false)
+	{
+		return;
+	}
+
+	if (
+		ParticleStateShaderResourceView == nullptr ||
+		ParticleSortUnorderedAccessView == nullptr ||
+		FillParticleSortKeysComputeShader == nullptr ||
+		BitonicSortStepComputeShader == nullptr ||
+		FillParticleSortConstantsBuffer == nullptr ||
+		BitonicSortConstantsBuffer == nullptr ||
+		PaddedParticleCount == 0u)
+	{
+		return;
+	}
+
+	ID3D11DeviceContext* DeviceContext = CachedSceneViewport->GetDeviceContext();
+	if (DeviceContext == nullptr)
+	{
+		return;
+	}
+
+	FillParticleSortConstantsBufferData FillBufferData = {};
+	FillBufferData.CameraWorldPosition = CachedSceneViewport->GetCameraWorldPosition();
+	FillBufferData.PaddingFill0 = 0.0f;
+	FillBufferData.MaxParticleCount = static_cast<UINT>(MaxParticleCount);
+	FillBufferData.PaddedParticleCount = PaddedParticleCount;
+	FillBufferData.PaddingFill1[0] = 0;
+	FillBufferData.PaddingFill1[1] = 0;
+
+	D3D11_MAPPED_SUBRESOURCE FillMappedResource = {};
+	HRESULT FillMapResult = DeviceContext->Map(FillParticleSortConstantsBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &FillMappedResource);
+	if (FAILED(FillMapResult))
+	{
+		return;
+	}
+
+	memcpy(FillMappedResource.pData, &FillBufferData, sizeof(FillBufferData));
+	DeviceContext->Unmap(FillParticleSortConstantsBuffer, 0);
+
+	DeviceContext->CSSetShader(FillParticleSortKeysComputeShader, nullptr, 0);
+	ID3D11Buffer* FillConstantBuffers[] = { FillParticleSortConstantsBuffer };
+	DeviceContext->CSSetConstantBuffers(0, 1, FillConstantBuffers);
+	ID3D11ShaderResourceView* FillShaderResourceViews[] = { ParticleStateShaderResourceView };
+	DeviceContext->CSSetShaderResources(0, 1, FillShaderResourceViews);
+	ID3D11UnorderedAccessView* FillUnorderedAccessViews[] = { ParticleSortUnorderedAccessView };
+	DeviceContext->CSSetUnorderedAccessViews(0, 1, FillUnorderedAccessViews, nullptr);
+
+	DeviceContext->Dispatch(ParticleSortDispatchThreadGroupCount, 1, 1);
+
+	ID3D11ShaderResourceView* NullShaderResourceViews[] = { nullptr };
+	DeviceContext->CSSetShaderResources(0, 1, NullShaderResourceViews);
+
+	DeviceContext->CSSetShader(BitonicSortStepComputeShader, nullptr, 0);
+
+	for (UINT PhaseK = 2u; PhaseK <= PaddedParticleCount; PhaseK <<= 1)
+	{
+		for (UINT PhaseJ = PhaseK >> 1; PhaseJ > 0u; PhaseJ >>= 1)
+		{
+			BitonicSortConstantsBufferData BitonicBufferData = {};
+			BitonicBufferData.ElementCount = PaddedParticleCount;
+			BitonicBufferData.PhaseK = PhaseK;
+			BitonicBufferData.PhaseJ = PhaseJ;
+			BitonicBufferData.PaddingBitonic = 0;
+
+			D3D11_MAPPED_SUBRESOURCE BitonicMappedResource = {};
+			HRESULT BitonicMapResult = DeviceContext->Map(BitonicSortConstantsBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &BitonicMappedResource);
+			if (FAILED(BitonicMapResult))
+			{
+				ID3D11ComputeShader* NullComputeShader = nullptr;
+				DeviceContext->CSSetShader(NullComputeShader, nullptr, 0);
+				ID3D11UnorderedAccessView* NullUnorderedAccessViews[] = { nullptr };
+				DeviceContext->CSSetUnorderedAccessViews(0, 1, NullUnorderedAccessViews, nullptr);
+				return;
+			}
+
+			memcpy(BitonicMappedResource.pData, &BitonicBufferData, sizeof(BitonicBufferData));
+			DeviceContext->Unmap(BitonicSortConstantsBuffer, 0);
+
+			ID3D11Buffer* BitonicConstantBuffers[] = { BitonicSortConstantsBuffer };
+			DeviceContext->CSSetConstantBuffers(0, 1, BitonicConstantBuffers);
+			ID3D11UnorderedAccessView* BitonicUnorderedAccessViews[] = { ParticleSortUnorderedAccessView };
+			DeviceContext->CSSetUnorderedAccessViews(0, 1, BitonicUnorderedAccessViews, nullptr);
+
+			DeviceContext->Dispatch(ParticleSortDispatchThreadGroupCount, 1, 1);
+		}
+	}
+
+	ID3D11ComputeShader* NullComputeShaderAfterSort = nullptr;
+	DeviceContext->CSSetShader(NullComputeShaderAfterSort, nullptr, 0);
+	ID3D11UnorderedAccessView* NullUnorderedAccessViewsAfterSort[] = { nullptr };
+	DeviceContext->CSSetUnorderedAccessViews(0, 1, NullUnorderedAccessViewsAfterSort, nullptr);
 }
 
 void ParticleRenderingComponent::BuildDefaultSimulationPipeline(ID3D11Device* Device)
@@ -545,60 +865,7 @@ void ParticleRenderingComponent::Update(float DeltaTime)
 	}
 
 	UnbindParticleSimulationCompute();
-	LogParticlePositionsIfEnabled();
-}
-
-void ParticleRenderingComponent::LogParticlePositionsIfEnabled()
-{
-	if (ParticlePositionLoggingEnabled == false)
-	{
-		return;
-	}
-
-	if (CachedSceneViewport == nullptr || ParticleStateBuffer == nullptr || ParticleStateStagingReadbackBuffer == nullptr)
-	{
-		return;
-	}
-
-	ID3D11DeviceContext* DeviceContext = CachedSceneViewport->GetDeviceContext();
-	if (DeviceContext == nullptr)
-	{
-		return;
-	}
-
-	DeviceContext->CopyResource(ParticleStateStagingReadbackBuffer, ParticleStateBuffer);
-
-	D3D11_MAPPED_SUBRESOURCE MappedResource = {};
-	HRESULT MapResult = DeviceContext->Map(ParticleStateStagingReadbackBuffer, 0, D3D11_MAP_READ, 0, &MappedResource);
-	if (FAILED(MapResult))
-	{
-		return;
-	}
-
-	const ParticleStructData* ParticleArray = static_cast<const ParticleStructData*>(MappedResource.pData);
-	const int TotalParticleCount = MaxParticleCount;
-	int LoggingLimit = ParticlePositionLoggingMaxParticles;
-	if (LoggingLimit < 1)
-	{
-		LoggingLimit = 1;
-	}
-	if (LoggingLimit > TotalParticleCount)
-	{
-		LoggingLimit = TotalParticleCount;
-	}
-
-	for (int ParticleIndex = 0; ParticleIndex < LoggingLimit; ++ParticleIndex)
-	{
-		const ParticleStructData& ParticleEntry = ParticleArray[ParticleIndex];
-		if (ParticleEntry.Active == 0)
-		{
-			continue;
-		}
-
-		std::cout << "Particle index " << ParticleIndex << " position: " << ParticleEntry.Position.x << " " << ParticleEntry.Position.y << " " << ParticleEntry.Position.z << std::endl;
-	}
-
-	DeviceContext->Unmap(ParticleStateStagingReadbackBuffer, 0);
+	DispatchParticleDistanceSort();
 }
 
 void ParticleRenderingComponent::Shutdown()
@@ -642,8 +909,9 @@ void ParticleRenderingComponent::DrawDearImGuiParticlePanels()
 		ImGui::PopID();
 	}
 	ImGui::Separator();
-	ImGui::Checkbox("Log particle positions each tick", &ParticlePositionLoggingEnabled);
-	ImGui::SliderInt("Particle log max count", &ParticlePositionLoggingMaxParticles, 1, MaxParticleCount);
+	bool LocalParticleDistanceSortEnabled = CachedSceneViewport->GetParticleDistanceSortEnabled();
+	ImGui::Checkbox("Particle distance sort", &LocalParticleDistanceSortEnabled);
+	CachedSceneViewport->SetParticleDistanceSortEnabled(LocalParticleDistanceSortEnabled);
 	ImGui::End();
 }
 
@@ -801,6 +1069,11 @@ ID3D11PixelShader* ParticleRenderingComponent::GetParticlePixelShader() const
 ID3D11ShaderResourceView* ParticleRenderingComponent::GetParticleStateShaderResourceView() const
 {
 	return ParticleStateShaderResourceView;
+}
+
+ID3D11ShaderResourceView* ParticleRenderingComponent::GetParticleSortShaderResourceView() const
+{
+	return ParticleSortShaderResourceView;
 }
 
 ID3D11BlendState* ParticleRenderingComponent::GetParticleAlphaBlendState() const

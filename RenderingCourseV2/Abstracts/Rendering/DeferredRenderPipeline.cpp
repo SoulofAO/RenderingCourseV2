@@ -138,6 +138,7 @@ void DeferredRenderPipeline::RenderFrame(
 	ForwardParticleRenderPassStateValue.DirectionalLightIntensity = SceneViewport->GetDirectionalLightIntensity();
 	ForwardParticleRenderPassStateValue.UseFullBrightnessWithoutLighting = SceneViewport->GetUseFullBrightnessWithoutLighting();
 	ForwardParticleRenderPassStateValue.IsDearImGuiInitialized = SceneViewport->GetIsDearImGuiInitialized();
+	ForwardParticleRenderPassStateValue.ParticleDistanceSortEnabled = SceneViewport->GetParticleDistanceSortEnabled();
 
 	for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
 	{

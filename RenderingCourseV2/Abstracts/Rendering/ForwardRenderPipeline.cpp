@@ -32,6 +32,7 @@ void ForwardRenderPipeline::RenderFrame(
 	ForwardMainRenderPassStateValue.DirectionalLightIntensity = SceneViewport->GetDirectionalLightIntensity();
 	ForwardMainRenderPassStateValue.UseFullBrightnessWithoutLighting = SceneViewport->GetUseFullBrightnessWithoutLighting();
 	ForwardMainRenderPassStateValue.IsDearImGuiInitialized = SceneViewport->GetIsDearImGuiInitialized();
+	ForwardMainRenderPassStateValue.ParticleDistanceSortEnabled = SceneViewport->GetParticleDistanceSortEnabled();
 
 	for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
 	{

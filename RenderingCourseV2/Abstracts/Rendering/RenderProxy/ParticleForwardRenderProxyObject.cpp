@@ -12,7 +12,8 @@ namespace
 		DirectX::XMFLOAT3 CameraUpWorld;
 		float Padding0;
 		UINT ParticleDrawCount;
-		UINT Padding1[3];
+		UINT UseParticleSort;
+		UINT Padding1[2];
 	};
 }
 
@@ -38,6 +39,7 @@ void ParticleForwardRenderProxyObject::RenderForwardMainPass(const ForwardMainRe
 	ID3D11PixelShader* PixelShader = OwnerComponent->GetParticlePixelShader();
 	ID3D11Buffer* MaterialConstantBuffer = OwnerComponent->GetParticleMaterialConstantBuffer();
 	ID3D11ShaderResourceView* ParticleStateShaderResourceView = OwnerComponent->GetParticleStateShaderResourceView();
+	ID3D11ShaderResourceView* ParticleSortShaderResourceView = OwnerComponent->GetParticleSortShaderResourceView();
 	if (VertexShader == nullptr || PixelShader == nullptr || MaterialConstantBuffer == nullptr || ParticleStateShaderResourceView == nullptr)
 	{
 		return;
@@ -67,9 +69,9 @@ void ParticleForwardRenderProxyObject::RenderForwardMainPass(const ForwardMainRe
 	MaterialBufferData.CameraUpWorld = CameraUpWorld;
 	MaterialBufferData.Padding0 = 0.0f;
 	MaterialBufferData.ParticleDrawCount = OwnerComponent->GetParticleDrawInstanceCount();
+	MaterialBufferData.UseParticleSort = ForwardMainRenderPassStateValue.ParticleDistanceSortEnabled ? 1u : 0u;
 	MaterialBufferData.Padding1[0] = 0;
 	MaterialBufferData.Padding1[1] = 0;
-	MaterialBufferData.Padding1[2] = 0;
 
 	D3D11_MAPPED_SUBRESOURCE MappedConstantBuffer = {};
 	HRESULT MapConstantBufferResult = DeviceContext->Map(MaterialConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedConstantBuffer);
@@ -91,16 +93,19 @@ void ParticleForwardRenderProxyObject::RenderForwardMainPass(const ForwardMainRe
 	DeviceContext->VSSetConstantBuffers(0, 1, ConstantBuffers);
 	DeviceContext->PSSetConstantBuffers(0, 1, ConstantBuffers);
 
-	ID3D11ShaderResourceView* ShaderResourceViews[] = { ParticleStateShaderResourceView };
-	DeviceContext->VSSetShaderResources(0, 1, ShaderResourceViews);
+	ID3D11ShaderResourceView* VertexShaderResourceViews[] = {
+		ParticleStateShaderResourceView,
+		ParticleSortShaderResourceView != nullptr ? ParticleSortShaderResourceView : ParticleStateShaderResourceView
+	};
+	DeviceContext->VSSetShaderResources(0, 2, VertexShaderResourceViews);
 
 	DeviceContext->VSSetShader(VertexShader, nullptr, 0);
 	DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 
 	DeviceContext->DrawInstanced(4, OwnerComponent->GetParticleDrawInstanceCount(), 0, 0);
 
-	ID3D11ShaderResourceView* NullShaderResourceViews[] = { nullptr };
-	DeviceContext->VSSetShaderResources(0, 1, NullShaderResourceViews);
+	ID3D11ShaderResourceView* NullVertexShaderResourceViews[] = { nullptr, nullptr };
+	DeviceContext->VSSetShaderResources(0, 2, NullVertexShaderResourceViews);
 
 	ID3D11BlendState* DefaultBlendState = nullptr;
 	DeviceContext->OMSetBlendState(DefaultBlendState, nullptr, 0xFFFFFFFF);

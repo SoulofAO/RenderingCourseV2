@@ -1,6 +1,13 @@
 #include "Shaders/ParticleSystem/ParticleStructShared.hlsli"
 
+struct ParticleSortData
+{
+    float SortKey;
+    uint OriginalIndex;
+};
+
 StructuredBuffer<ParticleStructData> ParticleStateReadOnly : register(t0);
+StructuredBuffer<ParticleSortData> ParticleSortReadOnly : register(t1);
 
 cbuffer ParticleMaterialConstants : register(b0)
 {
@@ -10,7 +17,8 @@ cbuffer ParticleMaterialConstants : register(b0)
     float3 CameraUpWorld;
     float Padding0;
     uint ParticleDrawCount;
-    uint3 Padding1;
+    uint UseParticleSort;
+    uint2 Padding1;
 };
 
 struct ParticleDrawVertexInput

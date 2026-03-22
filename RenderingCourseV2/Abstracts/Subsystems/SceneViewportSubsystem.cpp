@@ -37,6 +37,7 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, ShadowMaximumDistanceSetting(160.0f)
 	, CurrentDeferredDebugBufferViewMode(DeferredDebugBufferViewMode::FinalLighting)
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
+	, ParticleDistanceSortEnabled(true)
 	, IsDearImGuiInitialized(false)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, DirectX::XMMatrixIdentity());
@@ -350,6 +351,16 @@ DeferredDebugBufferViewMode SceneViewportSubsystem::GetDeferredDebugBufferViewMo
 bool SceneViewportSubsystem::IsDeferredRenderingEnabled() const
 {
 	return CurrentRenderPipelineType == RenderPipelineType::Deferred;
+}
+
+bool SceneViewportSubsystem::GetParticleDistanceSortEnabled() const
+{
+	return ParticleDistanceSortEnabled;
+}
+
+void SceneViewportSubsystem::SetParticleDistanceSortEnabled(bool NewParticleDistanceSortEnabled)
+{
+	ParticleDistanceSortEnabled = NewParticleDistanceSortEnabled;
 }
 
 void SceneViewportSubsystem::RenderSceneFrame()

@@ -10,7 +10,12 @@ ParticleDrawPixelInput VSMain(ParticleDrawVertexInput Input)
         Output.TextureCoordinates = float2(0.0, 0.0);
         return Output;
     }
-    ParticleStructData Particle = ParticleStateReadOnly[Input.InstanceId];
+    uint ParticleSlot = Input.InstanceId;
+    if (UseParticleSort != 0u)
+    {
+        ParticleSlot = ParticleSortReadOnly[Input.InstanceId].OriginalIndex;
+    }
+    ParticleStructData Particle = ParticleStateReadOnly[ParticleSlot];
     if (Particle.Active == 0)
     {
         Output.Position = float4(0.0, 0.0, -1.0, 1.0);

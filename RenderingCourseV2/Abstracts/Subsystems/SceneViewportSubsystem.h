@@ -72,6 +72,8 @@ public:
 	void SetDeferredDebugBufferViewMode(DeferredDebugBufferViewMode NewDeferredDebugBufferViewMode);
 	DeferredDebugBufferViewMode GetDeferredDebugBufferViewMode() const;
 	bool IsDeferredRenderingEnabled() const;
+	bool GetParticleDistanceSortEnabled() const;
+	void SetParticleDistanceSortEnabled(bool NewParticleDistanceSortEnabled);
 	void RenderSceneFrame();
 	void BeginDearImGuiFrame();
 	void EndDearImGuiFrame();
@@ -109,6 +111,7 @@ private:
 	float ShadowMaximumDistanceSetting;
 	DeferredDebugBufferViewMode CurrentDeferredDebugBufferViewMode;
 	RenderPipelineType CurrentRenderPipelineType;
+	bool ParticleDistanceSortEnabled;
 	std::unique_ptr<DeferredRenderer> DeferredRendererInstance;
 	std::unique_ptr<AbstractRenderPipeline> ForwardRenderPipelineInstance;
 	std::unique_ptr<AbstractRenderPipeline> DeferredRenderPipelineInstance;

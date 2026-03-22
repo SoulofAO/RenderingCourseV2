@@ -696,7 +696,7 @@ void Game::DrawCameraPossessionUserInterface()
 		{
 			ImGui::Separator();
 			bool IsDeferredLightingEnabled = SceneViewportSubsystemInstance->GetRenderPipelineType() == RenderPipelineType::Deferred;
-			if (ImGui::Checkbox("Use Deferred Lighting", &IsDeferredLightingEnabled))
+			if (ImGui::Checkbox("Use Deferred", &IsDeferredLightingEnabled))
 			{
 				const RenderPipelineType NewRenderPipelineType =
 					IsDeferredLightingEnabled ? RenderPipelineType::Deferred : RenderPipelineType::Forward;
@@ -769,6 +769,7 @@ void Game::DrawCameraPossessionUserInterface()
 			if (DirectionalLightActor != nullptr)
 			{
 				ImGui::Separator();
+				/*
 				ImGui::TextUnformatted("Directional Light");
 
 				const DirectX::XMFLOAT3 DirectionalLightRotationRadians = DirectionalLightActor->GetRotation(ETransformSpace::World);
@@ -787,6 +788,7 @@ void Game::DrawCameraPossessionUserInterface()
 						DirectX::XMConvertToRadians(DirectionalLightRotationDegrees[2]));
 					DirectionalLightActor->SetRotation(NewDirectionalLightRotationRadians, ETransformSpace::World);
 				}
+				*/
 			}
 		}
 	}

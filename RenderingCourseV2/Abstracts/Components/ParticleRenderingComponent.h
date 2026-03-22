@@ -21,6 +21,12 @@ struct ParticleStructData
 	UINT Active;
 };
 
+struct ParticleSortData
+{
+	float SortKey;
+	UINT OriginalIndex;
+};
+
 class SceneViewportSubsystem;
 
 class ParticleRenderingComponent : public RenderingComponent
@@ -57,6 +63,7 @@ public:
 	ID3D11VertexShader* GetParticleVertexShader() const;
 	ID3D11PixelShader* GetParticlePixelShader() const;
 	ID3D11ShaderResourceView* GetParticleStateShaderResourceView() const;
+	ID3D11ShaderResourceView* GetParticleSortShaderResourceView() const;
 	ID3D11BlendState* GetParticleAlphaBlendState() const;
 	ID3D11DepthStencilState* GetParticleDepthStencilState() const;
 	ID3D11RasterizerState* GetParticleRasterizerState() const;
@@ -74,16 +81,18 @@ private:
 	void ReleaseParticleSimulationResources();
 	void UpdateParticleSimulationConstantsBuffer();
 	void BuildDefaultSimulationPipeline(ID3D11Device* Device);
-	void LogParticlePositionsIfEnabled();
+	bool CreateParticleSortResources(ID3D11Device* Device);
+	void ReleaseParticleSortResources();
+	void DispatchParticleDistanceSort();
 
 	int MaxParticleCount;
+	UINT PaddedParticleCount;
 	float LastDeltaTime;
 	DirectX::XMFLOAT3 GravityDirectionSimulation;
 	float ParticleSizeWorld;
 	SceneViewportSubsystem* CachedSceneViewport;
 
 	ID3D11Buffer* ParticleStateBuffer;
-	ID3D11Buffer* ParticleStateStagingReadbackBuffer;
 	ID3D11UnorderedAccessView* ParticleStateUnorderedAccessView;
 	ID3D11ShaderResourceView* ParticleStateShaderResourceView;
 	ID3D11Buffer* ParticleSimulationConstantsBuffer;
@@ -100,11 +109,17 @@ private:
 	ID3D11RasterizerState* ParticleRasterizerState;
 
 	UINT ParticleSimulationThreadGroupCount;
+	UINT ParticleSortDispatchThreadGroupCount;
 
 	std::string ShaderContentRootDirectory;
 
-	std::vector<std::unique_ptr<ParticleSimulationObject>> SimulationStages;
+	ID3D11Buffer* ParticleSortBuffer;
+	ID3D11UnorderedAccessView* ParticleSortUnorderedAccessView;
+	ID3D11ShaderResourceView* ParticleSortShaderResourceView;
+	ID3D11Buffer* FillParticleSortConstantsBuffer;
+	ID3D11Buffer* BitonicSortConstantsBuffer;
+	ID3D11ComputeShader* FillParticleSortKeysComputeShader;
+	ID3D11ComputeShader* BitonicSortStepComputeShader;
 
-	bool ParticlePositionLoggingEnabled;
-	int ParticlePositionLoggingMaxParticles;
+	std::vector<std::unique_ptr<ParticleSimulationObject>> SimulationStages;
 };

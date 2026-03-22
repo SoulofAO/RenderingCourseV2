@@ -14,6 +14,7 @@ struct ForwardMainRenderPassState
 	float DirectionalLightIntensity;
 	float UseFullBrightnessWithoutLighting;
 	bool IsDearImGuiInitialized;
+	bool ParticleDistanceSortEnabled;
 };
 
 struct DeferredGeometryRenderPassState
