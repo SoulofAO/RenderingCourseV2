@@ -1,7 +1,9 @@
 #include "Abstracts/Rendering/DeferredRenderPipeline.h"
+#include "Abstracts/Components/ParticleRenderingComponent.h"
 #include "Abstracts/Components/RenderingComponent.h"
 #include "Abstracts/Rendering/DeferredRenderer.h"
 #include "Abstracts/Rendering/RenderProxy/DeferredRendererProxyObject.h"
+#include "Abstracts/Rendering/RenderProxy/ForwardRendererProxyObject.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 
 void DeferredRenderPipeline::RenderFrame(
@@ -122,4 +124,38 @@ void DeferredRenderPipeline::RenderFrame(
 		SceneViewport->GetUseFullBrightnessWithoutLighting(),
 		IsShadowRenderingEnabled ? 1.0f : 0.0f,
 		static_cast<float>(SceneViewport->GetDeferredDebugBufferViewMode()));
+
+	ID3D11DepthStencilView* SceneDepthStencilView = SceneViewport->GetDepthStencilView();
+	DeviceContext->OMSetRenderTargets(1, &RenderTargetView, SceneDepthStencilView);
+
+	ForwardMainRenderPassState ForwardParticleRenderPassStateValue = {};
+	ForwardParticleRenderPassStateValue.DeviceContext = DeviceContext;
+	ForwardParticleRenderPassStateValue.ViewMatrix = SceneViewport->GetViewMatrix();
+	ForwardParticleRenderPassStateValue.ProjectionMatrix = SceneViewport->GetProjectionMatrix();
+	ForwardParticleRenderPassStateValue.CameraWorldPosition = SceneViewport->GetCameraWorldPosition();
+	ForwardParticleRenderPassStateValue.DirectionalLightDirection = SceneViewport->GetDirectionalLightDirection();
+	ForwardParticleRenderPassStateValue.DirectionalLightColor = SceneViewport->GetDirectionalLightColor();
+	ForwardParticleRenderPassStateValue.DirectionalLightIntensity = SceneViewport->GetDirectionalLightIntensity();
+	ForwardParticleRenderPassStateValue.UseFullBrightnessWithoutLighting = SceneViewport->GetUseFullBrightnessWithoutLighting();
+	ForwardParticleRenderPassStateValue.IsDearImGuiInitialized = SceneViewport->GetIsDearImGuiInitialized();
+
+	for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
+	{
+		if (ExistingRenderingComponent == nullptr)
+		{
+			continue;
+		}
+
+		ParticleRenderingComponent* ParticleRendering = dynamic_cast<ParticleRenderingComponent*>(ExistingRenderingComponent);
+		if (ParticleRendering == nullptr)
+		{
+			continue;
+		}
+
+		ForwardRendererProxyObject* ForwardRendererProxyObjectInstance = ParticleRendering->GetForwardRendererProxyObject();
+		if (ForwardRendererProxyObjectInstance != nullptr)
+		{
+			ForwardRendererProxyObjectInstance->RenderForwardMainPass(ForwardParticleRenderPassStateValue);
+		}
+	}
 }

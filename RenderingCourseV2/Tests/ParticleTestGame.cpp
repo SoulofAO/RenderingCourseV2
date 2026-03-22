@@ -11,6 +11,7 @@ ParticleTestGame::ParticleTestGame(LPCWSTR ApplicationName, int ScreenWidth, int
 	: TestsBaseGame(ApplicationName, ScreenWidth, ScreenHeight)
 {
 	bSpawnDirectionalLightActor = true;
+	CurrentMouseInputMode = MouseInputMode::UIOnly;
 }
 
 ParticleTestGame::~ParticleTestGame() = default;

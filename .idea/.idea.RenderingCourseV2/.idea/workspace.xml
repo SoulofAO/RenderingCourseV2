@@ -9,13 +9,10 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleDefault.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleDefault.hlsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleSpawnRate.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleSpawnRate.hlsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleStructShared.hlsli" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleStructShared.hlsli" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/BaseParticleMaterial.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/BaseParticleMaterial.hlsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Tests/ParticleTestGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Tests/ParticleTestGame.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,7 +29,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://2" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://6" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.h" root0="FORCE_HIGHLIGHTING" />
@@ -129,7 +126,7 @@
       <workItem from="1774024109040" duration="14125000" />
       <workItem from="1774081066269" duration="3717000" />
       <workItem from="1774085068430" duration="5074000" />
-      <workItem from="1774165675958" duration="2892000" />
+      <workItem from="1774165675958" duration="5458000" />
     </task>
     <servers />
   </component>
@@ -165,11 +162,6 @@
           <url>file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp</url>
           <line>329</line>
           <option name="timeStamp" value="29" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.cpp</url>
-          <line>36</line>
-          <option name="timeStamp" value="30" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

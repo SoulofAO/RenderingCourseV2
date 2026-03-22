@@ -1,5 +1,6 @@
 #include "Abstracts/Rendering/RenderProxy/ParticleForwardRenderProxyObject.h"
 #include "Abstracts/Components/ParticleRenderingComponent.h"
+#include <cstring>
 
 namespace
 {
@@ -70,7 +71,13 @@ void ParticleForwardRenderProxyObject::RenderForwardMainPass(const ForwardMainRe
 	MaterialBufferData.Padding1[1] = 0;
 	MaterialBufferData.Padding1[2] = 0;
 
-	DeviceContext->UpdateSubresource(MaterialConstantBuffer, 0, nullptr, &MaterialBufferData, 0, 0);
+	D3D11_MAPPED_SUBRESOURCE MappedConstantBuffer = {};
+	HRESULT MapConstantBufferResult = DeviceContext->Map(MaterialConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedConstantBuffer);
+	if (SUCCEEDED(MapConstantBufferResult))
+	{
+		memcpy(MappedConstantBuffer.pData, &MaterialBufferData, sizeof(MaterialBufferData));
+		DeviceContext->Unmap(MaterialConstantBuffer, 0);
+	}
 
 	const float BlendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	DeviceContext->OMSetBlendState(OwnerComponent->GetParticleAlphaBlendState(), BlendFactor, 0xFFFFFFFF);

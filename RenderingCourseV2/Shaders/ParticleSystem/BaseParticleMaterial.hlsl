@@ -37,10 +37,7 @@ float4 PSMain(ParticleDrawPixelInput Input) : SV_Target
     }
     float2 SphereCoordinates = Input.TextureCoordinates * 2.0 - 1.0;
     float RadiusSquared = dot(SphereCoordinates, SphereCoordinates);
-    if (RadiusSquared > 1.0)
-    {
-        discard;
-    }
+    float Alpha = (RadiusSquared * -1 + 1) * Input.Color.a;
     float3 FinalColor = Input.Color.rgb;
-    return float4(FinalColor, 1.0);
+    return float4(FinalColor, Alpha);
 }
