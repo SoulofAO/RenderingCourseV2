@@ -51,6 +51,7 @@ ParticleRenderingComponent::ParticleRenderingComponent(int NewMaxParticleCount)
 	, ParticleSizeWorld(0.5f)
 	, CachedSceneViewport(nullptr)
 	, ParticleStateBuffer(nullptr)
+	, ParticleStateStagingReadbackBuffer(nullptr)
 	, ParticleStateUnorderedAccessView(nullptr)
 	, ParticleStateShaderResourceView(nullptr)
 	, ParticleSimulationConstantsBuffer(nullptr)
@@ -65,6 +66,8 @@ ParticleRenderingComponent::ParticleRenderingComponent(int NewMaxParticleCount)
 	, ParticleRasterizerState(nullptr)
 	, ParticleSimulationThreadGroupCount(0)
 	, ShaderContentRootDirectory()
+	, ParticlePositionLoggingEnabled(true)
+	, ParticlePositionLoggingMaxParticles(32)
 {
 	SetRenderOrder(50);
 	SetForwardRendererProxyObject(std::make_unique<ParticleForwardRenderProxyObject>(this));
@@ -221,6 +224,18 @@ bool ParticleRenderingComponent::CreateParticleSimulationResources(ID3D11Device*
 	HRESULT CreateBufferResult = Device->CreateBuffer(&BufferDescription, &InitialBufferData, &ParticleStateBuffer);
 	if (FAILED(CreateBufferResult))
 	{
+		return false;
+	}
+
+	D3D11_BUFFER_DESC StagingReadbackDescription = {};
+	StagingReadbackDescription.ByteWidth = static_cast<UINT>(BufferByteCount);
+	StagingReadbackDescription.Usage = D3D11_USAGE_STAGING;
+	StagingReadbackDescription.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+	HRESULT CreateStagingReadbackResult = Device->CreateBuffer(&StagingReadbackDescription, nullptr, &ParticleStateStagingReadbackBuffer);
+	if (FAILED(CreateStagingReadbackResult))
+	{
+		ReleaseParticleSimulationResources();
 		return false;
 	}
 
@@ -395,6 +410,12 @@ void ParticleRenderingComponent::ReleaseParticleSimulationResources()
 		ParticleStateUnorderedAccessView = nullptr;
 	}
 
+	if (ParticleStateStagingReadbackBuffer != nullptr)
+	{
+		ParticleStateStagingReadbackBuffer->Release();
+		ParticleStateStagingReadbackBuffer = nullptr;
+	}
+
 	if (ParticleStateShaderResourceView != nullptr)
 	{
 		ParticleStateShaderResourceView->Release();
@@ -524,6 +545,60 @@ void ParticleRenderingComponent::Update(float DeltaTime)
 	}
 
 	UnbindParticleSimulationCompute();
+	LogParticlePositionsIfEnabled();
+}
+
+void ParticleRenderingComponent::LogParticlePositionsIfEnabled()
+{
+	if (ParticlePositionLoggingEnabled == false)
+	{
+		return;
+	}
+
+	if (CachedSceneViewport == nullptr || ParticleStateBuffer == nullptr || ParticleStateStagingReadbackBuffer == nullptr)
+	{
+		return;
+	}
+
+	ID3D11DeviceContext* DeviceContext = CachedSceneViewport->GetDeviceContext();
+	if (DeviceContext == nullptr)
+	{
+		return;
+	}
+
+	DeviceContext->CopyResource(ParticleStateStagingReadbackBuffer, ParticleStateBuffer);
+
+	D3D11_MAPPED_SUBRESOURCE MappedResource = {};
+	HRESULT MapResult = DeviceContext->Map(ParticleStateStagingReadbackBuffer, 0, D3D11_MAP_READ, 0, &MappedResource);
+	if (FAILED(MapResult))
+	{
+		return;
+	}
+
+	const ParticleStructData* ParticleArray = static_cast<const ParticleStructData*>(MappedResource.pData);
+	const int TotalParticleCount = MaxParticleCount;
+	int LoggingLimit = ParticlePositionLoggingMaxParticles;
+	if (LoggingLimit < 1)
+	{
+		LoggingLimit = 1;
+	}
+	if (LoggingLimit > TotalParticleCount)
+	{
+		LoggingLimit = TotalParticleCount;
+	}
+
+	for (int ParticleIndex = 0; ParticleIndex < LoggingLimit; ++ParticleIndex)
+	{
+		const ParticleStructData& ParticleEntry = ParticleArray[ParticleIndex];
+		if (ParticleEntry.Active == 0)
+		{
+			continue;
+		}
+
+		std::cout << "Particle index " << ParticleIndex << " position: " << ParticleEntry.Position.x << " " << ParticleEntry.Position.y << " " << ParticleEntry.Position.z << std::endl;
+	}
+
+	DeviceContext->Unmap(ParticleStateStagingReadbackBuffer, 0);
 }
 
 void ParticleRenderingComponent::Shutdown()
@@ -566,6 +641,9 @@ void ParticleRenderingComponent::DrawDearImGuiParticlePanels()
 		}
 		ImGui::PopID();
 	}
+	ImGui::Separator();
+	ImGui::Checkbox("Log particle positions each tick", &ParticlePositionLoggingEnabled);
+	ImGui::SliderInt("Particle log max count", &ParticlePositionLoggingMaxParticles, 1, MaxParticleCount);
 	ImGui::End();
 }
 

@@ -7,5 +7,6 @@ struct ParticleStructData
     float4 Color;
     float AgeTime;
     float SizeWorld;
+    float LifetimeSeconds;
     uint Active;
 };

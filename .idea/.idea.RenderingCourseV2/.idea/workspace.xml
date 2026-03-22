@@ -11,33 +11,11 @@
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/ParticleRenderingComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleCollisionObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleCollisionObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleCollisionObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleCollisionObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleDefaultObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleDefaultObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleDefaultObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleDefaultObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleFrictionObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleFrictionObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleFrictionObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleFrictionObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleGravityObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleGravityObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleGravityObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleGravityObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleLinearForceObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleLinearForceObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleLinearForceObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleLinearForceObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticlePointForceObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticlePointForceObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticlePointForceObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticlePointForceObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSimulationObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSimulationObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSimulationObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSimulationObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Resources/ResourceManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Resources/ResourceManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Resources/ResourceManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Resources/ResourceManager.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/BaseParticleMaterial.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/BaseParticleMaterial.hlsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/ParticleSimulation/ParticleSpawnRateObject.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleDefault.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleDefault.hlsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleSpawnRate.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleSpawnRate.hlsl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleStructShared.hlsli" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/ParticleSystem/ParticleStructShared.hlsli" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -84,25 +62,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;C/C++ Project.RenderingCourseV2.executor&quot;: &quot;Debug&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;OtherTaskAfterRenderingCourse&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.build&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "C/C++ Project.RenderingCourseV2.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "OtherTaskAfterRenderingCourse",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "configurable.group.build",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="RenderingCourseV2" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
@@ -151,7 +129,7 @@
       <workItem from="1774024109040" duration="14125000" />
       <workItem from="1774081066269" duration="3717000" />
       <workItem from="1774085068430" duration="5074000" />
-      <workItem from="1774165675958" duration="321000" />
+      <workItem from="1774165675958" duration="2892000" />
     </task>
     <servers />
   </component>

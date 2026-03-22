@@ -19,8 +19,8 @@ namespace
 		DirectX::XMFLOAT4 EmitterColor;
 		float SpawnSizeWorldMinimum;
 		float SpawnSizeWorldMaximum;
-		float PaddingSize0;
-		float PaddingSize1;
+		float SpawnLifetimeSecondsMinimum;
+		float SpawnLifetimeSecondsMaximum;
 	};
 }
 
@@ -33,6 +33,8 @@ ParticleSpawnRateObject::ParticleSpawnRateObject()
 	, EmitterColor(1.0f, 0.55f, 0.15f, 1.0f)
 	, SpawnSizeWorldMinimum(0.35f)
 	, SpawnSizeWorldMaximum(0.65f)
+	, SpawnLifetimeSecondsMinimum(2.0f)
+	, SpawnLifetimeSecondsMaximum(5.0f)
 	, StageConstantBuffer(nullptr)
 	, ComputeShader(nullptr)
 	, ComputeShaderByteCode(nullptr)
@@ -137,8 +139,8 @@ void ParticleSpawnRateObject::Dispatch(ParticleRenderingComponent* OwnerComponen
 	BufferData.EmitterColor = EmitterColor;
 	BufferData.SpawnSizeWorldMinimum = SpawnSizeWorldMinimum;
 	BufferData.SpawnSizeWorldMaximum = SpawnSizeWorldMaximum;
-	BufferData.PaddingSize0 = 0.0f;
-	BufferData.PaddingSize1 = 0.0f;
+	BufferData.SpawnLifetimeSecondsMinimum = SpawnLifetimeSecondsMinimum;
+	BufferData.SpawnLifetimeSecondsMaximum = SpawnLifetimeSecondsMaximum;
 
 	D3D11_MAPPED_SUBRESOURCE MappedResource = {};
 	HRESULT MapResult = DeviceContext->Map(StageConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
@@ -198,6 +200,8 @@ void ParticleSpawnRateObject::DrawDearImGui(ParticleRenderingComponent*)
 	}
 	ImGui::DragFloat("SpawnSizeWorldMinimum", &SpawnSizeWorldMinimum, 0.01f, 0.0f, 100.0f);
 	ImGui::DragFloat("SpawnSizeWorldMaximum", &SpawnSizeWorldMaximum, 0.01f, 0.0f, 100.0f);
+	ImGui::DragFloat("SpawnLifetimeSecondsMinimum", &SpawnLifetimeSecondsMinimum, 0.05f, 0.0f, 1000.0f);
+	ImGui::DragFloat("SpawnLifetimeSecondsMaximum", &SpawnLifetimeSecondsMaximum, 0.05f, 0.0f, 1000.0f);
 }
 
 const char* ParticleSpawnRateObject::GetStageDisplayName() const

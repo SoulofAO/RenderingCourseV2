@@ -16,6 +16,8 @@ public:
 	DirectX::XMFLOAT4 EmitterColor;
 	float SpawnSizeWorldMinimum;
 	float SpawnSizeWorldMaximum;
+	float SpawnLifetimeSecondsMinimum;
+	float SpawnLifetimeSecondsMaximum;
 	ID3D11Buffer* StageConstantBuffer;
 
 	bool CreateGpuResources(ID3D11Device* Device) override;

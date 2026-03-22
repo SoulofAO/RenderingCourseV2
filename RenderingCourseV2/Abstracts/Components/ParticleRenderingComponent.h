@@ -17,8 +17,8 @@ struct ParticleStructData
 	DirectX::XMFLOAT4 Color;
 	float AgeTime;
 	float SizeWorld;
+	float LifetimeSeconds;
 	UINT Active;
-	UINT PaddingTail;
 };
 
 class SceneViewportSubsystem;
@@ -74,6 +74,7 @@ private:
 	void ReleaseParticleSimulationResources();
 	void UpdateParticleSimulationConstantsBuffer();
 	void BuildDefaultSimulationPipeline(ID3D11Device* Device);
+	void LogParticlePositionsIfEnabled();
 
 	int MaxParticleCount;
 	float LastDeltaTime;
@@ -82,6 +83,7 @@ private:
 	SceneViewportSubsystem* CachedSceneViewport;
 
 	ID3D11Buffer* ParticleStateBuffer;
+	ID3D11Buffer* ParticleStateStagingReadbackBuffer;
 	ID3D11UnorderedAccessView* ParticleStateUnorderedAccessView;
 	ID3D11ShaderResourceView* ParticleStateShaderResourceView;
 	ID3D11Buffer* ParticleSimulationConstantsBuffer;
@@ -102,4 +104,7 @@ private:
 	std::string ShaderContentRootDirectory;
 
 	std::vector<std::unique_ptr<ParticleSimulationObject>> SimulationStages;
+
+	bool ParticlePositionLoggingEnabled;
+	int ParticlePositionLoggingMaxParticles;
 };

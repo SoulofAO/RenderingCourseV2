@@ -23,6 +23,7 @@ void ParticleTestGame::BuildTestScene()
 		SceneViewportSubsystemInstance->SetRenderPipelineType(RenderPipelineType::Forward);
 	}
 
+	/*
 	std::unique_ptr<Actor> FloorActor = std::make_unique<Actor>();
 	Transform FloorTransform;
 	FloorTransform.Position = DirectX::XMFLOAT3(0.0f, -0.5f, 0.0f);
@@ -35,6 +36,7 @@ void ParticleTestGame::BuildTestScene()
 	FloorMeshComponent->SpecularIntensity = 0.4f;
 	FloorActor->AddComponent(std::move(FloorMeshComponent));
 	AddActor(std::move(FloorActor));
+	*/
 
 	std::unique_ptr<Actor> ParticleActor = std::make_unique<Actor>();
 	std::unique_ptr<ParticleRenderingComponent> ParticleRenderingComponentInstance = std::make_unique<ParticleRenderingComponent>(4096);

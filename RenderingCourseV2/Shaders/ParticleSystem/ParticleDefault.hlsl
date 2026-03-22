@@ -16,6 +16,10 @@ void Main(uint3 DispatchThreadId : SV_DispatchThreadID)
     {
         Particle.Position += Particle.Velocity * DeltaTime;
         Particle.AgeTime += DeltaTime;
+        if (Particle.LifetimeSeconds > 0.0 && Particle.AgeTime >= Particle.LifetimeSeconds)
+        {
+            Particle.Active = 0u;
+        }
     }
 
     ParticleStateReadWrite[Index] = Particle;
