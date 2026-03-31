@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Abstracts/Core/Game.h"
+#include "Abstracts/Core/RenderTypes.h"
 #include <d3d11.h>
 #include <vector>
 

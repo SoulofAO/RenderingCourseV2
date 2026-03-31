@@ -2,13 +2,12 @@
 
 #include "Abstracts/Core/GameConfigurator.h"
 #include "Abstracts/Core/MultiGameSession.h"
-#include "Abstracts/Core/PlayerRenderTargetService.h"
 #include <windows.h>
 #include <memory>
 #include <vector>
 
-class SceneViewportSubsystem;
 class Game;
+class RenderRuntimeGameInstanceSubsystem;
 
 class SessionManager
 {
@@ -23,8 +22,7 @@ public:
 	int GetActiveSessionIdentifier() const;
 	void TickFrame(float DeltaTime);
 	void RenderFrame(
-		SceneViewportSubsystem* SceneViewportSubsystemInstance,
-		PlayerRenderTargetService* PlayerRenderTargetServiceInstance,
+		RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem,
 		int ScreenWidth,
 		int ScreenHeight);
 	bool HandleMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);

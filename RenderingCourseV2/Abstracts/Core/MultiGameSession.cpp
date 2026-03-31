@@ -1,5 +1,6 @@
 #include "Abstracts/Core/MultiGameSession.h"
 #include "Abstracts/Core/Game.h"
+#include "Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
 #include <algorithm>
 #include <set>
@@ -89,17 +90,18 @@ void MultiGameSession::TickFrame(float DeltaTime, bool IsSessionActive, const st
 }
 
 void MultiGameSession::RenderFrame(
-	SceneViewportSubsystem* SceneViewportSubsystemInstance,
-	PlayerRenderTargetService* PlayerRenderTargetServiceInstance,
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem,
 	int ScreenWidth,
 	int ScreenHeight,
 	const std::vector<SessionGameView>& SessionGames,
 	std::vector<PlayerRenderTargetCompositeCommand>& OutCompositeCommands)
 {
-	if (SceneViewportSubsystemInstance == nullptr || PlayerRenderTargetServiceInstance == nullptr || ScreenWidth <= 0 || ScreenHeight <= 0)
+	if (RenderRuntimeSubsystem == nullptr || ScreenWidth <= 0 || ScreenHeight <= 0)
 	{
 		return;
 	}
+
+	const RenderFrameContext RenderFrameContextValue = RenderRuntimeSubsystem->BuildFrameContext(0.0f);
 
 	for (const std::unique_ptr<PlayerObject>& ExistingPlayer : Players)
 	{
@@ -120,13 +122,8 @@ void MultiGameSession::RenderFrame(
 		PlayerRenderTargetIdentifier Identifier = {};
 		Identifier.SessionIdentifier = SessionIdentifier;
 		Identifier.PlayerIdentifier = ExistingPlayer->GetPlayerIdentifier();
-		if (!PlayerRenderTargetServiceInstance->EnsurePlayerRenderTarget(SceneViewportSubsystemInstance->GetDevice(), Identifier, TargetWidth, TargetHeight))
-		{
-			continue;
-		}
-
 		GameRenderTargetOverride RenderTargetOverride = {};
-		if (!PlayerRenderTargetServiceInstance->GetPlayerRenderTargetOverride(Identifier, RenderTargetOverride))
+		if (!RenderRuntimeSubsystem->AcquirePlayerRenderTarget(Identifier, TargetWidth, TargetHeight, RenderTargetOverride))
 		{
 			continue;
 		}
@@ -138,7 +135,7 @@ void MultiGameSession::RenderFrame(
 		}
 
 		D3D11_VIEWPORT PlayerViewport = BuildPlayerViewport(TargetWidth, TargetHeight, ViewportRectangleNormalized{ 0.0f, 0.0f, 1.0f, 1.0f });
-		AssignedGame->RenderFrame(SceneViewportSubsystemInstance, &RenderTargetOverride, &PlayerViewport, false);
+		AssignedGame->RenderFrame(RenderFrameContextValue, &RenderTargetOverride, &PlayerViewport);
 
 		PlayerRenderTargetCompositeCommand CompositeCommand = {};
 		CompositeCommand.Identifier = Identifier;

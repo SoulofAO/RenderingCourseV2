@@ -1,7 +1,7 @@
 #include "Abstracts/Core/SessionManager.h"
 #include "Abstracts/Core/MultiGameSession.h"
 #include "Abstracts/Core/Game.h"
-#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
+#include "Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h"
 #include <algorithm>
 
 SessionManager::SessionManager()
@@ -33,7 +33,6 @@ int SessionManager::OpenGame(const GameConfigurator& NewGameConfigurator)
 			continue;
 		}
 
-		NewGame->SetCreateDefaultSceneViewportSubsystem(false);
 		NewGame->Initialize();
 		NewGame->StartEmbeddedPlay();
 
@@ -115,12 +114,11 @@ void SessionManager::TickFrame(float DeltaTime)
 }
 
 void SessionManager::RenderFrame(
-	SceneViewportSubsystem* SceneViewportSubsystemInstance,
-	PlayerRenderTargetService* PlayerRenderTargetServiceInstance,
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem,
 	int ScreenWidth,
 	int ScreenHeight)
 {
-	if (SceneViewportSubsystemInstance == nullptr || PlayerRenderTargetServiceInstance == nullptr)
+	if (RenderRuntimeSubsystem == nullptr)
 	{
 		return;
 	}
@@ -135,18 +133,14 @@ void SessionManager::RenderFrame(
 
 		const std::vector<SessionGameView> SessionGameViews = BuildSessionGameViews(ExistingSession->GetSessionIdentifier());
 		ExistingSession->RenderFrame(
-			SceneViewportSubsystemInstance,
-			PlayerRenderTargetServiceInstance,
+			RenderRuntimeSubsystem,
 			ScreenWidth,
 			ScreenHeight,
 			SessionGameViews,
 			CompositeCommands);
 	}
 
-	PlayerRenderTargetServiceInstance->CompositeToBackBuffer(
-		SceneViewportSubsystemInstance->GetDeviceContext(),
-		SceneViewportSubsystemInstance->GetBackBufferTexture(),
-		CompositeCommands);
+	RenderRuntimeSubsystem->CompositePlayerTargets(CompositeCommands);
 }
 
 bool SessionManager::HandleMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)

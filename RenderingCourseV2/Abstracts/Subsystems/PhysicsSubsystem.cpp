@@ -1,9 +1,11 @@
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include "Abstracts/Components/PhysicsComponent.h"
 #include "Abstracts/Core/Game.h"
+#include "Abstracts/Core/GameInstance.h"
 #include "Abstracts/Physics/PhysXTypeConversion.h"
 #include "Abstracts/Resources/ModelResource.h"
 #include "Abstracts/Resources/ResourceManager.h"
+#include "Abstracts/Subsystems/PhysicsRuntimeGameInstanceSubsystem.h"
 #include <algorithm>
 #include <cstdint>
 #include <cmath>
@@ -634,29 +636,26 @@ void PhysicsSubsystem::EnforceWorldBoundarySphere()
 
 void PhysicsSubsystem::InitializePhysXContext()
 {
-	PhysicsFoundation = PxCreateFoundation(
-		PX_PHYSICS_VERSION,
-		AllocatorCallback,
-		ErrorCallback);
-	if (PhysicsFoundation == nullptr)
+	PhysicsRuntimeGameInstanceSubsystem* PhysicsRuntimeSubsystem = GlobalGameInstance != nullptr
+		? GlobalGameInstance->GetSubsystem<PhysicsRuntimeGameInstanceSubsystem>()
+		: nullptr;
+	if (PhysicsRuntimeSubsystem == nullptr)
 	{
 		return;
 	}
+
+	PhysicsSharedContext SharedContext = {};
+	if (!PhysicsRuntimeSubsystem->AcquireSharedContext(SharedContext))
+	{
+		return;
+	}
+
+	PhysicsFoundation = SharedContext.PhysicsFoundation;
+	Physics = SharedContext.Physics;
+	CpuDispatcher = SharedContext.CpuDispatcher;
 
 	const physx::PxTolerancesScale ToleranceScale;
-	Physics = PxCreatePhysics(
-		PX_PHYSICS_VERSION,
-		*PhysicsFoundation,
-		ToleranceScale,
-		true,
-		nullptr);
-	if (Physics == nullptr)
-	{
-		return;
-	}
-
-	CpuDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
-	if (CpuDispatcher == nullptr)
+	if (Physics == nullptr || CpuDispatcher == nullptr)
 	{
 		return;
 	}
@@ -679,36 +678,24 @@ void PhysicsSubsystem::InitializePhysXContext()
 
 void PhysicsSubsystem::ShutdownPhysXContext()
 {
-	if (DefaultMaterial != nullptr)
-	{
-		DefaultMaterial->release();
-		DefaultMaterial = nullptr;
-	}
 	if (PhysicsScene != nullptr)
 	{
 		PhysicsScene->release();
 		PhysicsScene = nullptr;
-	}
-	if (CpuDispatcher != nullptr)
-	{
-		CpuDispatcher->release();
-		CpuDispatcher = nullptr;
-	}
-	if (Physics != nullptr)
-	{
-		Physics->release();
-		Physics = nullptr;
-	}
-	if (PhysicsFoundation != nullptr)
-	{
-		PhysicsFoundation->release();
-		PhysicsFoundation = nullptr;
 	}
 	if (SimulationEventCallback != nullptr)
 	{
 		delete SimulationEventCallback;
 		SimulationEventCallback = nullptr;
 	}
+	if (DefaultMaterial != nullptr)
+	{
+		DefaultMaterial->release();
+		DefaultMaterial = nullptr;
+	}
+	PhysicsFoundation = nullptr;
+	Physics = nullptr;
+	CpuDispatcher = nullptr;
 }
 
 void PhysicsSubsystem::ReleaseCachedConvexMeshes()

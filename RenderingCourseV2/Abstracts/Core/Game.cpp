@@ -13,7 +13,6 @@
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
-#include "Abstracts/Subsystems/DisplayWin32.h"
 #include "Abstracts/Resources/ResourceManager.h"
 #include <imgui.h>
 #include <filesystem>
@@ -63,6 +62,7 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, WorldBoundarySphereRadius(4000.0f)
 	, IsEmbeddedPlayStarted(false)
 	, CreateDefaultSceneViewportSubsystem(true)
+	, OwningGameInstance(nullptr)
 {
 	GlobalGame = this;
 }
@@ -192,7 +192,7 @@ void Game::Run()
 		float DeltaTime = std::chrono::duration_cast<std::chrono::microseconds>(CurrentTime - PreviousTime).count() / 1000000.0f;
 		PreviousTime = CurrentTime;
 		TickFrame(DeltaTime);
-		RenderFrame();
+		Draw();
 	}
 }
 
@@ -215,7 +215,7 @@ void Game::TickFrame(float DeltaTime)
 	FrameCount++;
 
 	SceneViewportSubsystem* SceneViewport = GetSubsystem<SceneViewportSubsystem>();
-	if (SceneViewport != nullptr && SceneViewport->GetDisplay() != nullptr && TotalRunTimeSeconds > 0.0f)
+	if (SceneViewport != nullptr && SceneViewport->GetWindowHandle() != nullptr && TotalRunTimeSeconds > 0.0f)
 	{
 		static float FramesSecondAccumulator = 0.0f;
 		FramesSecondAccumulator += DeltaTime;
@@ -227,7 +227,7 @@ void Game::TickFrame(float DeltaTime)
 
 			WCHAR TitleText[256];
 			swprintf_s(TitleText, TEXT("FPS: %f"), FramesPerSecond);
-			SetWindowText(SceneViewport->GetDisplay()->GetWindowHandle(), TitleText);
+			SetWindowText(SceneViewport->GetWindowHandle(), TitleText);
 		}
 	}
 
@@ -235,40 +235,57 @@ void Game::TickFrame(float DeltaTime)
 }
 
 void Game::RenderFrame(
-	SceneViewportSubsystem* OverrideSceneViewportSubsystem,
+	const RenderFrameContext& RenderFrameContextValue,
 	const GameRenderTargetOverride* OverrideRenderTarget,
-	const D3D11_VIEWPORT* OverrideViewport,
-	bool PresentFrame)
+	const D3D11_VIEWPORT* OverrideViewport)
 {
-	SceneViewportSubsystem* SceneViewport = OverrideSceneViewportSubsystem;
-	if (SceneViewport == nullptr)
-	{
-		SceneViewport = GetSubsystem<SceneViewportSubsystem>();
-	}
-
+	SceneViewportSubsystem* SceneViewport = GetSubsystem<SceneViewportSubsystem>();
 	if (SceneViewport == nullptr)
 	{
 		return;
 	}
 
-	if (OverrideRenderTarget != nullptr)
+	CameraSubsystem* CameraSystem = GetSubsystem<CameraSubsystem>();
+	const float ViewWidth = OverrideRenderTarget != nullptr ? static_cast<float>(OverrideRenderTarget->Width) : static_cast<float>(RenderFrameContextValue.ScreenWidth);
+	const float ViewHeight = OverrideRenderTarget != nullptr ? static_cast<float>(OverrideRenderTarget->Height) : static_cast<float>(RenderFrameContextValue.ScreenHeight);
+	float AspectRatio = 1.0f;
+	if (ViewHeight > 0.0f)
 	{
-		SceneViewport->SetFrameRenderTargetOverride(
-			OverrideRenderTarget->RenderTargetView,
-			OverrideRenderTarget->DepthStencilView,
-			OverrideRenderTarget->Width,
-			OverrideRenderTarget->Height);
-	}
-	if (OverrideViewport != nullptr)
-	{
-		SceneViewport->SetFrameViewportOverride(*OverrideViewport);
+		AspectRatio = ViewWidth / ViewHeight;
 	}
 
-	SceneViewport->SetFramePresentEnabled(PresentFrame);
-	Draw();
-	SceneViewport->ClearFrameRenderTargetOverride();
-	SceneViewport->ClearFrameViewportOverride();
-	SceneViewport->SetFramePresentEnabled(true);
+	DirectX::XMMATRIX ViewMatrix = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), AspectRatio, 0.1f, 1000.0f);
+	DirectX::XMFLOAT3 CameraWorldPosition(0.0f, 0.0f, 0.0f);
+	if (CameraSystem != nullptr)
+	{
+		ViewMatrix = CameraSystem->GetActiveViewMatrix();
+		ProjectionMatrix = CameraSystem->GetActiveProjectionMatrix(AspectRatio);
+		CameraWorldPosition = CameraSystem->GetActiveCameraPosition();
+	}
+	SceneViewport->SetFrameCameraData(ViewMatrix, ProjectionMatrix, CameraWorldPosition);
+
+	SceneViewport->RenderFrame(
+		RenderFrameContextValue,
+		OverrideRenderTarget,
+		OverrideViewport,
+		false,
+		[this]()
+		{
+			DrawCameraPossessionUserInterface();
+			for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
+			{
+				if (ExistingActor == nullptr)
+				{
+					continue;
+				}
+				ParticleRenderingComponent* ParticleRendering = ExistingActor->GetFirstComponentByClass<ParticleRenderingComponent>();
+				if (ParticleRendering != nullptr)
+				{
+					ParticleRendering->DrawDearImGuiParticlePanels();
+				}
+			}
+		});
 }
 
 void Game::SetCreateDefaultSceneViewportSubsystem(bool NewCreateDefaultSceneViewportSubsystem)
@@ -279,6 +296,16 @@ void Game::SetCreateDefaultSceneViewportSubsystem(bool NewCreateDefaultSceneView
 void Game::SetExternalMessageHandler(std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> NewExternalMessageHandler)
 {
 	ExternalMessageHandler = NewExternalMessageHandler;
+}
+
+void Game::SetOwningGameInstance(GameInstance* NewOwningGameInstance)
+{
+	OwningGameInstance = NewOwningGameInstance;
+}
+
+GameInstance* Game::GetOwningGameInstance() const
+{
+	return OwningGameInstance;
 }
 
 void Game::Update(float DeltaTime)
@@ -343,22 +370,32 @@ void Game::Draw()
 	}
 	SceneViewport->SetFrameCameraData(ViewMatrix, ProjectionMatrix, CameraWorldPosition);
 
-	SceneViewport->BeginFrame(TotalRunTimeSeconds);
-	SceneViewport->BeginDearImGuiFrame();
-	DrawCameraPossessionUserInterface();
-	for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
-	{
-		if (ExistingActor == nullptr)
+	RenderFrameContext RenderFrameContextValue = {};
+	RenderFrameContextValue.TotalTimeSeconds = TotalRunTimeSeconds;
+	RenderFrameContextValue.ScreenWidth = GetScreenWidth();
+	RenderFrameContextValue.ScreenHeight = GetScreenHeight();
+	RenderFrameContextValue.WindowHandle = SceneViewport->GetWindowHandle();
+	SceneViewport->RenderFrame(
+		RenderFrameContextValue,
+		nullptr,
+		nullptr,
+		false,
+		[this]()
 		{
-			continue;
-		}
-		ParticleRenderingComponent* ParticleRendering = ExistingActor->GetFirstComponentByClass<ParticleRenderingComponent>();
-		if (ParticleRendering != nullptr)
-		{
-			ParticleRendering->DrawDearImGuiParticlePanels();
-		}
-	}
-	SceneViewport->RenderSceneFrame();
+			DrawCameraPossessionUserInterface();
+			for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
+			{
+				if (ExistingActor == nullptr)
+				{
+					continue;
+				}
+				ParticleRenderingComponent* ParticleRendering = ExistingActor->GetFirstComponentByClass<ParticleRenderingComponent>();
+				if (ParticleRendering != nullptr)
+				{
+					ParticleRendering->DrawDearImGuiParticlePanels();
+				}
+			}
+		});
 }
 
 LPCWSTR Game::GetApplicationName() const
@@ -978,13 +1015,7 @@ void Game::ApplyMouseInputMode()
 		return;
 	}
 
-	DisplayWin32* Display = SceneViewport->GetDisplay();
-	if (Display == nullptr)
-	{
-		return;
-	}
-
-	HWND WindowHandle = Display->GetWindowHandle();
+	HWND WindowHandle = SceneViewport->GetWindowHandle();
 	if (WindowHandle == nullptr)
 	{
 		return;
@@ -1022,13 +1053,7 @@ void Game::UpdateMouseInputModeState()
 		return;
 	}
 
-	DisplayWin32* Display = SceneViewport->GetDisplay();
-	if (Display == nullptr)
-	{
-		return;
-	}
-
-	HWND WindowHandle = Display->GetWindowHandle();
+	HWND WindowHandle = SceneViewport->GetWindowHandle();
 	if (WindowHandle == nullptr)
 	{
 		return;

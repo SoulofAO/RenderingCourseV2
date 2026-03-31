@@ -1,16 +1,15 @@
 #pragma once
 
+#include "Abstracts/Core/RenderTypes.h"
 #include "Abstracts/Subsystems/Subsystem.h"
 #include "Abstracts/Rendering/DeferredRenderer.h"
 #include <windows.h>
-#include <wrl.h>
 #include <d3d11.h>
 #include <memory>
 #include <vector>
-#include <directxmath.h>
 #include <functional>
+#include <directxmath.h>
 
-class DisplayWin32;
 class RenderingComponent;
 class AbstractRenderPipeline;
 
@@ -37,24 +36,25 @@ public:
 	~SceneViewportSubsystem() override;
 
 	void Initialize() override;
-	void InitializeStandalone(
-		LPCWSTR ApplicationName,
-		int ScreenWidth,
-		int ScreenHeight,
-		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> MessageCallback);
 	void Shutdown() override;
+	void SetExternalRenderFrameContext(const RenderFrameContext& NewRenderFrameContext);
+	void ClearExternalRenderFrameContext();
 
 	void BeginFrame(float TotalTimeSeconds);
 	void EndFrame();
+	void RenderFrame(
+		const RenderFrameContext& NewRenderFrameContext,
+		const GameRenderTargetOverride* OverrideRenderTarget = nullptr,
+		const D3D11_VIEWPORT* OverrideViewport = nullptr,
+		bool NewFramePresentEnabled = false,
+		const std::function<void()>& BeforeSceneRenderCallback = std::function<void()>());
 
 	ID3D11Device* GetDevice() const;
 	ID3D11DeviceContext* GetDeviceContext() const;
-	IDXGISwapChain* GetSwapChain() const;
-	ID3D11Texture2D* GetBackBufferTexture() const;
 	ID3D11RenderTargetView* GetRenderTargetView() const;
 	ID3D11DepthStencilView* GetDepthStencilView() const;
 	DeferredRenderer* GetDeferredRenderer() const;
-	DisplayWin32* GetDisplay() const;
+	HWND GetWindowHandle() const;
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
 	DirectX::XMMATRIX GetViewMatrix() const;
@@ -99,20 +99,10 @@ public:
 	bool bDisplayChangedColor = false;
 
 private:
-	void CreateBackBuffer();
-	void RestoreTargets();
-	void DestroyResources();
+	bool EnsureRenderingResourcesInitialized();
 	void InitializeDearImGui();
 	void ShutdownDearImGui();
 
-	std::unique_ptr<DisplayWin32> Display;
-	Microsoft::WRL::ComPtr<ID3D11Device> Device;
-	ID3D11DeviceContext* Context;
-	IDXGISwapChain* SwapChain;
-	ID3D11Texture2D* BackBuffer;
-	ID3D11RenderTargetView* RenderView;
-	ID3D11Texture2D* DepthTexture;
-	ID3D11DepthStencilView* DepthStencilView;
 	DirectX::XMFLOAT4X4 ViewMatrixStorage;
 	DirectX::XMFLOAT4X4 ProjectionMatrixStorage;
 	DirectX::XMFLOAT3 CameraWorldPosition;
@@ -139,8 +129,7 @@ private:
 	bool HasFrameViewportOverride;
 	D3D11_VIEWPORT FrameViewportOverride;
 	bool FramePresentEnabled;
-
-	int StandaloneScreenWidth;
-	int StandaloneScreenHeight;
-	bool IsStandaloneMode;
+	bool UseExternalRenderFrameContext;
+	RenderFrameContext ExternalRenderFrameContext;
+	HWND LastKnownWindowHandle;
 };

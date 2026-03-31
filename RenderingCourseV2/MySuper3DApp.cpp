@@ -56,6 +56,22 @@ std::unique_ptr<Game> BuildKatamaryTaskGame()
 	return std::make_unique<KatamaryGame>(L"My3DApp KatamaryTask", 1280, 720);
 }
 
+GameConfigurator BuildSplitScreenValidationConfigurator()
+{
+	GameConfigurator SplitScreenValidationConfigurator = {};
+	SplitScreenValidationConfigurator.SessionName = L"SplitScreenValidationSession";
+	SplitScreenValidationConfigurator.ReceiveInputWhenSessionIsInactive = true;
+	SplitScreenValidationConfigurator.Games.push_back(GameDefinition{ 4001, BuildLightingTestGame });
+	SplitScreenValidationConfigurator.Games.push_back(GameDefinition{ 4002, BuildParticleTestGame });
+	SplitScreenValidationConfigurator.Games.push_back(GameDefinition{ 4003, BuildKatamaryTaskGame });
+	SplitScreenValidationConfigurator.Games.push_back(GameDefinition{ 4004, BuildMeshTestGame });
+	SplitScreenValidationConfigurator.Players.push_back(PlayerBinding{ 21, 0, 0, ViewportRectangleNormalized{ 0.0f, 0.0f, 0.5f, 0.5f }, 4001 });
+	SplitScreenValidationConfigurator.Players.push_back(PlayerBinding{ 22, 1, 0, ViewportRectangleNormalized{ 0.5f, 0.0f, 0.5f, 0.5f }, 4002 });
+	SplitScreenValidationConfigurator.Players.push_back(PlayerBinding{ 23, 2, 0, ViewportRectangleNormalized{ 0.0f, 0.5f, 0.5f, 0.5f }, 4003 });
+	SplitScreenValidationConfigurator.Players.push_back(PlayerBinding{ 24, 3, 0, ViewportRectangleNormalized{ 0.5f, 0.5f, 0.5f, 0.5f }, 4004 });
+	return SplitScreenValidationConfigurator;
+}
+
 int main()
 {
 	GameInstance RuntimeGameInstance;
@@ -85,6 +101,7 @@ int main()
 	GameConfigurators.push_back(SharedGameForTwoPlayersConfigurator);
 	GameConfigurators.push_back(TwoPlayersTwoGamesConfigurator);
 	GameConfigurators.push_back(GameWithoutPlayersConfigurator);
+	GameConfigurators.push_back(BuildSplitScreenValidationConfigurator());
 	RuntimeGameInstance.OpenMultipleGames(GameConfigurators);
 	RuntimeGameInstance.Run();
 	return 0;

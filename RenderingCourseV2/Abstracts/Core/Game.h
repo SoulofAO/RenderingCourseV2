@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Abstracts/Core/RenderTypes.h"
 #include "Abstracts/Subsystems/Subsystem.h"
 #include "Abstracts/Core/Actor.h"
 #include <windows.h>
@@ -16,14 +17,7 @@ class ResourceManager;
 class GameInputHandler;
 class CameraComponent;
 class LightComponent;
-
-struct GameRenderTargetOverride
-{
-	ID3D11RenderTargetView* RenderTargetView;
-	ID3D11DepthStencilView* DepthStencilView;
-	int Width;
-	int Height;
-};
+class GameInstance;
 
 enum class MouseInputMode
 {
@@ -45,13 +39,13 @@ public:
 	void Run();
 	void StartEmbeddedPlay();
 	void TickFrame(float DeltaTime);
-	void RenderFrame(
-		SceneViewportSubsystem* OverrideSceneViewportSubsystem = nullptr,
+	void RenderFrame(const RenderFrameContext& RenderFrameContextValue,
 		const GameRenderTargetOverride* OverrideRenderTarget = nullptr,
-		const D3D11_VIEWPORT* OverrideViewport = nullptr,
-		bool PresentFrame = true);
+		const D3D11_VIEWPORT* OverrideViewport = nullptr);
 	void SetCreateDefaultSceneViewportSubsystem(bool NewCreateDefaultSceneViewportSubsystem);
 	void SetExternalMessageHandler(std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> NewExternalMessageHandler);
+	void SetOwningGameInstance(GameInstance* NewOwningGameInstance);
+	GameInstance* GetOwningGameInstance() const;
 
 	LPCWSTR GetApplicationName() const;
 	InputDevice* GetInputDevice() const;
@@ -203,6 +197,7 @@ protected:
 	bool IsEmbeddedPlayStarted;
 	bool CreateDefaultSceneViewportSubsystem;
 	std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> ExternalMessageHandler;
+	GameInstance* OwningGameInstance;
 };
 
 extern Game* GlobalGame;

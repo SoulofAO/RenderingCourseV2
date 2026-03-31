@@ -3,7 +3,6 @@
 #include "FirstTask/Render/RenderProxy/TriangleDeferredRendererProxyObject.h"
 #include "FirstTask/Render/RenderProxy/TriangleForwardRendererProxyObject.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
-#include "Abstracts/Subsystems/DisplayWin32.h"
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <iostream>
@@ -75,8 +74,9 @@ void TriangleComponent::Initialize()
 		}
 		else
 		{
+			const HWND WindowHandle = SceneViewport->GetWindowHandle();
 			MessageBox(
-				SceneViewport->GetDisplay()->GetWindowHandle(),
+				WindowHandle,
 				L"MyVeryFirstShader.hlsl",
 				L"Missing Shader File",
 				MB_OK);

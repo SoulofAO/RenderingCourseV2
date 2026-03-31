@@ -168,7 +168,9 @@
     <ClCompile Include="Abstracts\Rendering\RenderProxy\ParticleDeferredRenderProxyObject.cpp" />
     <ClCompile Include="Abstracts\Rendering\RenderProxy\ParticleForwardRenderProxyObject.cpp" />
     <ClCompile Include="Abstracts\Subsystems\DisplayWin32.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\GameInstanceSubsystem.cpp" />
     <ClCompile Include="Abstracts\Subsystems\InputDevice.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\PhysicsRuntimeGameInstanceSubsystem.cpp" />
     <ClCompile Include="Abstracts\Subsystems\PhysicsSubsystem.cpp" />
     <ClCompile Include="Abstracts\Rendering\DeferredRenderer.cpp" />
     <ClCompile Include="Abstracts\Rendering\DeferredRenderPipeline.cpp" />
@@ -183,6 +185,7 @@
     <ClCompile Include="Abstracts\Resources\ResourceCooker.cpp" />
     <ClCompile Include="Abstracts\Resources\ResourceManager.cpp" />
     <ClCompile Include="Abstracts\Subsystems\CameraSubsystem.cpp" />
+    <ClCompile Include="Abstracts\Subsystems\RenderRuntimeGameInstanceSubsystem.cpp" />
     <ClCompile Include="Abstracts\Subsystems\SceneViewportSubsystem.cpp" />
     <ClCompile Include="Abstracts\Subsystems\Subsystem.cpp" />
     <ClCompile Include="FirstTask\FirstTaskGame.cpp" />
@@ -262,6 +265,7 @@
     <ClInclude Include="Abstracts\Core\Object.h" />
     <ClInclude Include="Abstracts\Core\PlayerObject.h" />
     <ClInclude Include="Abstracts\Core\PlayerRenderTargetService.h" />
+    <ClInclude Include="Abstracts\Core\RenderTypes.h" />
     <ClInclude Include="Abstracts\Core\SessionManager.h" />
     <ClInclude Include="Abstracts\Core\Transform.h" />
     <ClInclude Include="Abstracts\Others\MainMathLibrary.h" />
@@ -270,9 +274,12 @@
     <ClInclude Include="Abstracts\Input\FreeCameraInputHandler.h" />
     <ClInclude Include="Abstracts\Input\GameInputHandler.h" />
     <ClInclude Include="Abstracts\Subsystems\DisplayWin32.h" />
+    <ClInclude Include="Abstracts\Subsystems\GameInstanceSubsystem.h" />
     <ClInclude Include="Abstracts\Subsystems\InputDevice.h" />
+    <ClInclude Include="Abstracts\Subsystems\PhysicsRuntimeGameInstanceSubsystem.h" />
     <ClInclude Include="Abstracts\Subsystems\PhysicsSubsystem.h" />
     <ClInclude Include="Abstracts\Subsystems\CameraSubsystem.h" />
+    <ClInclude Include="Abstracts\Subsystems\RenderRuntimeGameInstanceSubsystem.h" />
     <ClInclude Include="Abstracts\Subsystems\SceneViewportSubsystem.h" />
     <ClInclude Include="Abstracts\Subsystems\Subsystem.h" />
     <ClInclude Include="FirstTask\FirstTaskGame.h" />

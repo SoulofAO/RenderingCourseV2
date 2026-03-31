@@ -1,6 +1,10 @@
 #include "Abstracts/Core/GameInstance.h"
-#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
+#include "Abstracts/Subsystems/GameInstanceSubsystem.h"
+#include "Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h"
+#include "Abstracts/Subsystems/PhysicsRuntimeGameInstanceSubsystem.h"
 #include <chrono>
+
+GameInstance* GlobalGameInstance = nullptr;
 
 GameInstance::GameInstance()
 	: ApplicationName(L"GameInstance")
@@ -9,24 +13,56 @@ GameInstance::GameInstance()
 	, IsExitRequested(false)
 	, TotalRunTimeSeconds(0.0f)
 {
+	GlobalGameInstance = this;
 }
 
-GameInstance::~GameInstance() = default;
+GameInstance::~GameInstance()
+{
+	for (std::unique_ptr<GameInstanceSubsystem>& ExistingSubsystem : Subsystems)
+	{
+		if (ExistingSubsystem != nullptr)
+		{
+			ExistingSubsystem->Shutdown();
+		}
+	}
+	Subsystems.clear();
+
+	if (GlobalGameInstance == this)
+	{
+		GlobalGameInstance = nullptr;
+	}
+}
 
 void GameInstance::Initialize(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 {
 	this->ApplicationName = ApplicationName;
 	this->ScreenWidth = ScreenWidth;
 	this->ScreenHeight = ScreenHeight;
-	SceneViewportSubsystemInstance = std::make_unique<SceneViewportSubsystem>();
-	SceneViewportSubsystemInstance->InitializeStandalone(
-		ApplicationName,
-		ScreenWidth,
-		ScreenHeight,
-		[this](HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam) -> LRESULT
-		{
-			return this->MessageHandler(WindowHandle, Message, WParam, LParam);
-		});
+
+	if (GetSubsystem<RenderRuntimeGameInstanceSubsystem>() == nullptr)
+	{
+		std::unique_ptr<RenderRuntimeGameInstanceSubsystem> NewRenderRuntimeSubsystem = std::make_unique<RenderRuntimeGameInstanceSubsystem>();
+		AddSubsystem(std::move(NewRenderRuntimeSubsystem));
+	}
+	if (GetSubsystem<PhysicsRuntimeGameInstanceSubsystem>() == nullptr)
+	{
+		std::unique_ptr<PhysicsRuntimeGameInstanceSubsystem> NewPhysicsRuntimeSubsystem = std::make_unique<PhysicsRuntimeGameInstanceSubsystem>();
+		AddSubsystem(std::move(NewPhysicsRuntimeSubsystem));
+	}
+
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = GetSubsystem<RenderRuntimeGameInstanceSubsystem>();
+	if (RenderRuntimeSubsystem != nullptr)
+	{
+		RenderRuntimeSubsystem->InitializeRuntime(
+			ApplicationName,
+			ScreenWidth,
+			ScreenHeight,
+			[this](HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam) -> LRESULT
+			{
+				return this->MessageHandler(WindowHandle, Message, WParam, LParam);
+			});
+	}
+
 	PreviousTime = std::chrono::steady_clock::now();
 }
 
@@ -47,11 +83,6 @@ void GameInstance::CloseGame(int SessionIdentifier)
 
 void GameInstance::Run()
 {
-	if (SceneViewportSubsystemInstance == nullptr)
-	{
-		return;
-	}
-
 	MSG Message = {};
 	while (!IsExitRequested)
 	{
@@ -73,13 +104,16 @@ void GameInstance::Run()
 
 		SessionManagerInstance.TickFrame(DeltaTime);
 
-		SceneViewportSubsystemInstance->BeginFrame(TotalRunTimeSeconds);
-		SessionManagerInstance.RenderFrame(
-			SceneViewportSubsystemInstance.get(),
-			&PlayerRenderTargetServiceInstance,
-			ScreenWidth,
-			ScreenHeight);
-		SceneViewportSubsystemInstance->EndFrame();
+		RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = GetSubsystem<RenderRuntimeGameInstanceSubsystem>();
+		if (RenderRuntimeSubsystem != nullptr)
+		{
+			RenderRuntimeSubsystem->BeginRuntimeFrame(TotalRunTimeSeconds);
+			SessionManagerInstance.RenderFrame(
+				RenderRuntimeSubsystem,
+				ScreenWidth,
+				ScreenHeight);
+			RenderRuntimeSubsystem->EndRuntimeFrame();
+		}
 	}
 }
 
@@ -91,4 +125,15 @@ LRESULT GameInstance::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WPa
 	}
 
 	return 0;
+}
+
+void GameInstance::AddSubsystem(std::unique_ptr<GameInstanceSubsystem> NewSubsystem)
+{
+	if (NewSubsystem == nullptr)
+	{
+		return;
+	}
+
+	NewSubsystem->SetOwningGameInstance(this);
+	Subsystems.push_back(std::move(NewSubsystem));
 }

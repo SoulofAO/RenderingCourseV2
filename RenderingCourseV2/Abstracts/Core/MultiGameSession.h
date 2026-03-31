@@ -3,11 +3,12 @@
 #include "Abstracts/Core/GameConfigurator.h"
 #include "Abstracts/Core/PlayerObject.h"
 #include "Abstracts/Core/PlayerRenderTargetService.h"
-#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
+#include "Abstracts/Core/RenderTypes.h"
 #include <memory>
 #include <vector>
 
 class Game;
+class RenderRuntimeGameInstanceSubsystem;
 
 struct SessionGameView
 {
@@ -27,8 +28,7 @@ public:
 	void Initialize();
 	void TickFrame(float DeltaTime, bool IsSessionActive, const std::vector<SessionGameView>& SessionGames);
 	void RenderFrame(
-		SceneViewportSubsystem* SceneViewportSubsystemInstance,
-		PlayerRenderTargetService* PlayerRenderTargetServiceInstance,
+		RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem,
 		int ScreenWidth,
 		int ScreenHeight,
 		const std::vector<SessionGameView>& SessionGames,

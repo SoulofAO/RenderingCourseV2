@@ -94,8 +94,6 @@ private:
 	DirectX::XMFLOAT3 WorldBoundaryCenter;
 	float WorldBoundaryRadius;
 
-	physx::PxDefaultAllocator AllocatorCallback;
-	physx::PxDefaultErrorCallback ErrorCallback;
 	physx::PxFoundation* PhysicsFoundation;
 	physx::PxPhysics* Physics;
 	physx::PxScene* PhysicsScene;

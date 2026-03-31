@@ -1,0 +1,243 @@
+#include "Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h"
+#include <iostream>
+
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "dxguid.lib")
+
+RenderRuntimeGameInstanceSubsystem::RenderRuntimeGameInstanceSubsystem()
+	: Context(nullptr)
+	, SwapChain(nullptr)
+	, BackBuffer(nullptr)
+	, BackBufferRenderView(nullptr)
+	, BackBufferDepthTexture(nullptr)
+	, BackBufferDepthStencilView(nullptr)
+	, ScreenWidth(0)
+	, ScreenHeight(0)
+{
+}
+
+RenderRuntimeGameInstanceSubsystem::~RenderRuntimeGameInstanceSubsystem()
+{
+	Shutdown();
+}
+
+void RenderRuntimeGameInstanceSubsystem::InitializeRuntime(
+	LPCWSTR ApplicationName,
+	int ScreenWidth,
+	int ScreenHeight,
+	std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> MessageCallback)
+{
+	this->ScreenWidth = ScreenWidth;
+	this->ScreenHeight = ScreenHeight;
+	HINSTANCE InstanceHandle = GetModuleHandle(nullptr);
+	Display = std::make_unique<DisplayWin32>(
+		ApplicationName,
+		InstanceHandle,
+		ScreenWidth,
+		ScreenHeight,
+		MessageCallback);
+
+	D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_1 };
+	DXGI_SWAP_CHAIN_DESC SwapDescription = {};
+	SwapDescription.BufferCount = 2;
+	SwapDescription.BufferDesc.Width = static_cast<UINT>(ScreenWidth);
+	SwapDescription.BufferDesc.Height = static_cast<UINT>(ScreenHeight);
+	SwapDescription.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	SwapDescription.BufferDesc.RefreshRate.Numerator = 60;
+	SwapDescription.BufferDesc.RefreshRate.Denominator = 1;
+	SwapDescription.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	SwapDescription.OutputWindow = Display->GetWindowHandle();
+	SwapDescription.Windowed = true;
+	SwapDescription.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	SwapDescription.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	SwapDescription.SampleDesc.Count = 1;
+	SwapDescription.SampleDesc.Quality = 0;
+
+	HRESULT Result = D3D11CreateDeviceAndSwapChain(
+		nullptr,
+		D3D_DRIVER_TYPE_HARDWARE,
+		nullptr,
+		D3D11_CREATE_DEVICE_DEBUG,
+		FeatureLevels,
+		1,
+		D3D11_SDK_VERSION,
+		&SwapDescription,
+		&SwapChain,
+		&Device,
+		nullptr,
+		&Context);
+	if (FAILED(Result))
+	{
+		std::cerr << "Failed to create D3D11 device and swap chain." << std::endl;
+		return;
+	}
+
+	CreateBackBuffer();
+}
+
+void RenderRuntimeGameInstanceSubsystem::Shutdown()
+{
+	PlayerRenderTargetServiceInstance.ReleaseAll();
+	DestroyResources();
+	GameInstanceSubsystem::Shutdown();
+}
+
+void RenderRuntimeGameInstanceSubsystem::BeginRuntimeFrame(float TotalTimeSeconds)
+{
+	if (Context == nullptr || BackBufferRenderView == nullptr)
+	{
+		return;
+	}
+
+	const float ClearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	Context->ClearRenderTargetView(BackBufferRenderView, ClearColor);
+	if (BackBufferDepthStencilView != nullptr)
+	{
+		Context->ClearDepthStencilView(BackBufferDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	}
+	Context->ClearState();
+	D3D11_VIEWPORT FullscreenViewport = {};
+	FullscreenViewport.Width = static_cast<float>(ScreenWidth);
+	FullscreenViewport.Height = static_cast<float>(ScreenHeight);
+	FullscreenViewport.MinDepth = 0.0f;
+	FullscreenViewport.MaxDepth = 1.0f;
+	Context->RSSetViewports(1, &FullscreenViewport);
+}
+
+void RenderRuntimeGameInstanceSubsystem::EndRuntimeFrame()
+{
+	if (Context != nullptr)
+	{
+		Context->OMSetRenderTargets(0, nullptr, nullptr);
+	}
+	if (SwapChain != nullptr)
+	{
+		SwapChain->Present(1, 0);
+	}
+}
+
+RenderFrameContext RenderRuntimeGameInstanceSubsystem::BuildFrameContext(float TotalTimeSeconds) const
+{
+	RenderFrameContext FrameContext = {};
+	FrameContext.Device = Device.Get();
+	FrameContext.DeviceContext = Context;
+	FrameContext.BackBufferTexture = BackBuffer;
+	FrameContext.BackBufferRenderTargetView = BackBufferRenderView;
+	FrameContext.BackBufferDepthStencilView = BackBufferDepthStencilView;
+	FrameContext.WindowHandle = GetWindowHandle();
+	FrameContext.ScreenWidth = ScreenWidth;
+	FrameContext.ScreenHeight = ScreenHeight;
+	FrameContext.TotalTimeSeconds = TotalTimeSeconds;
+	return FrameContext;
+}
+
+bool RenderRuntimeGameInstanceSubsystem::AcquirePlayerRenderTarget(
+	const PlayerRenderTargetIdentifier& Identifier,
+	int Width,
+	int Height,
+	GameRenderTargetOverride& OutRenderTargetOverride)
+{
+	if (!PlayerRenderTargetServiceInstance.EnsurePlayerRenderTarget(Device.Get(), Identifier, Width, Height))
+	{
+		return false;
+	}
+	return PlayerRenderTargetServiceInstance.GetPlayerRenderTargetOverride(Identifier, OutRenderTargetOverride);
+}
+
+void RenderRuntimeGameInstanceSubsystem::CompositePlayerTargets(const std::vector<PlayerRenderTargetCompositeCommand>& CompositeCommands)
+{
+	PlayerRenderTargetServiceInstance.CompositeToBackBuffer(Context, BackBuffer, CompositeCommands);
+}
+
+HWND RenderRuntimeGameInstanceSubsystem::GetWindowHandle() const
+{
+	if (Display == nullptr)
+	{
+		return nullptr;
+	}
+	return Display->GetWindowHandle();
+}
+
+ID3D11Device* RenderRuntimeGameInstanceSubsystem::GetDevice() const
+{
+	return Device.Get();
+}
+
+ID3D11DeviceContext* RenderRuntimeGameInstanceSubsystem::GetDeviceContext() const
+{
+	return Context;
+}
+
+ID3D11Texture2D* RenderRuntimeGameInstanceSubsystem::GetBackBufferTexture() const
+{
+	return BackBuffer;
+}
+
+int RenderRuntimeGameInstanceSubsystem::GetScreenWidth() const
+{
+	return ScreenWidth;
+}
+
+int RenderRuntimeGameInstanceSubsystem::GetScreenHeight() const
+{
+	return ScreenHeight;
+}
+
+void RenderRuntimeGameInstanceSubsystem::CreateBackBuffer()
+{
+	if (SwapChain == nullptr || Device.Get() == nullptr)
+	{
+		return;
+	}
+
+	SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&BackBuffer));
+	Device->CreateRenderTargetView(BackBuffer, nullptr, &BackBufferRenderView);
+
+	D3D11_TEXTURE2D_DESC DepthDescription = {};
+	DepthDescription.Width = static_cast<UINT>(ScreenWidth);
+	DepthDescription.Height = static_cast<UINT>(ScreenHeight);
+	DepthDescription.MipLevels = 1;
+	DepthDescription.ArraySize = 1;
+	DepthDescription.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	DepthDescription.SampleDesc.Count = 1;
+	DepthDescription.Usage = D3D11_USAGE_DEFAULT;
+	DepthDescription.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	Device->CreateTexture2D(&DepthDescription, nullptr, &BackBufferDepthTexture);
+	Device->CreateDepthStencilView(BackBufferDepthTexture, nullptr, &BackBufferDepthStencilView);
+}
+
+void RenderRuntimeGameInstanceSubsystem::DestroyResources()
+{
+	if (BackBufferDepthStencilView != nullptr)
+	{
+		BackBufferDepthStencilView->Release();
+		BackBufferDepthStencilView = nullptr;
+	}
+	if (BackBufferDepthTexture != nullptr)
+	{
+		BackBufferDepthTexture->Release();
+		BackBufferDepthTexture = nullptr;
+	}
+	if (BackBufferRenderView != nullptr)
+	{
+		BackBufferRenderView->Release();
+		BackBufferRenderView = nullptr;
+	}
+	if (BackBuffer != nullptr)
+	{
+		BackBuffer->Release();
+		BackBuffer = nullptr;
+	}
+	if (SwapChain != nullptr)
+	{
+		SwapChain->Release();
+		SwapChain = nullptr;
+	}
+	if (Context != nullptr)
+	{
+		Context->Release();
+		Context = nullptr;
+	}
+	Display.reset();
+}
