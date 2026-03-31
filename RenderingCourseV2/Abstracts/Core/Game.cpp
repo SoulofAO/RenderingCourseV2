@@ -61,6 +61,8 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, IsWorldBoundarySphereEnabled(false)
 	, WorldBoundarySphereCenter(0.0f, 0.0f, 0.0f)
 	, WorldBoundarySphereRadius(4000.0f)
+	, IsEmbeddedPlayStarted(false)
+	, CreateDefaultSceneViewportSubsystem(true)
 {
 	GlobalGame = this;
 }
@@ -129,7 +131,7 @@ void Game::Initialize()
 	const FileSystem::path CookedPath = SearchPath / "Cooked";
 	Resources->Initialize(SearchPath.string(), CookedPath.string());
 
-	if (GetSubsystem<SceneViewportSubsystem>() == nullptr)
+	if (CreateDefaultSceneViewportSubsystem && GetSubsystem<SceneViewportSubsystem>() == nullptr)
 	{
 		std::unique_ptr<SceneViewportSubsystem> NewSceneViewport = std::make_unique<SceneViewportSubsystem>();
 		AddSubsystem(std::move(NewSceneViewport));
@@ -170,7 +172,7 @@ void Game::Run()
 {
 	StartTime = std::chrono::steady_clock::now();
 	PreviousTime = StartTime;
-	BeginPlay();
+	StartEmbeddedPlay();
 
 	MSG Message = {};
 	while (!IsExitRequested)
@@ -189,30 +191,94 @@ void Game::Run()
 		auto CurrentTime = std::chrono::steady_clock::now();
 		float DeltaTime = std::chrono::duration_cast<std::chrono::microseconds>(CurrentTime - PreviousTime).count() / 1000000.0f;
 		PreviousTime = CurrentTime;
-
-		TotalRunTimeSeconds += DeltaTime;
-		FrameCount++;
-
-		SceneViewportSubsystem* SceneViewport = GetSubsystem<SceneViewportSubsystem>();
-		if (SceneViewport != nullptr && SceneViewport->GetDisplay() != nullptr && TotalRunTimeSeconds > 0.0f)
-		{
-			static float FramesSecondAccumulator = 0.0f;
-			FramesSecondAccumulator += DeltaTime;
-			if (FramesSecondAccumulator > 1.0f)
-			{
-				float FramesPerSecond = static_cast<float>(FrameCount) / FramesSecondAccumulator;
-				FramesSecondAccumulator = 0.0f;
-				FrameCount = 0;
-
-				WCHAR TitleText[256];
-				swprintf_s(TitleText, TEXT("FPS: %f"), FramesPerSecond);
-				SetWindowText(SceneViewport->GetDisplay()->GetWindowHandle(), TitleText);
-			}
-		}
-
-		Update(DeltaTime);
-		Draw();
+		TickFrame(DeltaTime);
+		RenderFrame();
 	}
+}
+
+void Game::StartEmbeddedPlay()
+{
+	if (IsEmbeddedPlayStarted)
+	{
+		return;
+	}
+
+	StartTime = std::chrono::steady_clock::now();
+	PreviousTime = StartTime;
+	BeginPlay();
+	IsEmbeddedPlayStarted = true;
+}
+
+void Game::TickFrame(float DeltaTime)
+{
+	TotalRunTimeSeconds += DeltaTime;
+	FrameCount++;
+
+	SceneViewportSubsystem* SceneViewport = GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewport != nullptr && SceneViewport->GetDisplay() != nullptr && TotalRunTimeSeconds > 0.0f)
+	{
+		static float FramesSecondAccumulator = 0.0f;
+		FramesSecondAccumulator += DeltaTime;
+		if (FramesSecondAccumulator > 1.0f)
+		{
+			float FramesPerSecond = static_cast<float>(FrameCount) / FramesSecondAccumulator;
+			FramesSecondAccumulator = 0.0f;
+			FrameCount = 0;
+
+			WCHAR TitleText[256];
+			swprintf_s(TitleText, TEXT("FPS: %f"), FramesPerSecond);
+			SetWindowText(SceneViewport->GetDisplay()->GetWindowHandle(), TitleText);
+		}
+	}
+
+	Update(DeltaTime);
+}
+
+void Game::RenderFrame(
+	SceneViewportSubsystem* OverrideSceneViewportSubsystem,
+	const GameRenderTargetOverride* OverrideRenderTarget,
+	const D3D11_VIEWPORT* OverrideViewport,
+	bool PresentFrame)
+{
+	SceneViewportSubsystem* SceneViewport = OverrideSceneViewportSubsystem;
+	if (SceneViewport == nullptr)
+	{
+		SceneViewport = GetSubsystem<SceneViewportSubsystem>();
+	}
+
+	if (SceneViewport == nullptr)
+	{
+		return;
+	}
+
+	if (OverrideRenderTarget != nullptr)
+	{
+		SceneViewport->SetFrameRenderTargetOverride(
+			OverrideRenderTarget->RenderTargetView,
+			OverrideRenderTarget->DepthStencilView,
+			OverrideRenderTarget->Width,
+			OverrideRenderTarget->Height);
+	}
+	if (OverrideViewport != nullptr)
+	{
+		SceneViewport->SetFrameViewportOverride(*OverrideViewport);
+	}
+
+	SceneViewport->SetFramePresentEnabled(PresentFrame);
+	Draw();
+	SceneViewport->ClearFrameRenderTargetOverride();
+	SceneViewport->ClearFrameViewportOverride();
+	SceneViewport->SetFramePresentEnabled(true);
+}
+
+void Game::SetCreateDefaultSceneViewportSubsystem(bool NewCreateDefaultSceneViewportSubsystem)
+{
+	CreateDefaultSceneViewportSubsystem = NewCreateDefaultSceneViewportSubsystem;
+}
+
+void Game::SetExternalMessageHandler(std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> NewExternalMessageHandler)
+{
+	ExternalMessageHandler = NewExternalMessageHandler;
 }
 
 void Game::Update(float DeltaTime)
@@ -383,6 +449,15 @@ void Game::AddActor(std::unique_ptr<Actor> NewActor)
 
 LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
 {
+	if (ExternalMessageHandler)
+	{
+		LRESULT ExternalMessageResult = ExternalMessageHandler(WindowHandle, Message, WParam, LParam);
+		if (ExternalMessageResult != 0)
+		{
+			return ExternalMessageResult;
+		}
+	}
+
 	if (Message == WM_KEYDOWN && static_cast<unsigned int>(WParam) == 27)
 	{
 		if (Input)

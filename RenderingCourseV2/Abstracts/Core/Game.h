@@ -4,9 +4,11 @@
 #include "Abstracts/Core/Actor.h"
 #include <windows.h>
 #include <directxmath.h>
+#include <d3d11.h>
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <functional>
 
 class InputDevice;
 class SceneViewportSubsystem;
@@ -14,6 +16,14 @@ class ResourceManager;
 class GameInputHandler;
 class CameraComponent;
 class LightComponent;
+
+struct GameRenderTargetOverride
+{
+	ID3D11RenderTargetView* RenderTargetView;
+	ID3D11DepthStencilView* DepthStencilView;
+	int Width;
+	int Height;
+};
 
 enum class MouseInputMode
 {
@@ -33,6 +43,15 @@ public:
 
 	void Initialize();
 	void Run();
+	void StartEmbeddedPlay();
+	void TickFrame(float DeltaTime);
+	void RenderFrame(
+		SceneViewportSubsystem* OverrideSceneViewportSubsystem = nullptr,
+		const GameRenderTargetOverride* OverrideRenderTarget = nullptr,
+		const D3D11_VIEWPORT* OverrideViewport = nullptr,
+		bool PresentFrame = true);
+	void SetCreateDefaultSceneViewportSubsystem(bool NewCreateDefaultSceneViewportSubsystem);
+	void SetExternalMessageHandler(std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> NewExternalMessageHandler);
 
 	LPCWSTR GetApplicationName() const;
 	InputDevice* GetInputDevice() const;
@@ -181,6 +200,9 @@ protected:
 	bool IsWorldBoundarySphereEnabled;
 	DirectX::XMFLOAT3 WorldBoundarySphereCenter;
 	float WorldBoundarySphereRadius;
+	bool IsEmbeddedPlayStarted;
+	bool CreateDefaultSceneViewportSubsystem;
+	std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> ExternalMessageHandler;
 };
 
 extern Game* GlobalGame;

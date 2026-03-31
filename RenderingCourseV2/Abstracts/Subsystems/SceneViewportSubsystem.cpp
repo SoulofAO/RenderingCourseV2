@@ -39,6 +39,15 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
 	, ParticleDistanceSortEnabled(true)
 	, IsDearImGuiInitialized(false)
+	, FrameRenderTargetOverrideView(nullptr)
+	, FrameDepthStencilOverrideView(nullptr)
+	, FrameOverrideWidth(0)
+	, FrameOverrideHeight(0)
+	, HasFrameViewportOverride(false)
+	, FramePresentEnabled(true)
+	, StandaloneScreenWidth(0)
+	, StandaloneScreenHeight(0)
+	, IsStandaloneMode(false)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, DirectX::XMMatrixIdentity());
 	DirectX::XMStoreFloat4x4(&ProjectionMatrixStorage, DirectX::XMMatrixIdentity());
@@ -116,6 +125,71 @@ void SceneViewportSubsystem::Initialize()
 	InitializeDearImGui();
 }
 
+void SceneViewportSubsystem::InitializeStandalone(
+	LPCWSTR ApplicationName,
+	int ScreenWidth,
+	int ScreenHeight,
+	std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> MessageCallback)
+{
+	Subsystem::Initialize();
+	StandaloneScreenWidth = ScreenWidth;
+	StandaloneScreenHeight = ScreenHeight;
+	IsStandaloneMode = true;
+	HINSTANCE InstanceHandle = GetModuleHandle(nullptr);
+	Display = std::make_unique<DisplayWin32>(
+		ApplicationName,
+		InstanceHandle,
+		ScreenWidth,
+		ScreenHeight,
+		MessageCallback);
+
+	D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_1 };
+	DXGI_SWAP_CHAIN_DESC SwapDescription = {};
+	SwapDescription.BufferCount = 2;
+	SwapDescription.BufferDesc.Width = static_cast<UINT>(ScreenWidth);
+	SwapDescription.BufferDesc.Height = static_cast<UINT>(ScreenHeight);
+	SwapDescription.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	SwapDescription.BufferDesc.RefreshRate.Numerator = 60;
+	SwapDescription.BufferDesc.RefreshRate.Denominator = 1;
+	SwapDescription.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	SwapDescription.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	SwapDescription.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	SwapDescription.OutputWindow = Display->GetWindowHandle();
+	SwapDescription.Windowed = true;
+	SwapDescription.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	SwapDescription.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	SwapDescription.SampleDesc.Count = 1;
+	SwapDescription.SampleDesc.Quality = 0;
+
+	HRESULT Result = D3D11CreateDeviceAndSwapChain(
+		nullptr,
+		D3D_DRIVER_TYPE_HARDWARE,
+		nullptr,
+		D3D11_CREATE_DEVICE_DEBUG,
+		FeatureLevels,
+		1,
+		D3D11_SDK_VERSION,
+		&SwapDescription,
+		&SwapChain,
+		&Device,
+		nullptr,
+		&Context);
+	if (FAILED(Result))
+	{
+		std::cerr << "Failed to create D3D11 device and swap chain." << std::endl;
+		return;
+	}
+
+	CreateBackBuffer();
+	DeferredRendererInstance = std::make_unique<DeferredRenderer>();
+	DeferredRendererInstance->Initialize(Device.Get());
+	DeferredRendererInstance->EnsureTargets(Device.Get(), GetScreenWidth(), GetScreenHeight());
+	DeferredRendererInstance->SetShadowCascadeSettings(ShadowCascadeCountSetting, ShadowMaximumDistanceSetting);
+	ForwardRenderPipelineInstance = std::make_unique<ForwardRenderPipeline>();
+	DeferredRenderPipelineInstance = std::make_unique<DeferredRenderPipeline>();
+	InitializeDearImGui();
+}
+
 void SceneViewportSubsystem::Shutdown()
 {
 	ShutdownDearImGui();
@@ -130,6 +204,9 @@ void SceneViewportSubsystem::BeginFrame(float TotalTimeSeconds)
 		return;
 	}
 
+	ID3D11RenderTargetView* ActiveRenderTargetView = FrameRenderTargetOverrideView != nullptr ? FrameRenderTargetOverrideView : RenderView;
+	ID3D11DepthStencilView* ActiveDepthStencilView = FrameDepthStencilOverrideView != nullptr ? FrameDepthStencilOverrideView : DepthStencilView;
+
 	if (bDisplayChangedColor)
 	{
 		float ColorCycle = TotalTimeSeconds;
@@ -139,28 +216,35 @@ void SceneViewportSubsystem::BeginFrame(float TotalTimeSeconds)
 		}
 
 		float ClearColor[] = { ColorCycle, 0.1f, 0.1f, 1.0f };
-		Context->ClearRenderTargetView(RenderView, ClearColor);
+		Context->ClearRenderTargetView(ActiveRenderTargetView, ClearColor);
 	}
 	else
 	{
 		float ClearColor[] = { 0.0, 0.0f, 0.0f, 1.0f };
-		Context->ClearRenderTargetView(RenderView, ClearColor);
+		Context->ClearRenderTargetView(ActiveRenderTargetView, ClearColor);
 	}
 
-	if (DepthStencilView != nullptr)
+	if (ActiveDepthStencilView != nullptr)
 	{
-		Context->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		Context->ClearDepthStencilView(ActiveDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
 
 	Context->ClearState();
 
 	D3D11_VIEWPORT Viewport = {};
-	Viewport.Width = static_cast<float>(GetOwningGame()->GetScreenWidth());
-	Viewport.Height = static_cast<float>(GetOwningGame()->GetScreenHeight());
-	Viewport.TopLeftX = 0.0f;
-	Viewport.TopLeftY = 0.0f;
-	Viewport.MinDepth = 0.0f;
-	Viewport.MaxDepth = 1.0f;
+	if (HasFrameViewportOverride)
+	{
+		Viewport = FrameViewportOverride;
+	}
+	else
+	{
+		Viewport.Width = static_cast<float>(GetScreenWidth());
+		Viewport.Height = static_cast<float>(GetScreenHeight());
+		Viewport.TopLeftX = 0.0f;
+		Viewport.TopLeftY = 0.0f;
+		Viewport.MinDepth = 0.0f;
+		Viewport.MaxDepth = 1.0f;
+	}
 	Context->RSSetViewports(1, &Viewport);
 }
 
@@ -171,7 +255,7 @@ void SceneViewportSubsystem::EndFrame()
 		Context->OMSetRenderTargets(0, nullptr, nullptr);
 	}
 
-	if (SwapChain != nullptr)
+	if (FramePresentEnabled && SwapChain != nullptr)
 	{
 		SwapChain->Present(1, 0);
 	}
@@ -192,13 +276,28 @@ IDXGISwapChain* SceneViewportSubsystem::GetSwapChain() const
 	return SwapChain;
 }
 
+ID3D11Texture2D* SceneViewportSubsystem::GetBackBufferTexture() const
+{
+	return BackBuffer;
+}
+
 ID3D11RenderTargetView* SceneViewportSubsystem::GetRenderTargetView() const
 {
+	if (FrameRenderTargetOverrideView != nullptr)
+	{
+		return FrameRenderTargetOverrideView;
+	}
+
 	return RenderView;
 }
 
 ID3D11DepthStencilView* SceneViewportSubsystem::GetDepthStencilView() const
 {
+	if (FrameDepthStencilOverrideView != nullptr)
+	{
+		return FrameDepthStencilOverrideView;
+	}
+
 	return DepthStencilView;
 }
 
@@ -214,6 +313,14 @@ DisplayWin32* SceneViewportSubsystem::GetDisplay() const
 
 int SceneViewportSubsystem::GetScreenWidth() const
 {
+	if (FrameOverrideWidth > 0)
+	{
+		return FrameOverrideWidth;
+	}
+	if (IsStandaloneMode)
+	{
+		return StandaloneScreenWidth;
+	}
 	Game* GameInstance = GetOwningGame();
 	if (GameInstance == nullptr)
 	{
@@ -225,6 +332,14 @@ int SceneViewportSubsystem::GetScreenWidth() const
 
 int SceneViewportSubsystem::GetScreenHeight() const
 {
+	if (FrameOverrideHeight > 0)
+	{
+		return FrameOverrideHeight;
+	}
+	if (IsStandaloneMode)
+	{
+		return StandaloneScreenHeight;
+	}
 	Game* GameInstance = GetOwningGame();
 	if (GameInstance == nullptr)
 	{
@@ -488,6 +603,7 @@ void SceneViewportSubsystem::RenderSceneFrame()
 	EndFrame();
 }
 
+
 void SceneViewportSubsystem::BeginDearImGuiFrame()
 {
 	if (IsDearImGuiInitialized == false)
@@ -640,4 +756,40 @@ void SceneViewportSubsystem::ShutdownDearImGui()
 	ImGui_ImplDX11_Shutdown();
 	ImGui::DestroyContext();
 	IsDearImGuiInitialized = false;
+}
+
+void SceneViewportSubsystem::SetFrameRenderTargetOverride(
+	ID3D11RenderTargetView* NewRenderTargetView,
+	ID3D11DepthStencilView* NewDepthStencilView,
+	int NewWidth,
+	int NewHeight)
+{
+	FrameRenderTargetOverrideView = NewRenderTargetView;
+	FrameDepthStencilOverrideView = NewDepthStencilView;
+	FrameOverrideWidth = NewWidth;
+	FrameOverrideHeight = NewHeight;
+}
+
+void SceneViewportSubsystem::ClearFrameRenderTargetOverride()
+{
+	FrameRenderTargetOverrideView = nullptr;
+	FrameDepthStencilOverrideView = nullptr;
+	FrameOverrideWidth = 0;
+	FrameOverrideHeight = 0;
+}
+
+void SceneViewportSubsystem::SetFrameViewportOverride(const D3D11_VIEWPORT& NewViewport)
+{
+	FrameViewportOverride = NewViewport;
+	HasFrameViewportOverride = true;
+}
+
+void SceneViewportSubsystem::ClearFrameViewportOverride()
+{
+	HasFrameViewportOverride = false;
+}
+
+void SceneViewportSubsystem::SetFramePresentEnabled(bool NewFramePresentEnabled)
+{
+	FramePresentEnabled = NewFramePresentEnabled;
 }

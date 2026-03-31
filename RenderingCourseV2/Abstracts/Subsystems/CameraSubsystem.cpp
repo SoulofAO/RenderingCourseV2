@@ -133,6 +133,22 @@ void CameraSubsystem::CycleActiveCamera()
 	UpdateCameraPossessionState();
 }
 
+void CameraSubsystem::SetActiveCameraIndex(int NewActiveCameraIndex)
+{
+	if (Cameras.empty())
+	{
+		ActiveCameraIndex = -1;
+		LastNonFallbackActiveCameraIndex = -1;
+		UpdateCameraPossessionState();
+		return;
+	}
+
+	const int ClampedCameraIndex = (std::clamp)(NewActiveCameraIndex, 0, static_cast<int>(Cameras.size()) - 1);
+	ActiveCameraIndex = ClampedCameraIndex;
+	LastNonFallbackActiveCameraIndex = ActiveCameraIndex;
+	UpdateCameraPossessionState();
+}
+
 CameraComponent* CameraSubsystem::GetActiveCamera() const
 {
 	if (IsFallbackCameraForced && FallbackCamera != nullptr)

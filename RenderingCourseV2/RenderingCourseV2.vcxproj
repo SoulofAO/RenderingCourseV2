@@ -154,6 +154,11 @@
     <ClCompile Include="Abstracts\Components\RenderingComponent.cpp" />
     <ClCompile Include="Abstracts\Components\UIRenderingComponent.cpp" />
     <ClCompile Include="Abstracts\Core\Actor.cpp" />
+    <ClCompile Include="Abstracts\Core\GameInstance.cpp" />
+    <ClCompile Include="Abstracts\Core\MultiGameSession.cpp" />
+    <ClCompile Include="Abstracts\Core\PlayerObject.cpp" />
+    <ClCompile Include="Abstracts\Core\PlayerRenderTargetService.cpp" />
+    <ClCompile Include="Abstracts\Core\SessionManager.cpp" />
     <ClCompile Include="Abstracts\Core\Game.cpp" />
     <ClCompile Include="Abstracts\Core\Object.cpp" />
     <ClCompile Include="Abstracts\Others\MainMathLibrary.cpp" />
@@ -250,8 +255,14 @@
     <ClInclude Include="Abstracts\Components\RenderingComponent.h" />
     <ClInclude Include="Abstracts\Components\UIRenderingComponent.h" />
     <ClInclude Include="Abstracts\Core\Actor.h" />
+    <ClInclude Include="Abstracts\Core\GameConfigurator.h" />
+    <ClInclude Include="Abstracts\Core\GameInstance.h" />
     <ClInclude Include="Abstracts\Core\Game.h" />
+    <ClInclude Include="Abstracts\Core\MultiGameSession.h" />
     <ClInclude Include="Abstracts\Core\Object.h" />
+    <ClInclude Include="Abstracts\Core\PlayerObject.h" />
+    <ClInclude Include="Abstracts\Core\PlayerRenderTargetService.h" />
+    <ClInclude Include="Abstracts\Core\SessionManager.h" />
     <ClInclude Include="Abstracts\Core\Transform.h" />
     <ClInclude Include="Abstracts\Others\MainMathLibrary.h" />
     <ClInclude Include="Abstracts\Others\PhysicsLibrary.h" />

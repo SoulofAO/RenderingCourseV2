@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 #include <directxmath.h>
+#include <functional>
 
 class DisplayWin32;
 class RenderingComponent;
@@ -36,6 +37,11 @@ public:
 	~SceneViewportSubsystem() override;
 
 	void Initialize() override;
+	void InitializeStandalone(
+		LPCWSTR ApplicationName,
+		int ScreenWidth,
+		int ScreenHeight,
+		std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> MessageCallback);
 	void Shutdown() override;
 
 	void BeginFrame(float TotalTimeSeconds);
@@ -44,6 +50,7 @@ public:
 	ID3D11Device* GetDevice() const;
 	ID3D11DeviceContext* GetDeviceContext() const;
 	IDXGISwapChain* GetSwapChain() const;
+	ID3D11Texture2D* GetBackBufferTexture() const;
 	ID3D11RenderTargetView* GetRenderTargetView() const;
 	ID3D11DepthStencilView* GetDepthStencilView() const;
 	DeferredRenderer* GetDeferredRenderer() const;
@@ -79,6 +86,15 @@ public:
 	void EndDearImGuiFrame();
 	bool HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 	bool GetIsDearImGuiInitialized() const;
+	void SetFrameRenderTargetOverride(
+		ID3D11RenderTargetView* NewRenderTargetView,
+		ID3D11DepthStencilView* NewDepthStencilView,
+		int NewWidth,
+		int NewHeight);
+	void ClearFrameRenderTargetOverride();
+	void SetFrameViewportOverride(const D3D11_VIEWPORT& NewViewport);
+	void ClearFrameViewportOverride();
+	void SetFramePresentEnabled(bool NewFramePresentEnabled);
 
 	bool bDisplayChangedColor = false;
 
@@ -116,4 +132,15 @@ private:
 	std::unique_ptr<AbstractRenderPipeline> ForwardRenderPipelineInstance;
 	std::unique_ptr<AbstractRenderPipeline> DeferredRenderPipelineInstance;
 	bool IsDearImGuiInitialized;
+	ID3D11RenderTargetView* FrameRenderTargetOverrideView;
+	ID3D11DepthStencilView* FrameDepthStencilOverrideView;
+	int FrameOverrideWidth;
+	int FrameOverrideHeight;
+	bool HasFrameViewportOverride;
+	D3D11_VIEWPORT FrameViewportOverride;
+	bool FramePresentEnabled;
+
+	int StandaloneScreenWidth;
+	int StandaloneScreenHeight;
+	bool IsStandaloneMode;
 };

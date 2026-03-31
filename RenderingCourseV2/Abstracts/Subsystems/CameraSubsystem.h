@@ -17,6 +17,7 @@ public:
 	void RegisterCamera(CameraComponent* NewCamera);
 	void UnregisterCamera(CameraComponent* ExistingCamera);
 	void CycleActiveCamera();
+	void SetActiveCameraIndex(int NewActiveCameraIndex);
 	void SetFallbackCamera(CameraComponent* NewFallbackCamera);
 	CameraComponent* GetFallbackCamera() const;
 	void SetIsFallbackCameraForced(bool NewIsFallbackCameraForced);
