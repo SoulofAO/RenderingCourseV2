@@ -9,9 +9,7 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj.filters" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj.filters" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Tests/PointLightShadowWallsTestGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Tests/PointLightShadowWallsTestGame.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,7 +20,7 @@
     <option name="firstShow" value="false" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="201" />
+    <option name="cachedIndexableFilesCount" value="203" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -59,7 +57,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "C/C++ Project.RenderingCourseV2.executor": "Debug",
+    "C/C++ Project.RenderingCourseV2.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -130,6 +128,7 @@
       <workItem from="1774960614453" duration="7509000" />
       <workItem from="1775041543458" duration="5890000" />
       <workItem from="1775049413120" duration="4750000" />
+      <workItem from="1775054458906" duration="817000" />
     </task>
     <servers />
   </component>

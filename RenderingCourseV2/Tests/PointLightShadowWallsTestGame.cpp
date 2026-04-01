@@ -88,8 +88,8 @@ void PointLightShadowWallsTestGame::BuildTestScene()
 	std::unique_ptr<LightComponent> PointLightComponent = std::make_unique<LightComponent>();
 	PointLightComponent->SetLightType(LightType::Point);
 	PointLightComponent->SetColor(DirectX::XMFLOAT4(1.0f, 0.95f, 0.85f, 1.0f));
-	PointLightComponent->SetIntensity(7.0f);
-	PointLightComponent->SetRange(18.0f);
+	PointLightComponent->SetIntensity(20.0f);
+	PointLightComponent->SetRange(50.0f);
 	PointLightActor->AddComponent(std::move(PointLightComponent));
 	AddActor(std::move(PointLightActor));
 }
