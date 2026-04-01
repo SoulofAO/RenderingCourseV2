@@ -65,8 +65,11 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, DefaultCameraSettingsWindowVisible(true)
 	, HasInputResourcesRebuildResult(false)
 	, LastInputResourcesRebuildSucceeded(false)
+	, CurrentActorGizmoOperationMode(ActorGizmoOperationMode::Translate)
+	, CurrentActorGizmoSpaceMode(ActorGizmoSpaceMode::World)
 	, IsWorldBoundarySphereEnabled(false)
 	, IsGridFloorEnabled(true)
+	, IsParticleIndexOverlayEnabled(false)
 	, WorldBoundarySphereCenter(0.0f, 0.0f, 0.0f)
 	, WorldBoundarySphereRadius(4000.0f)
 	, IsEmbeddedPlayStarted(false)
@@ -292,6 +295,10 @@ void Game::RenderFrame(
 				if (ParticleRendering != nullptr)
 				{
 					ParticleRendering->DrawDearImGuiParticlePanels();
+					if (IsParticleIndexOverlayEnabled)
+					{
+						ParticleRendering->DrawParticleIndicesOverlay(false);
+					}
 				}
 			}
 		});
@@ -404,6 +411,10 @@ void Game::Draw()
 				if (ParticleRendering != nullptr)
 				{
 					ParticleRendering->DrawDearImGuiParticlePanels();
+					if (IsParticleIndexOverlayEnabled)
+					{
+						ParticleRendering->DrawParticleIndicesOverlay(false);
+					}
 				}
 			}
 		});
@@ -823,11 +834,6 @@ void Game::DrawCameraPossessionUserInterface()
 		{
 			ToggleCameraPossessionFromUserInterface();
 		}
-		if (IsFallbackCameraCurrentlyPossessed == false)
-		{
-			SelectedActorForGizmo = nullptr;
-		}
-
 		ImGui::SameLine();
 		if (IsFallbackCameraCurrentlyPossessed)
 		{
@@ -836,6 +842,59 @@ void Game::DrawCameraPossessionUserInterface()
 		else
 		{
 			ImGui::TextUnformatted("Gameplay camera");
+		}
+
+		if (IsFallbackCameraCurrentlyPossessed == true)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Actor Gizmo");
+
+			int ActorGizmoOperationModeIndex = static_cast<int>(CurrentActorGizmoOperationMode);
+			const char* ActorGizmoOperationModeItems[] =
+			{
+				"Translate",
+				"Rotate",
+				"Scale"
+			};
+			if (ImGui::Combo(
+				"Gizmo Mode",
+				&ActorGizmoOperationModeIndex,
+				ActorGizmoOperationModeItems,
+				static_cast<int>(sizeof(ActorGizmoOperationModeItems) / sizeof(ActorGizmoOperationModeItems[0]))))
+			{
+				if (ActorGizmoOperationModeIndex < 0)
+				{
+					ActorGizmoOperationModeIndex = 0;
+				}
+				if (ActorGizmoOperationModeIndex > 2)
+				{
+					ActorGizmoOperationModeIndex = 2;
+				}
+				CurrentActorGizmoOperationMode = static_cast<ActorGizmoOperationMode>(ActorGizmoOperationModeIndex);
+			}
+
+			int ActorGizmoSpaceModeIndex = static_cast<int>(CurrentActorGizmoSpaceMode);
+			const char* ActorGizmoSpaceModeItems[] =
+			{
+				"World",
+				"Local"
+			};
+			if (ImGui::Combo(
+				"Gizmo Space",
+				&ActorGizmoSpaceModeIndex,
+				ActorGizmoSpaceModeItems,
+				static_cast<int>(sizeof(ActorGizmoSpaceModeItems) / sizeof(ActorGizmoSpaceModeItems[0]))))
+			{
+				if (ActorGizmoSpaceModeIndex < 0)
+				{
+					ActorGizmoSpaceModeIndex = 0;
+				}
+				if (ActorGizmoSpaceModeIndex > 1)
+				{
+					ActorGizmoSpaceModeIndex = 1;
+				}
+				CurrentActorGizmoSpaceMode = static_cast<ActorGizmoSpaceMode>(ActorGizmoSpaceModeIndex);
+			}
 		}
 
 		if (ImGui::Button("Force Rebuild InputResources"))
@@ -854,6 +913,31 @@ void Game::DrawCameraPossessionUserInterface()
 			{
 				ImGui::TextUnformatted("InputResources rebuild: failed");
 			}
+		}
+
+		bool HasAnyActiveParticleOnScene = false;
+		for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
+		{
+			if (ExistingActor == nullptr)
+			{
+				continue;
+			}
+
+			ParticleRenderingComponent* ParticleRendering = ExistingActor->GetFirstComponentByClass<ParticleRenderingComponent>();
+			if (ParticleRendering != nullptr && ParticleRendering->HasAnyActiveParticles())
+			{
+				HasAnyActiveParticleOnScene = true;
+				break;
+			}
+		}
+
+		if (HasAnyActiveParticleOnScene)
+		{
+			ImGui::Checkbox("Draw Particle Indices", &IsParticleIndexOverlayEnabled);
+		}
+		else
+		{
+			IsParticleIndexOverlayEnabled = false;
 		}
 
 		SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
@@ -1126,11 +1210,27 @@ void Game::DrawActorTranslationGizmo()
 		MainViewport->Pos.y,
 		ViewportWidth,
 		ViewportHeight);
+	ImGuizmo::OPERATION CurrentImGuizmoOperation = ImGuizmo::TRANSLATE;
+	if (CurrentActorGizmoOperationMode == ActorGizmoOperationMode::Rotate)
+	{
+		CurrentImGuizmoOperation = ImGuizmo::ROTATE;
+	}
+	if (CurrentActorGizmoOperationMode == ActorGizmoOperationMode::Scale)
+	{
+		CurrentImGuizmoOperation = ImGuizmo::SCALE;
+	}
+
+	ImGuizmo::MODE CurrentImGuizmoMode = ImGuizmo::WORLD;
+	if (CurrentActorGizmoSpaceMode == ActorGizmoSpaceMode::Local)
+	{
+		CurrentImGuizmoMode = ImGuizmo::LOCAL;
+	}
+
 	if (!ImGuizmo::Manipulate(
 		&ViewMatrixStorage.m[0][0],
 		&ProjectionMatrixStorage.m[0][0],
-		ImGuizmo::TRANSLATE,
-		ImGuizmo::WORLD,
+		CurrentImGuizmoOperation,
+		CurrentImGuizmoMode,
 		&TransformMatrixStorage.m[0][0]))
 	{
 		return;

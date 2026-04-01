@@ -91,6 +91,12 @@
     <ClCompile Include="Abstracts\Others\PhysicsLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Abstracts\Components\SelectionUIRenderingComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Abstracts\Core\SelectionGame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -166,6 +172,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Abstracts\Others\PhysicsLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Components\SelectionUIRenderingComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Abstracts\Core\SelectionGame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

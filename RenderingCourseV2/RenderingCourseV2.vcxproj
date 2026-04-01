@@ -151,6 +151,7 @@
     <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticleSpawnRateObject.cpp" />
     <ClCompile Include="Abstracts\Rendering\ParticleSimulation\ParticleCollisionObject.cpp" />
     <ClCompile Include="Abstracts\Components\PhysicsComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\SelectionUIRenderingComponent.cpp" />
     <ClCompile Include="Abstracts\Physics\PhysXTypeConversion.cpp" />
     <ClCompile Include="Abstracts\Components\RenderingComponent.cpp" />
     <ClCompile Include="Abstracts\Components\UIRenderingComponent.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="Abstracts\Core\MultiGameSession.cpp" />
     <ClCompile Include="Abstracts\Core\PlayerObject.cpp" />
     <ClCompile Include="Abstracts\Core\PlayerRenderTargetService.cpp" />
+    <ClCompile Include="Abstracts\Core\SelectionGame.cpp" />
     <ClCompile Include="Abstracts\Core\SessionManager.cpp" />
     <ClCompile Include="Abstracts\Core\Game.cpp" />
     <ClCompile Include="Abstracts\Core\Object.cpp" />
@@ -256,6 +258,7 @@
     <ClInclude Include="Abstracts\Resources\ResourceManager.h" />
     <ClInclude Include="Abstracts\Resources\TextureResource.h" />
     <ClInclude Include="Abstracts\Components\PhysicsComponent.h" />
+    <ClInclude Include="Abstracts\Components\SelectionUIRenderingComponent.h" />
     <ClInclude Include="Abstracts\Physics\PhysXTypeConversion.h" />
     <ClInclude Include="Abstracts\Components\RenderingComponent.h" />
     <ClInclude Include="Abstracts\Components\UIRenderingComponent.h" />
@@ -267,6 +270,7 @@
     <ClInclude Include="Abstracts\Core\Object.h" />
     <ClInclude Include="Abstracts\Core\PlayerObject.h" />
     <ClInclude Include="Abstracts\Core\PlayerRenderTargetService.h" />
+    <ClInclude Include="Abstracts\Core\SelectionGame.h" />
     <ClInclude Include="Abstracts\Core\RenderTypes.h" />
     <ClInclude Include="Abstracts\Core\SessionManager.h" />
     <ClInclude Include="Abstracts\Core\Transform.h" />

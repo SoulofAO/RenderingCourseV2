@@ -5,7 +5,7 @@ cbuffer SpawnRateConstants : register(b1)
     uint SpawnCount;
     uint BaseIndex;
     uint MaxParticleCount;
-    uint Padding0;
+    uint SpawnIdBase;
     float3 EmitterWorldPosition;
     float Padding1;
     float3 InitialVelocity;
@@ -54,6 +54,8 @@ void Main(uint3 DispatchThreadId : SV_DispatchThreadID)
     Particle.SizeWorld = lerp(SpawnSizeWorldMinimum, SpawnSizeWorldMaximum, RandomValueSize);
     Particle.LifetimeSeconds = lerp(SpawnLifetimeSecondsMinimum, SpawnLifetimeSecondsMaximum, RandomValueLifetime);
     Particle.Active = 1u;
+    Particle.SpawnId = SpawnIdBase + GlobalIndex;
+    Particle.DataPadding = uint2(0u, 0u);
 
     ParticleStateReadWrite[ParticleIndex] = Particle;
 }

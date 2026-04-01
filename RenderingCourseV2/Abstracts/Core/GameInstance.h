@@ -17,6 +17,8 @@ public:
 	int OpenGame(const GameConfigurator& NewGameConfigurator);
 	void OpenMultipleGames(const std::vector<GameConfigurator>& NewGameConfigurators);
 	void CloseGame(int SessionIdentifier);
+	void SetPlayerActiveGameIdentifier(int SessionIdentifier, int PlayerIdentifier, int GameIdentifier);
+	void QueueSessionReplacement(int SessionIdentifier, const GameConfigurator& NewGameConfigurator);
 	void Run();
 	LRESULT MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 	void AddSubsystem(std::unique_ptr<GameInstanceSubsystem> NewSubsystem);
@@ -37,11 +39,18 @@ public:
 	}
 
 private:
+	struct PendingSessionReplacement
+	{
+		int SessionIdentifier;
+		GameConfigurator NewGameConfigurator;
+	};
+
 	LPCWSTR ApplicationName;
 	int ScreenWidth;
 	int ScreenHeight;
 	SessionManager SessionManagerInstance;
 	std::vector<std::unique_ptr<GameInstanceSubsystem>> Subsystems;
+	std::vector<PendingSessionReplacement> PendingSessionReplacements;
 	bool IsExitRequested;
 	std::chrono::time_point<std::chrono::steady_clock> PreviousTime;
 	float TotalRunTimeSeconds;

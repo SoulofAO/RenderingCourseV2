@@ -26,6 +26,19 @@ enum class MouseInputMode
 	UIOnly
 };
 
+enum class ActorGizmoOperationMode
+{
+	Translate,
+	Rotate,
+	Scale
+};
+
+enum class ActorGizmoSpaceMode
+{
+	World,
+	Local
+};
+
 class Game
 {
 public:
@@ -199,8 +212,11 @@ protected:
 	bool DefaultCameraSettingsWindowVisible;
 	bool HasInputResourcesRebuildResult;
 	bool LastInputResourcesRebuildSucceeded;
+	ActorGizmoOperationMode CurrentActorGizmoOperationMode;
+	ActorGizmoSpaceMode CurrentActorGizmoSpaceMode;
 	bool IsWorldBoundarySphereEnabled;
 	bool IsGridFloorEnabled;
+	bool IsParticleIndexOverlayEnabled;
 	DirectX::XMFLOAT3 WorldBoundarySphereCenter;
 	float WorldBoundarySphereRadius;
 	bool IsEmbeddedPlayStarted;

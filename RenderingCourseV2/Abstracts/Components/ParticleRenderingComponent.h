@@ -19,6 +19,9 @@ struct ParticleStructData
 	float SizeWorld;
 	float LifetimeSeconds;
 	UINT Active;
+	UINT SpawnId;
+	UINT DataPadding0;
+	UINT DataPadding1;
 };
 
 struct ParticleSortData
@@ -68,6 +71,8 @@ public:
 	ID3D11DepthStencilState* GetParticleDepthStencilState() const;
 	ID3D11RasterizerState* GetParticleRasterizerState() const;
 	UINT GetParticleDrawInstanceCount() const;
+	bool HasAnyActiveParticles() const;
+	void DrawParticleIndicesOverlay(bool IsSpawnIdentifierEnabled);
 
 private:
 	bool CompileShaderFromFile(
@@ -93,6 +98,7 @@ private:
 	SceneViewportSubsystem* CachedSceneViewport;
 
 	ID3D11Buffer* ParticleStateBuffer;
+	ID3D11Buffer* ParticleStateReadbackBuffer;
 	ID3D11UnorderedAccessView* ParticleStateUnorderedAccessView;
 	ID3D11ShaderResourceView* ParticleStateShaderResourceView;
 	ID3D11Buffer* ParticleSimulationConstantsBuffer;

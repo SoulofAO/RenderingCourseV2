@@ -83,6 +83,19 @@ void GameInstance::CloseGame(int SessionIdentifier)
 	SessionManagerInstance.CloseGame(SessionIdentifier);
 }
 
+void GameInstance::SetPlayerActiveGameIdentifier(int SessionIdentifier, int PlayerIdentifier, int GameIdentifier)
+{
+	SessionManagerInstance.SetPlayerActiveGameIdentifier(SessionIdentifier, PlayerIdentifier, GameIdentifier);
+}
+
+void GameInstance::QueueSessionReplacement(int SessionIdentifier, const GameConfigurator& NewGameConfigurator)
+{
+	PendingSessionReplacement NewSessionReplacement = {};
+	NewSessionReplacement.SessionIdentifier = SessionIdentifier;
+	NewSessionReplacement.NewGameConfigurator = NewGameConfigurator;
+	PendingSessionReplacements.push_back(NewSessionReplacement);
+}
+
 void GameInstance::Run()
 {
 	MSG Message = {};
@@ -97,6 +110,17 @@ void GameInstance::Run()
 		if (Message.message == WM_QUIT)
 		{
 			IsExitRequested = true;
+		}
+
+		if (PendingSessionReplacements.empty() == false)
+		{
+			const std::vector<PendingSessionReplacement> SessionReplacements = PendingSessionReplacements;
+			PendingSessionReplacements.clear();
+			for (const PendingSessionReplacement& ExistingSessionReplacement : SessionReplacements)
+			{
+				CloseGame(ExistingSessionReplacement.SessionIdentifier);
+				OpenGame(ExistingSessionReplacement.NewGameConfigurator);
+			}
 		}
 
 		auto CurrentTime = std::chrono::steady_clock::now();

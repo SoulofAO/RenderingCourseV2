@@ -11,6 +11,7 @@ public:
 	float SpawnRate;
 	float SpawnAccumulator;
 	UINT NextSpawnRingIndex;
+	UINT NextSpawnUniqueId;
 	DirectX::XMFLOAT3 EmitterWorldPosition;
 	DirectX::XMFLOAT3 InitialVelocity;
 	DirectX::XMFLOAT4 EmitterColor;

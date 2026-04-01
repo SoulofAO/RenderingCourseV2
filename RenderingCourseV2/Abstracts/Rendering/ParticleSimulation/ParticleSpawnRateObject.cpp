@@ -11,7 +11,7 @@ namespace
 		UINT SpawnCount;
 		UINT BaseIndex;
 		UINT MaxParticleCount;
-		UINT Padding0;
+		UINT SpawnIdBase;
 		DirectX::XMFLOAT3 EmitterWorldPosition;
 		float Padding1;
 		DirectX::XMFLOAT3 InitialVelocity;
@@ -28,6 +28,7 @@ ParticleSpawnRateObject::ParticleSpawnRateObject()
 	: SpawnRate(180.0f)
 	, SpawnAccumulator(0.0f)
 	, NextSpawnRingIndex(0)
+	, NextSpawnUniqueId(0)
 	, EmitterWorldPosition(0.0f, 1.2f, 2.0f)
 	, InitialVelocity(0.0f, 4.5f, 0.0f)
 	, EmitterColor(1.0f, 0.55f, 0.15f, 1.0f)
@@ -131,7 +132,7 @@ void ParticleSpawnRateObject::Dispatch(ParticleRenderingComponent* OwnerComponen
 	BufferData.SpawnCount = static_cast<UINT>(SpawnCount);
 	BufferData.BaseIndex = NextSpawnRingIndex;
 	BufferData.MaxParticleCount = static_cast<UINT>(MaxParticles);
-	BufferData.Padding0 = 0;
+	BufferData.SpawnIdBase = NextSpawnUniqueId;
 	BufferData.EmitterWorldPosition = EmitterWorldPosition;
 	BufferData.Padding1 = 0.0f;
 	BufferData.InitialVelocity = InitialVelocity;
@@ -153,6 +154,7 @@ void ParticleSpawnRateObject::Dispatch(ParticleRenderingComponent* OwnerComponen
 	DeviceContext->Unmap(StageConstantBuffer, 0);
 
 	NextSpawnRingIndex = (NextSpawnRingIndex + static_cast<UINT>(SpawnCount)) % static_cast<UINT>(MaxParticles);
+	NextSpawnUniqueId += static_cast<UINT>(SpawnCount);
 
 	OwnerComponent->BindParticleSimulationCommonComputeState(ComputeShader);
 	ID3D11Buffer* ConstantBuffers[] = { StageConstantBuffer };

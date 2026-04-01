@@ -85,6 +85,7 @@ ParticleRenderingComponent::ParticleRenderingComponent(int NewMaxParticleCount)
 	, ParticleSizeWorld(0.5f)
 	, CachedSceneViewport(nullptr)
 	, ParticleStateBuffer(nullptr)
+	, ParticleStateReadbackBuffer(nullptr)
 	, ParticleStateUnorderedAccessView(nullptr)
 	, ParticleStateShaderResourceView(nullptr)
 	, ParticleSimulationConstantsBuffer(nullptr)
@@ -263,6 +264,17 @@ bool ParticleRenderingComponent::CreateParticleSimulationResources(ID3D11Device*
 	InitialBufferData.pSysMem = InitialParticles.data();
 	HRESULT CreateBufferResult = Device->CreateBuffer(&BufferDescription, &InitialBufferData, &ParticleStateBuffer);
 	if (FAILED(CreateBufferResult))
+	{
+		return false;
+	}
+
+	D3D11_BUFFER_DESC ReadbackBufferDescription = BufferDescription;
+	ReadbackBufferDescription.Usage = D3D11_USAGE_STAGING;
+	ReadbackBufferDescription.BindFlags = 0;
+	ReadbackBufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	ReadbackBufferDescription.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	HRESULT CreateReadbackBufferResult = Device->CreateBuffer(&ReadbackBufferDescription, nullptr, &ParticleStateReadbackBuffer);
+	if (FAILED(CreateReadbackBufferResult))
 	{
 		return false;
 	}
@@ -455,6 +467,11 @@ void ParticleRenderingComponent::ReleaseParticleSimulationResources()
 	{
 		ParticleStateBuffer->Release();
 		ParticleStateBuffer = nullptr;
+	}
+	if (ParticleStateReadbackBuffer != nullptr)
+	{
+		ParticleStateReadbackBuffer->Release();
+		ParticleStateReadbackBuffer = nullptr;
 	}
 }
 
@@ -1094,4 +1111,108 @@ ID3D11RasterizerState* ParticleRenderingComponent::GetParticleRasterizerState() 
 UINT ParticleRenderingComponent::GetParticleDrawInstanceCount() const
 {
 	return static_cast<UINT>(MaxParticleCount);
+}
+
+bool ParticleRenderingComponent::HasAnyActiveParticles() const
+{
+	if (CachedSceneViewport == nullptr || ParticleStateBuffer == nullptr || ParticleStateReadbackBuffer == nullptr || MaxParticleCount <= 0)
+	{
+		return false;
+	}
+
+	ID3D11DeviceContext* DeviceContext = CachedSceneViewport->GetDeviceContext();
+	if (DeviceContext == nullptr)
+	{
+		return false;
+	}
+
+	DeviceContext->CopyResource(ParticleStateReadbackBuffer, ParticleStateBuffer);
+	D3D11_MAPPED_SUBRESOURCE MappedResource = {};
+	HRESULT MapResult = DeviceContext->Map(ParticleStateReadbackBuffer, 0, D3D11_MAP_READ, 0, &MappedResource);
+	if (FAILED(MapResult))
+	{
+		return false;
+	}
+
+	const ParticleStructData* ParticleStateArray = static_cast<const ParticleStructData*>(MappedResource.pData);
+	bool HasActiveParticles = false;
+	for (int ParticleIndex = 0; ParticleIndex < MaxParticleCount; ++ParticleIndex)
+	{
+		if (ParticleStateArray[ParticleIndex].Active != 0u)
+		{
+			HasActiveParticles = true;
+			break;
+		}
+	}
+
+	DeviceContext->Unmap(ParticleStateReadbackBuffer, 0);
+	return HasActiveParticles;
+}
+
+void ParticleRenderingComponent::DrawParticleIndicesOverlay(bool IsSpawnIdentifierEnabled)
+{
+	if (CachedSceneViewport == nullptr || ParticleStateBuffer == nullptr || ParticleStateReadbackBuffer == nullptr || MaxParticleCount <= 0)
+	{
+		return;
+	}
+
+	ID3D11DeviceContext* DeviceContext = CachedSceneViewport->GetDeviceContext();
+	if (DeviceContext == nullptr)
+	{
+		return;
+	}
+
+	DeviceContext->CopyResource(ParticleStateReadbackBuffer, ParticleStateBuffer);
+	D3D11_MAPPED_SUBRESOURCE MappedResource = {};
+	HRESULT MapResult = DeviceContext->Map(ParticleStateReadbackBuffer, 0, D3D11_MAP_READ, 0, &MappedResource);
+	if (FAILED(MapResult))
+	{
+		return;
+	}
+
+	const DirectX::XMMATRIX ViewProjectionMatrix = CachedSceneViewport->GetViewMatrix() * CachedSceneViewport->GetProjectionMatrix();
+	ImDrawList* ForegroundDrawList = ImGui::GetForegroundDrawList();
+	const int ScreenWidth = CachedSceneViewport->GetScreenWidth();
+	const int ScreenHeight = CachedSceneViewport->GetScreenHeight();
+	const ParticleStructData* ParticleStateArray = static_cast<const ParticleStructData*>(MappedResource.pData);
+	for (int ParticleIndex = 0; ParticleIndex < MaxParticleCount; ++ParticleIndex)
+	{
+		const ParticleStructData& ExistingParticle = ParticleStateArray[ParticleIndex];
+		if (ExistingParticle.Active == 0u)
+		{
+			continue;
+		}
+
+		const DirectX::XMVECTOR ParticlePositionVector = DirectX::XMVectorSet(
+			ExistingParticle.Position.x,
+			ExistingParticle.Position.y,
+			ExistingParticle.Position.z,
+			1.0f);
+		const DirectX::XMVECTOR ClipPosition = DirectX::XMVector4Transform(ParticlePositionVector, ViewProjectionMatrix);
+		const float ClipW = DirectX::XMVectorGetW(ClipPosition);
+		if (ClipW <= 0.0001f)
+		{
+			continue;
+		}
+
+		const float InverseClipW = 1.0f / ClipW;
+		const float NormalizedX = DirectX::XMVectorGetX(ClipPosition) * InverseClipW;
+		const float NormalizedY = DirectX::XMVectorGetY(ClipPosition) * InverseClipW;
+		if (NormalizedX < -1.0f || NormalizedX > 1.0f || NormalizedY < -1.0f || NormalizedY > 1.0f)
+		{
+			continue;
+		}
+
+		const float ScreenPositionX = (NormalizedX * 0.5f + 0.5f) * static_cast<float>(ScreenWidth);
+		const float ScreenPositionY = (1.0f - (NormalizedY * 0.5f + 0.5f)) * static_cast<float>(ScreenHeight);
+		std::string ParticleLabel = std::to_string(ParticleIndex);
+		if (IsSpawnIdentifierEnabled)
+		{
+			ParticleLabel += " | ";
+			ParticleLabel += std::to_string(ExistingParticle.SpawnId);
+		}
+		ForegroundDrawList->AddText(ImVec2(ScreenPositionX, ScreenPositionY), IM_COL32(255, 245, 80, 255), ParticleLabel.c_str());
+	}
+
+	DeviceContext->Unmap(ParticleStateReadbackBuffer, 0);
 }

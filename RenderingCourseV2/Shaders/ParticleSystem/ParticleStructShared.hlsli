@@ -9,4 +9,6 @@ struct ParticleStructData
     float SizeWorld;
     float LifetimeSeconds;
     uint Active;
+    uint SpawnId;
+    uint2 DataPadding;
 };
