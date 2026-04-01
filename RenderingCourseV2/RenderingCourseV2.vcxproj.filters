@@ -97,6 +97,9 @@
     <ClCompile Include="Abstracts\Core\SelectionGame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\PointLightShadowWallsTestGame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -178,6 +181,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Abstracts\Core\SelectionGame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\PointLightShadowWallsTestGame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -207,6 +207,7 @@
     <ClCompile Include="Tests\MeshTestGame.cpp" />
     <ClCompile Include="Tests\ParticleTestGame.cpp" />
     <ClCompile Include="Tests\ParticleTestUIRenderingComponent.cpp" />
+    <ClCompile Include="Tests\PointLightShadowWallsTestGame.cpp" />
     <ClCompile Include="Tests\PhysicsTestGame.cpp" />
     <ClCompile Include="Tests\TestsBaseGame.cpp" />
     <ClCompile Include="Tests\TexturingTestGame.cpp" />
@@ -308,6 +309,7 @@
     <ClInclude Include="Tests\MeshTestGame.h" />
     <ClInclude Include="Tests\ParticleTestGame.h" />
     <ClInclude Include="Tests\ParticleTestUIRenderingComponent.h" />
+    <ClInclude Include="Tests\PointLightShadowWallsTestGame.h" />
     <ClInclude Include="Tests\PhysicsTestGame.h" />
     <ClInclude Include="Tests\TestsBaseGame.h" />
     <ClInclude Include="Tests\TexturingTestGame.h" />

@@ -8,6 +8,7 @@
 #include "Tests/LightingTestGame.h"
 #include "Tests/MeshTestGame.h"
 #include "Tests/ParticleTestGame.h"
+#include "Tests/PointLightShadowWallsTestGame.h"
 #include "Tests/PhysicsTestGame.h"
 #include "Tests/TexturingTestGame.h"
 #include <memory>
@@ -22,6 +23,7 @@ constexpr int TexturingTestGameIdentifier = 1006;
 constexpr int LightingTestGameIdentifier = 1007;
 constexpr int ParticleTestGameIdentifier = 1008;
 constexpr int KatamaryTaskGameIdentifier = 1009;
+constexpr int PointLightShadowWallsTestGameIdentifier = 1010;
 constexpr int SingleSessionIdentifier = 1;
 constexpr int SinglePlayerIdentifier = 1;
 
@@ -73,6 +75,7 @@ std::unique_ptr<Game> BuildTexturingTestGame();
 std::unique_ptr<Game> BuildLightingTestGame();
 std::unique_ptr<Game> BuildParticleTestGame();
 std::unique_ptr<Game> BuildKatamaryTaskGame();
+std::unique_ptr<Game> BuildPointLightShadowWallsTestGame();
 
 std::unique_ptr<Game> BuildSelectionGame()
 {
@@ -88,6 +91,7 @@ std::unique_ptr<Game> BuildSelectionGame()
 			SelectionGameEntry{ "Texturing Test Game", BuildSinglePlayerGameConfigurator(L"TexturingTestSession", TexturingTestGameIdentifier, BuildTexturingTestGame) },
 			SelectionGameEntry{ "Lighting Test Game", BuildSinglePlayerGameConfigurator(L"LightingTestSession", LightingTestGameIdentifier, BuildLightingTestGame) },
 			SelectionGameEntry{ "Particle Test Game", BuildSinglePlayerGameConfigurator(L"ParticleTestSession", ParticleTestGameIdentifier, BuildParticleTestGame) },
+			SelectionGameEntry{ "Point Light Shadow Walls Test", BuildSinglePlayerGameConfigurator(L"PointLightShadowWallsSession", PointLightShadowWallsTestGameIdentifier, BuildPointLightShadowWallsTestGame) },
 			SelectionGameEntry{ "Katamary Game", BuildSinglePlayerGameConfigurator(L"KatamarySession", KatamaryTaskGameIdentifier, BuildKatamaryTaskGame) },
 			SelectionGameEntry{ "Planets SplitScreen 2 Players", BuildTwoPlayerSplitScreenGameConfigurator(L"PlanetsSplitScreenSession", PlanetsGameIdentifier, BuildPlanetsTaskGame) }
 		});
@@ -122,6 +126,11 @@ std::unique_ptr<Game> BuildParticleTestGame()
 std::unique_ptr<Game> BuildKatamaryTaskGame()
 {
 	return std::make_unique<KatamaryGame>(L"My3DApp KatamaryTask", 1280, 720);
+}
+
+std::unique_ptr<Game> BuildPointLightShadowWallsTestGame()
+{
+	return std::make_unique<PointLightShadowWallsTestGame>(L"My3DApp PointLightShadowWallsTest", 1280, 720);
 }
 
 GameConfigurator BuildSplitScreenValidationConfigurator()
