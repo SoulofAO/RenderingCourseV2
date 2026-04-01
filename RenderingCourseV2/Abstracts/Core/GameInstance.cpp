@@ -18,6 +18,8 @@ GameInstance::GameInstance()
 
 GameInstance::~GameInstance()
 {
+	SessionManagerInstance.CloseAllGames();
+
 	for (std::unique_ptr<GameInstanceSubsystem>& ExistingSubsystem : Subsystems)
 	{
 		if (ExistingSubsystem != nullptr)
@@ -119,12 +121,25 @@ void GameInstance::Run()
 
 LRESULT GameInstance::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
 {
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = GetSubsystem<RenderRuntimeGameInstanceSubsystem>();
+	if (Message == WM_CLOSE || Message == WM_DESTROY)
+	{
+		IsExitRequested = true;
+		PostQuitMessage(0);
+		return 0;
+	}
+	if (Message == WM_SIZE && RenderRuntimeSubsystem != nullptr)
+	{
+		const bool IsWindowMinimized = WParam == SIZE_MINIMIZED;
+		RenderRuntimeSubsystem->SetIsWindowMinimized(IsWindowMinimized);
+	}
+
 	if (SessionManagerInstance.HandleMessage(WindowHandle, Message, WParam, LParam))
 	{
 		return 1;
 	}
 
-	return 0;
+	return DefWindowProc(WindowHandle, Message, WParam, LParam);
 }
 
 void GameInstance::AddSubsystem(std::unique_ptr<GameInstanceSubsystem> NewSubsystem)

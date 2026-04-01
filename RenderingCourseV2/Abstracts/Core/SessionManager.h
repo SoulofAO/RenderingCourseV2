@@ -18,6 +18,7 @@ public:
 	int OpenGame(const GameConfigurator& NewGameConfigurator);
 	void OpenMultipleGames(const std::vector<GameConfigurator>& NewGameConfigurators);
 	void CloseGame(int SessionIdentifier);
+	void CloseAllGames();
 	void SetActiveSessionIdentifier(int NewActiveSessionIdentifier);
 	int GetActiveSessionIdentifier() const;
 	void TickFrame(float DeltaTime);

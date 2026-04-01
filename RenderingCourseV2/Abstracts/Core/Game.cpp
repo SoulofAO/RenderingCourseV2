@@ -13,11 +13,16 @@
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include "Abstracts/Subsystems/PhysicsSubsystem.h"
 #include "Abstracts/Subsystems/CameraSubsystem.h"
+#include "Abstracts/Others/PhysicsLibrary.h"
+#include "Abstracts/Components/PhysicsComponent.h"
 #include "Abstracts/Resources/ResourceManager.h"
 #include <imgui.h>
+#include <ImGuizmo.h>
 #include <filesystem>
 #include <directxmath.h>
 #include <algorithm>
+#include <cmath>
+#include <cfloat>
 #include <iostream>
 
 Game* GlobalGame = nullptr;
@@ -52,6 +57,7 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, FrameCount(0)
 	, IsExitRequested(false)
 	, FallbackCameraActor(nullptr)
+	, SelectedActorForGizmo(nullptr)
 	, FallbackCameraComponentInstance(nullptr)
 	, CurrentMouseInputMode(MouseInputMode::GameAndUI)
 	, DefaultCameraSettingsWindowVisible(true)
@@ -507,6 +513,17 @@ LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPA
 		return 0;
 	}
 
+	if (GetIsFallbackCameraPossessed())
+	{
+		SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+		if (
+			SceneViewportSubsystemInstance != nullptr &&
+			SceneViewportSubsystemInstance->HandleDearImGuiMessage(WindowHandle, Message, WParam, LParam))
+		{
+			return 1;
+		}
+	}
+
 	for (std::unique_ptr<Actor>& ExistingActor : Actors)
 	{
 		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = ExistingActor->GetComponents();
@@ -774,6 +791,10 @@ void Game::DrawCameraPossessionUserInterface()
 		{
 			ToggleCameraPossessionFromUserInterface();
 		}
+		if (IsFallbackCameraCurrentlyPossessed == false)
+		{
+			SelectedActorForGizmo = nullptr;
+		}
 
 		ImGui::SameLine();
 		if (IsFallbackCameraCurrentlyPossessed)
@@ -905,6 +926,215 @@ void Game::DrawCameraPossessionUserInterface()
 		}
 	}
 	ImGui::End();
+
+	UpdateSelectedActorFromMouseClick();
+	DrawActorTranslationGizmo();
+}
+
+void Game::UpdateSelectedActorFromMouseClick()
+{
+	if (GetIsFallbackCameraPossessed() == false)
+	{
+		return;
+	}
+	if (ImGui::GetIO().WantCaptureMouse)
+	{
+		return;
+	}
+	if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) == false)
+	{
+		return;
+	}
+
+	SelectedActorForGizmo = FindActorUnderMouseCursor();
+}
+
+Actor* Game::FindActorUnderMouseCursor() const
+{
+	if (Input == nullptr)
+	{
+		return nullptr;
+	}
+
+	DirectX::XMFLOAT3 TraceStart;
+	DirectX::XMFLOAT3 TraceDirection;
+	if (PhysicsLibrary::BuildLineTraceFromMousePosition(
+		Input->GetMousePositionX(),
+		Input->GetMousePositionY(),
+		TraceStart,
+		TraceDirection))
+	{
+		PhysicsLineTraceHitResult HitResult = {};
+		if (PhysicsLibrary::LineTrace(TraceStart, TraceDirection, 100000.0f, HitResult))
+		{
+			for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
+			{
+				if (ExistingActor == nullptr || ExistingActor == FallbackCameraActor)
+				{
+					continue;
+				}
+
+				PhysicsComponent* ExistingPhysicsComponent = ExistingActor->GetFirstComponentByClass<PhysicsComponent>(true);
+				if (
+					ExistingPhysicsComponent != nullptr &&
+					ExistingPhysicsComponent->GetPhysicsActor() == HitResult.HitActor)
+				{
+					return ExistingActor;
+				}
+			}
+		}
+	}
+
+	SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewportSubsystemInstance == nullptr)
+	{
+		return nullptr;
+	}
+
+	const DirectX::XMMATRIX ViewProjectionMatrix = SceneViewportSubsystemInstance->GetViewMatrix() * SceneViewportSubsystemInstance->GetProjectionMatrix();
+	const float ScreenWidthValue = static_cast<float>(GetScreenWidth());
+	const float ScreenHeightValue = static_cast<float>(GetScreenHeight());
+	if (ScreenWidthValue <= 0.0f || ScreenHeightValue <= 0.0f)
+	{
+		return nullptr;
+	}
+
+	const float MousePositionX = static_cast<float>(Input->GetMousePositionX());
+	const float MousePositionY = static_cast<float>(Input->GetMousePositionY());
+	const float SelectionPixelRadius = 24.0f;
+	const float SelectionPixelRadiusSquared = SelectionPixelRadius * SelectionPixelRadius;
+	float BestScore = FLT_MAX;
+	Actor* BestActor = nullptr;
+
+	for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
+	{
+		if (ExistingActor == nullptr || ExistingActor == FallbackCameraActor)
+		{
+			continue;
+		}
+
+		const DirectX::XMFLOAT3 ActorLocation = ExistingActor->GetLocation(ETransformSpace::World);
+		const DirectX::XMVECTOR ActorLocationVector = DirectX::XMVectorSet(ActorLocation.x, ActorLocation.y, ActorLocation.z, 1.0f);
+		const DirectX::XMVECTOR ClipPosition = DirectX::XMVector4Transform(ActorLocationVector, ViewProjectionMatrix);
+		const float ClipW = DirectX::XMVectorGetW(ClipPosition);
+		if (ClipW <= 0.0001f)
+		{
+			continue;
+		}
+
+		const DirectX::XMVECTOR NdcPosition = DirectX::XMVectorScale(ClipPosition, 1.0f / ClipW);
+		const float NdcX = DirectX::XMVectorGetX(NdcPosition);
+		const float NdcY = DirectX::XMVectorGetY(NdcPosition);
+		const float NdcZ = DirectX::XMVectorGetZ(NdcPosition);
+		if (NdcZ < 0.0f || NdcZ > 1.0f)
+		{
+			continue;
+		}
+
+		const float ScreenPositionX = (NdcX * 0.5f + 0.5f) * ScreenWidthValue;
+		const float ScreenPositionY = (1.0f - (NdcY * 0.5f + 0.5f)) * ScreenHeightValue;
+		const float DeltaX = ScreenPositionX - MousePositionX;
+		const float DeltaY = ScreenPositionY - MousePositionY;
+		const float DistanceSquared = DeltaX * DeltaX + DeltaY * DeltaY;
+		if (DistanceSquared > SelectionPixelRadiusSquared)
+		{
+			continue;
+		}
+
+		const float SelectionScore = DistanceSquared + NdcZ * 100.0f;
+		if (SelectionScore < BestScore)
+		{
+			BestScore = SelectionScore;
+			BestActor = ExistingActor;
+		}
+	}
+
+	return BestActor;
+}
+
+void Game::DrawActorTranslationGizmo()
+{
+	if (GetIsFallbackCameraPossessed() == false || SelectedActorForGizmo == nullptr)
+	{
+		return;
+	}
+
+	SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewportSubsystemInstance == nullptr)
+	{
+		return;
+	}
+
+	ImGuiViewport* MainViewport = ImGui::GetMainViewport();
+	if (MainViewport == nullptr)
+	{
+		return;
+	}
+
+	const Transform ActorTransform = SelectedActorForGizmo->GetTransform(ETransformSpace::World);
+	DirectX::XMFLOAT4X4 ViewMatrixStorage;
+	DirectX::XMFLOAT4X4 ProjectionMatrixStorage;
+	DirectX::XMFLOAT4X4 TransformMatrixStorage;
+	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, SceneViewportSubsystemInstance->GetViewMatrix());
+	DirectX::XMStoreFloat4x4(&ProjectionMatrixStorage, SceneViewportSubsystemInstance->GetProjectionMatrix());
+	DirectX::XMStoreFloat4x4(&TransformMatrixStorage, ActorTransform.ToMatrix());
+
+	ImGuizmo::SetOrthographic(false);
+	ImDrawList* ForegroundDrawList = ImGui::GetForegroundDrawList();
+	ImGuizmo::SetDrawlist(ForegroundDrawList);
+	const float ViewportWidth = static_cast<float>(SceneViewportSubsystemInstance->GetScreenWidth());
+	const float ViewportHeight = static_cast<float>(SceneViewportSubsystemInstance->GetScreenHeight());
+	if (ViewportWidth <= 0.0f || ViewportHeight <= 0.0f)
+	{
+		return;
+	}
+
+	ImGuizmo::SetRect(
+		MainViewport->Pos.x,
+		MainViewport->Pos.y,
+		ViewportWidth,
+		ViewportHeight);
+	if (!ImGuizmo::Manipulate(
+		&ViewMatrixStorage.m[0][0],
+		&ProjectionMatrixStorage.m[0][0],
+		ImGuizmo::TRANSLATE,
+		ImGuizmo::WORLD,
+		&TransformMatrixStorage.m[0][0]))
+	{
+		return;
+	}
+
+	DirectX::XMMATRIX NewTransformMatrix = DirectX::XMLoadFloat4x4(&TransformMatrixStorage);
+	DirectX::XMVECTOR NewScaleVector;
+	DirectX::XMVECTOR NewRotationQuaternion;
+	DirectX::XMVECTOR NewTranslationVector;
+	if (DirectX::XMMatrixDecompose(&NewScaleVector, &NewRotationQuaternion, &NewTranslationVector, NewTransformMatrix) == false)
+	{
+		return;
+	}
+
+	DirectX::XMMATRIX NewRotationMatrix = DirectX::XMMatrixRotationQuaternion(NewRotationQuaternion);
+	DirectX::XMFLOAT4X4 NewRotationStorage;
+	DirectX::XMStoreFloat4x4(&NewRotationStorage, NewRotationMatrix);
+	const float NewPitch = std::asin((std::max)(-1.0f, (std::min)(1.0f, -NewRotationStorage._32)));
+	const float NewCosPitch = std::cos(NewPitch);
+	float NewYaw = 0.0f;
+	float NewRoll = 0.0f;
+	if (std::fabs(NewCosPitch) > 0.0001f)
+	{
+		NewYaw = std::atan2(NewRotationStorage._31, NewRotationStorage._33);
+		NewRoll = std::atan2(NewRotationStorage._12, NewRotationStorage._22);
+	}
+	else
+	{
+		NewYaw = std::atan2(-NewRotationStorage._13, NewRotationStorage._11);
+	}
+
+	Transform NewActorTransform;
+	DirectX::XMStoreFloat3(&NewActorTransform.Position, NewTranslationVector);
+	DirectX::XMStoreFloat3(&NewActorTransform.Scale, NewScaleVector);
+	NewActorTransform.RotationEuler = DirectX::XMFLOAT3(NewPitch, NewYaw, NewRoll);
+	SelectedActorForGizmo->SetTransform(NewActorTransform, ETransformSpace::World);
 }
 
 bool Game::ForceRebuildInputResourcesAndReinitializeScene()

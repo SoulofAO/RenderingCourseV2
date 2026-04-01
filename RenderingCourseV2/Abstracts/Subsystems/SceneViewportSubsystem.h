@@ -12,6 +12,7 @@
 
 class RenderingComponent;
 class AbstractRenderPipeline;
+class RenderRuntimeGameInstanceSubsystem;
 
 enum class RenderPipelineType
 {
@@ -99,9 +100,8 @@ public:
 	bool bDisplayChangedColor = false;
 
 private:
+	RenderRuntimeGameInstanceSubsystem* ResolveRenderRuntimeSubsystem() const;
 	bool EnsureRenderingResourcesInitialized();
-	void InitializeDearImGui();
-	void ShutdownDearImGui();
 
 	DirectX::XMFLOAT4X4 ViewMatrixStorage;
 	DirectX::XMFLOAT4X4 ProjectionMatrixStorage;
@@ -121,7 +121,6 @@ private:
 	std::unique_ptr<DeferredRenderer> DeferredRendererInstance;
 	std::unique_ptr<AbstractRenderPipeline> ForwardRenderPipelineInstance;
 	std::unique_ptr<AbstractRenderPipeline> DeferredRenderPipelineInstance;
-	bool IsDearImGuiInitialized;
 	ID3D11RenderTargetView* FrameRenderTargetOverrideView;
 	ID3D11DepthStencilView* FrameDepthStencilOverrideView;
 	int FrameOverrideWidth;
@@ -132,4 +131,5 @@ private:
 	bool UseExternalRenderFrameContext;
 	RenderFrameContext ExternalRenderFrameContext;
 	HWND LastKnownWindowHandle;
+	mutable RenderRuntimeGameInstanceSubsystem* CachedRenderRuntimeSubsystem;
 };

@@ -32,12 +32,20 @@ public:
 		int Height,
 		GameRenderTargetOverride& OutRenderTargetOverride);
 	void CompositePlayerTargets(const std::vector<PlayerRenderTargetCompositeCommand>& CompositeCommands);
+	void EnsureDearImGuiInitialized();
+	void ShutdownDearImGui();
+	void BeginDearImGuiFrame();
+	void EndDearImGuiFrame();
+	bool HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
+	bool GetIsDearImGuiInitialized() const;
 	HWND GetWindowHandle() const;
 	ID3D11Device* GetDevice() const;
 	ID3D11DeviceContext* GetDeviceContext() const;
 	ID3D11Texture2D* GetBackBufferTexture() const;
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
+	void SetIsWindowMinimized(bool NewIsWindowMinimized);
+	bool GetIsWindowMinimized() const;
 
 private:
 	void CreateBackBuffer();
@@ -53,5 +61,7 @@ private:
 	ID3D11DepthStencilView* BackBufferDepthStencilView;
 	int ScreenWidth;
 	int ScreenHeight;
+	bool IsWindowMinimized;
+	bool IsDearImGuiInitialized;
 	PlayerRenderTargetService PlayerRenderTargetServiceInstance;
 };

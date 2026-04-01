@@ -75,34 +75,15 @@ GameConfigurator BuildSplitScreenValidationConfigurator()
 int main()
 {
 	GameInstance RuntimeGameInstance;
-	RuntimeGameInstance.Initialize(L"My3DApp MultiSession", 1280, 720);
+	RuntimeGameInstance.Initialize(L"My3DApp SingleSession", 1280, 720);
 
-	GameConfigurator SharedGameForTwoPlayersConfigurator = {};
-	SharedGameForTwoPlayersConfigurator.SessionName = L"SharedGameForTwoPlayersSession";
-	SharedGameForTwoPlayersConfigurator.ReceiveInputWhenSessionIsInactive = true;
-	SharedGameForTwoPlayersConfigurator.Games.push_back(GameDefinition{ 1001, BuildPlanetsTaskGame });
-	SharedGameForTwoPlayersConfigurator.Players.push_back(PlayerBinding{ 1, 0, 0, ViewportRectangleNormalized{ 0.0f, 0.0f, 0.5f, 1.0f }, 1001 });
-	SharedGameForTwoPlayersConfigurator.Players.push_back(PlayerBinding{ 2, 1, 1, ViewportRectangleNormalized{ 0.5f, 0.0f, 0.5f, 1.0f }, 1001 });
+	GameConfigurator SingleGameSinglePlayerConfigurator = {}; //BuildSplitScreenValidationConfigurator();
+	SingleGameSinglePlayerConfigurator.SessionName = L"SingleGameSinglePlayerSession";
+	SingleGameSinglePlayerConfigurator.ReceiveInputWhenSessionIsInactive = true;
+	SingleGameSinglePlayerConfigurator.Games.push_back(GameDefinition{ 1001, BuildPlanetsTaskGame });
+	SingleGameSinglePlayerConfigurator.Players.push_back(PlayerBinding{ 1, 0, 0, ViewportRectangleNormalized{ 0.0f, 0.0f, 1.0f, 1.0f }, 1001 });
 
-	GameConfigurator TwoPlayersTwoGamesConfigurator = {};
-	TwoPlayersTwoGamesConfigurator.SessionName = L"TwoPlayersTwoGamesSession";
-	TwoPlayersTwoGamesConfigurator.ReceiveInputWhenSessionIsInactive = true;
-	TwoPlayersTwoGamesConfigurator.Games.push_back(GameDefinition{ 2001, BuildKatamaryTaskGame });
-	TwoPlayersTwoGamesConfigurator.Games.push_back(GameDefinition{ 2002, BuildLightingTestGame });
-	TwoPlayersTwoGamesConfigurator.Players.push_back(PlayerBinding{ 11, 0, 0, ViewportRectangleNormalized{ 0.0f, 0.0f, 0.5f, 0.5f }, 2001 });
-	TwoPlayersTwoGamesConfigurator.Players.push_back(PlayerBinding{ 12, 1, 0, ViewportRectangleNormalized{ 0.5f, 0.5f, 0.5f, 0.5f }, 2002 });
-
-	GameConfigurator GameWithoutPlayersConfigurator = {};
-	GameWithoutPlayersConfigurator.SessionName = L"GameWithoutPlayersSession";
-	GameWithoutPlayersConfigurator.ReceiveInputWhenSessionIsInactive = true;
-	GameWithoutPlayersConfigurator.Games.push_back(GameDefinition{ 3001, BuildMeshTestGame });
-
-	std::vector<GameConfigurator> GameConfigurators;
-	GameConfigurators.push_back(SharedGameForTwoPlayersConfigurator);
-	GameConfigurators.push_back(TwoPlayersTwoGamesConfigurator);
-	GameConfigurators.push_back(GameWithoutPlayersConfigurator);
-	GameConfigurators.push_back(BuildSplitScreenValidationConfigurator());
-	RuntimeGameInstance.OpenMultipleGames(GameConfigurators);
+	RuntimeGameInstance.OpenMultipleGames(std::vector<GameConfigurator>{ SingleGameSinglePlayerConfigurator });
 	RuntimeGameInstance.Run();
 	return 0;
 }

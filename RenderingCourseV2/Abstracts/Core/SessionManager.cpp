@@ -1,6 +1,7 @@
 #include "Abstracts/Core/SessionManager.h"
 #include "Abstracts/Core/MultiGameSession.h"
 #include "Abstracts/Core/Game.h"
+#include "Abstracts/Core/GameInstance.h"
 #include "Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h"
 #include <algorithm>
 
@@ -34,6 +35,10 @@ int SessionManager::OpenGame(const GameConfigurator& NewGameConfigurator)
 		}
 
 		NewGame->Initialize();
+		if (GlobalGameInstance != nullptr)
+		{
+			NewGame->SetOwningGameInstance(GlobalGameInstance);
+		}
 		NewGame->StartEmbeddedPlay();
 
 		ManagedGameEntry ManagedGame = {};
@@ -86,6 +91,13 @@ void SessionManager::CloseGame(int SessionIdentifier)
 			ActiveSessionIdentifier = Sessions.front()->GetSessionIdentifier();
 		}
 	}
+}
+
+void SessionManager::CloseAllGames()
+{
+	ManagedGames.clear();
+	Sessions.clear();
+	ActiveSessionIdentifier = -1;
 }
 
 void SessionManager::SetActiveSessionIdentifier(int NewActiveSessionIdentifier)

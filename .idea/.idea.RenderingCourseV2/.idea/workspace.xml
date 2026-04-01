@@ -9,28 +9,12 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/Game.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/GameInstance.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/GameInstance.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/GameInstance.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/GameInstance.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/MultiGameSession.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/MultiGameSession.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/MultiGameSession.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/MultiGameSession.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/PlayerRenderTargetService.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/PlayerRenderTargetService.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/SessionManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/SessionManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/SessionManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Core/SessionManager.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/PhysicsSubsystem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Subsystems/SceneViewportSubsystem.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/FirstTask/TriangleComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/RenderingCourseV2.lastbuildstate" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/RenderingCourseV2.lastbuildstate" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/RenderingCourseV2.vcxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,7 +31,6 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://4" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um/d3dcompiler.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/ParticleDeferredRenderProxyObject.h" root0="FORCE_HIGHLIGHTING" />
@@ -147,7 +130,7 @@
       <workItem from="1774165675958" duration="10367000" />
       <workItem from="1774705262293" duration="599000" />
       <workItem from="1774942148420" duration="2632000" />
-      <workItem from="1774960614453" duration="5444000" />
+      <workItem from="1774960614453" duration="7509000" />
     </task>
     <servers />
   </component>

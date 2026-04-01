@@ -3,20 +3,17 @@
 #include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Core/Game.h"
 #include "Abstracts/Core/Actor.h"
+#include "Abstracts/Core/GameInstance.h"
 #include "Abstracts/Rendering/AbstractRenderPipeline.h"
 #include "Abstracts/Rendering/ForwardRenderPipeline.h"
 #include "Abstracts/Rendering/DeferredRenderPipeline.h"
-#include <imgui.h>
-#include <imgui_impl_dx11.h>
-#include <imgui_impl_win32.h>
+#include "Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h"
 #include <algorithm>
 #include <cmath>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
-
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 
 SceneViewportSubsystem::SceneViewportSubsystem()
 	: CameraWorldPosition(0.0f, 0.0f, 0.0f)
@@ -30,7 +27,6 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, CurrentDeferredDebugBufferViewMode(DeferredDebugBufferViewMode::FinalLighting)
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
 	, ParticleDistanceSortEnabled(true)
-	, IsDearImGuiInitialized(false)
 	, FrameRenderTargetOverrideView(nullptr)
 	, FrameDepthStencilOverrideView(nullptr)
 	, FrameOverrideWidth(0)
@@ -40,6 +36,7 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, UseExternalRenderFrameContext(false)
 	, ExternalRenderFrameContext{}
 	, LastKnownWindowHandle(nullptr)
+	, CachedRenderRuntimeSubsystem(nullptr)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, DirectX::XMMatrixIdentity());
 	DirectX::XMStoreFloat4x4(&ProjectionMatrixStorage, DirectX::XMMatrixIdentity());
@@ -52,12 +49,20 @@ SceneViewportSubsystem::~SceneViewportSubsystem()
 
 void SceneViewportSubsystem::Initialize()
 {
+	CachedRenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem != nullptr)
+	{
+		LastKnownWindowHandle = RenderRuntimeSubsystem->GetWindowHandle();
+	}
+
 	Subsystem::Initialize();
 }
 
 void SceneViewportSubsystem::Shutdown()
 {
-	ShutdownDearImGui();
+	CachedRenderRuntimeSubsystem = nullptr;
+
 	ForwardRenderPipelineInstance.reset();
 	DeferredRenderPipelineInstance.reset();
 	if (DeferredRendererInstance != nullptr)
@@ -183,6 +188,11 @@ void SceneViewportSubsystem::RenderFrame(
 
 ID3D11Device* SceneViewportSubsystem::GetDevice() const
 {
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem != nullptr)
+	{
+		return RenderRuntimeSubsystem->GetDevice();
+	}
 	if (UseExternalRenderFrameContext)
 	{
 		return ExternalRenderFrameContext.Device;
@@ -192,6 +202,11 @@ ID3D11Device* SceneViewportSubsystem::GetDevice() const
 
 ID3D11DeviceContext* SceneViewportSubsystem::GetDeviceContext() const
 {
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem != nullptr)
+	{
+		return RenderRuntimeSubsystem->GetDeviceContext();
+	}
 	if (UseExternalRenderFrameContext)
 	{
 		return ExternalRenderFrameContext.DeviceContext;
@@ -232,6 +247,16 @@ DeferredRenderer* SceneViewportSubsystem::GetDeferredRenderer() const
 
 HWND SceneViewportSubsystem::GetWindowHandle() const
 {
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem != nullptr)
+	{
+		HWND WindowHandle = RenderRuntimeSubsystem->GetWindowHandle();
+		if (WindowHandle != nullptr)
+		{
+			return WindowHandle;
+		}
+	}
+
 	return LastKnownWindowHandle;
 }
 
@@ -535,41 +560,46 @@ void SceneViewportSubsystem::RenderSceneFrame()
 }
 void SceneViewportSubsystem::BeginDearImGuiFrame()
 {
-	InitializeDearImGui();
-	if (IsDearImGuiInitialized == false)
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem == nullptr)
 	{
 		return;
 	}
 
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
+	RenderRuntimeSubsystem->BeginDearImGuiFrame();
 }
 
 void SceneViewportSubsystem::EndDearImGuiFrame()
 {
-	if (IsDearImGuiInitialized == false)
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem == nullptr)
 	{
 		return;
 	}
 
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	RenderRuntimeSubsystem->EndDearImGuiFrame();
 }
 
 bool SceneViewportSubsystem::HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
 {
-	if (IsDearImGuiInitialized == false)
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem == nullptr)
 	{
 		return false;
 	}
 
-	return ImGui_ImplWin32_WndProcHandler(WindowHandle, Message, WParam, LParam);
+	return RenderRuntimeSubsystem->HandleDearImGuiMessage(WindowHandle, Message, WParam, LParam);
 }
 
 bool SceneViewportSubsystem::GetIsDearImGuiInitialized() const
 {
-	return IsDearImGuiInitialized;
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem == nullptr)
+	{
+		return false;
+	}
+
+	return RenderRuntimeSubsystem->GetIsDearImGuiInitialized();
 }
 
 bool SceneViewportSubsystem::EnsureRenderingResourcesInitialized()
@@ -598,42 +628,6 @@ bool SceneViewportSubsystem::EnsureRenderingResourcesInitialized()
 		DeferredRendererInstance->SetShadowCascadeSettings(ShadowCascadeCountSetting, ShadowMaximumDistanceSetting);
 	}
 	return true;
-}
-
-void SceneViewportSubsystem::InitializeDearImGui()
-{
-	if (IsDearImGuiInitialized)
-	{
-		return;
-	}
-
-	HWND WindowHandle = GetWindowHandle();
-	ID3D11Device* DeviceInstance = GetDevice();
-	ID3D11DeviceContext* DeviceContextInstance = GetDeviceContext();
-	if (WindowHandle == nullptr || DeviceInstance == nullptr || DeviceContextInstance == nullptr)
-	{
-		return;
-	}
-
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark();
-	ImGui_ImplWin32_Init(WindowHandle);
-	ImGui_ImplDX11_Init(DeviceInstance, DeviceContextInstance);
-	IsDearImGuiInitialized = true;
-}
-
-void SceneViewportSubsystem::ShutdownDearImGui()
-{
-	if (IsDearImGuiInitialized == false)
-	{
-		return;
-	}
-
-	ImGui_ImplWin32_Shutdown();
-	ImGui_ImplDX11_Shutdown();
-	ImGui::DestroyContext();
-	IsDearImGuiInitialized = false;
 }
 
 void SceneViewportSubsystem::SetFrameRenderTargetOverride(
@@ -670,4 +664,33 @@ void SceneViewportSubsystem::ClearFrameViewportOverride()
 void SceneViewportSubsystem::SetFramePresentEnabled(bool NewFramePresentEnabled)
 {
 	FramePresentEnabled = NewFramePresentEnabled;
+}
+
+RenderRuntimeGameInstanceSubsystem* SceneViewportSubsystem::ResolveRenderRuntimeSubsystem() const
+{
+	if (CachedRenderRuntimeSubsystem != nullptr)
+	{
+		return CachedRenderRuntimeSubsystem;
+	}
+
+	Game* OwningGame = GetOwningGame();
+	if (OwningGame != nullptr)
+	{
+		GameInstance* OwningGameInstance = OwningGame->GetOwningGameInstance();
+		if (OwningGameInstance != nullptr)
+		{
+			CachedRenderRuntimeSubsystem = OwningGameInstance->GetSubsystem<RenderRuntimeGameInstanceSubsystem>();
+			if (CachedRenderRuntimeSubsystem != nullptr)
+			{
+				return CachedRenderRuntimeSubsystem;
+			}
+		}
+	}
+
+	if (GlobalGameInstance != nullptr)
+	{
+		CachedRenderRuntimeSubsystem = GlobalGameInstance->GetSubsystem<RenderRuntimeGameInstanceSubsystem>();
+	}
+
+	return CachedRenderRuntimeSubsystem;
 }

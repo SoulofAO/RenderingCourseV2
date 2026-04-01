@@ -1,9 +1,14 @@
 #include "Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h"
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
 #include <iostream>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 
 RenderRuntimeGameInstanceSubsystem::RenderRuntimeGameInstanceSubsystem()
 	: Context(nullptr)
@@ -14,6 +19,8 @@ RenderRuntimeGameInstanceSubsystem::RenderRuntimeGameInstanceSubsystem()
 	, BackBufferDepthStencilView(nullptr)
 	, ScreenWidth(0)
 	, ScreenHeight(0)
+	, IsWindowMinimized(false)
+	, IsDearImGuiInitialized(false)
 {
 }
 
@@ -78,6 +85,7 @@ void RenderRuntimeGameInstanceSubsystem::InitializeRuntime(
 
 void RenderRuntimeGameInstanceSubsystem::Shutdown()
 {
+	ShutdownDearImGui();
 	PlayerRenderTargetServiceInstance.ReleaseAll();
 	DestroyResources();
 	GameInstanceSubsystem::Shutdown();
@@ -85,7 +93,7 @@ void RenderRuntimeGameInstanceSubsystem::Shutdown()
 
 void RenderRuntimeGameInstanceSubsystem::BeginRuntimeFrame(float TotalTimeSeconds)
 {
-	if (Context == nullptr || BackBufferRenderView == nullptr)
+	if (IsWindowMinimized || Context == nullptr || BackBufferRenderView == nullptr)
 	{
 		return;
 	}
@@ -107,6 +115,11 @@ void RenderRuntimeGameInstanceSubsystem::BeginRuntimeFrame(float TotalTimeSecond
 
 void RenderRuntimeGameInstanceSubsystem::EndRuntimeFrame()
 {
+	if (IsWindowMinimized)
+	{
+		return;
+	}
+
 	if (Context != nullptr)
 	{
 		Context->OMSetRenderTargets(0, nullptr, nullptr);
@@ -150,6 +163,94 @@ void RenderRuntimeGameInstanceSubsystem::CompositePlayerTargets(const std::vecto
 	PlayerRenderTargetServiceInstance.CompositeToBackBuffer(Context, BackBuffer, CompositeCommands);
 }
 
+void RenderRuntimeGameInstanceSubsystem::EnsureDearImGuiInitialized()
+{
+	if (IsDearImGuiInitialized)
+	{
+		return;
+	}
+
+	HWND WindowHandle = GetWindowHandle();
+	if (WindowHandle == nullptr || Device.Get() == nullptr || Context == nullptr)
+	{
+		return;
+	}
+
+	IMGUI_CHECKVERSION();
+	if (ImGui::GetCurrentContext() == nullptr)
+	{
+		ImGui::CreateContext();
+		ImGui::StyleColorsDark();
+	}
+
+	ImGuiIO& DearImGuiIO = ImGui::GetIO();
+	if (DearImGuiIO.BackendPlatformUserData == nullptr)
+	{
+		ImGui_ImplWin32_Init(WindowHandle);
+	}
+	if (DearImGuiIO.BackendRendererUserData == nullptr)
+	{
+		ImGui_ImplDX11_Init(Device.Get(), Context);
+	}
+
+	IsDearImGuiInitialized = DearImGuiIO.BackendPlatformUserData != nullptr && DearImGuiIO.BackendRendererUserData != nullptr;
+}
+
+void RenderRuntimeGameInstanceSubsystem::ShutdownDearImGui()
+{
+	if (IsDearImGuiInitialized == false)
+	{
+		return;
+	}
+
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	if (ImGui::GetCurrentContext() != nullptr)
+	{
+		ImGui::DestroyContext();
+	}
+	IsDearImGuiInitialized = false;
+}
+
+void RenderRuntimeGameInstanceSubsystem::BeginDearImGuiFrame()
+{
+	EnsureDearImGuiInitialized();
+	if (IsDearImGuiInitialized == false)
+	{
+		return;
+	}
+
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+}
+
+void RenderRuntimeGameInstanceSubsystem::EndDearImGuiFrame()
+{
+	if (IsDearImGuiInitialized == false)
+	{
+		return;
+	}
+
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+bool RenderRuntimeGameInstanceSubsystem::HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam)
+{
+	if (IsDearImGuiInitialized == false)
+	{
+		return false;
+	}
+
+	return ImGui_ImplWin32_WndProcHandler(WindowHandle, Message, WParam, LParam) != 0;
+}
+
+bool RenderRuntimeGameInstanceSubsystem::GetIsDearImGuiInitialized() const
+{
+	return IsDearImGuiInitialized;
+}
+
 HWND RenderRuntimeGameInstanceSubsystem::GetWindowHandle() const
 {
 	if (Display == nullptr)
@@ -182,6 +283,16 @@ int RenderRuntimeGameInstanceSubsystem::GetScreenWidth() const
 int RenderRuntimeGameInstanceSubsystem::GetScreenHeight() const
 {
 	return ScreenHeight;
+}
+
+void RenderRuntimeGameInstanceSubsystem::SetIsWindowMinimized(bool NewIsWindowMinimized)
+{
+	IsWindowMinimized = NewIsWindowMinimized;
+}
+
+bool RenderRuntimeGameInstanceSubsystem::GetIsWindowMinimized() const
+{
+	return IsWindowMinimized;
 }
 
 void RenderRuntimeGameInstanceSubsystem::CreateBackBuffer()

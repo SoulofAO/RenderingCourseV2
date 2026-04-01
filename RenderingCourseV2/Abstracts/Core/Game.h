@@ -166,6 +166,9 @@ protected:
 	void UpdateInputHandlerActivationState();
 	void DrawCameraPossessionUserInterface();
 	void ToggleCameraPossessionFromUserInterface();
+	void UpdateSelectedActorFromMouseClick();
+	Actor* FindActorUnderMouseCursor() const;
+	void DrawActorTranslationGizmo();
 	bool ForceRebuildInputResourcesAndReinitializeScene();
 	LightComponent* FindFirstDirectionalLightComponent() const;
 	void ApplyWorldBoundarySphereSettings();
@@ -180,6 +183,7 @@ protected:
 	std::vector<std::unique_ptr<Actor>> Actors;
 	std::vector<std::unique_ptr<GameInputHandler>> InputHandlers;
 	Actor* FallbackCameraActor;
+	Actor* SelectedActorForGizmo;
 	CameraComponent* FallbackCameraComponentInstance;
 
 	std::chrono::time_point<std::chrono::steady_clock> StartTime;
