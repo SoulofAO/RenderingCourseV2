@@ -58,5 +58,9 @@ void KatamaryOrbitCameraInputHandler::HandleInput(Game* OwningGame, InputDevice*
 		{
 			KatamaryGameInstance->HandlePlayerJumpInput();
 		}
+		if (Input->WasKeyPressedThisFrame(VK_LBUTTON))
+		{
+			KatamaryGameInstance->HandleLightShotInput();
+		}
 	}
 }

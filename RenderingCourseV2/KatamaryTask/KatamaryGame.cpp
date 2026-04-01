@@ -12,6 +12,7 @@
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -36,8 +37,15 @@ KatamaryGame::KatamaryGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenH
 	, PlayerJumpImpulse(400.0f)
 	, PlayerJumpTraceExtraDistance(0.5f)
 	, PlayerMaximumPlanarSpeed(9.0f)
+	, LightProjectileLifetimeSeconds(4.0f)
+	, LightProjectileSpeed(20.0f)
+	, LightProjectileSpawnOffsetDistance(2.0f)
+	, LightProjectileVisualScale(0.25f)
+	, LightProjectileLightRange(8.0f)
+	, LightProjectileLightIntensity(4.0f)
 	, RoundDurationSeconds(60.0f)
 	, RemainingTimeSeconds(60.0f)
+	, MaximumActiveLightProjectileCount(10)
 	, IsRoundFinished(false)
 	, UseWeldCollectMode(false)
 	, CollectedItemCount(0)
@@ -148,6 +156,7 @@ void KatamaryGame::Update(float DeltaTime)
 {
 	HandleRoundTimer(DeltaTime);
 	ProcessPendingCollectibleAttachments();
+	UpdateLightProjectiles(DeltaTime);
 	UpdateGameplayCamera();
 	Game::Update(DeltaTime);
 }
@@ -437,6 +446,16 @@ void KatamaryGame::HandlePlayerJumpInput()
 	PlayerPhysicsComponent->ApplyImpulse(JumpImpulseValue);
 }
 
+void KatamaryGame::HandleLightShotInput()
+{
+	if (IsRoundFinished || PlayerActor == nullptr)
+	{
+		return;
+	}
+
+	SpawnLightProjectile();
+}
+
 bool KatamaryGame::IsPlayerNearSurfaceForJump() const
 {
 	if (PlayerActor == nullptr || PlayerPhysicsComponent == nullptr)
@@ -506,6 +525,125 @@ void KatamaryGame::UpdateGameplayCamera()
 	CameraActor->SetTransform(CameraTransform);
 }
 
+void KatamaryGame::UpdateLightProjectiles(float DeltaTime)
+{
+	if (DeltaTime <= 0.0f || ActiveLightProjectiles.empty())
+	{
+		return;
+	}
+
+	for (size_t LightProjectileIndex = 0; LightProjectileIndex < ActiveLightProjectiles.size();)
+	{
+		LightProjectileData& ExistingLightProjectileData = ActiveLightProjectiles[LightProjectileIndex];
+		ExistingLightProjectileData.RemainingLifetimeSeconds -= DeltaTime;
+		if (ExistingLightProjectileData.RemainingLifetimeSeconds <= 0.0f)
+		{
+			DeactivateLightProjectile(ExistingLightProjectileData);
+			ActiveLightProjectiles.erase(ActiveLightProjectiles.begin() + static_cast<std::ptrdiff_t>(LightProjectileIndex));
+			continue;
+		}
+
+		++LightProjectileIndex;
+	}
+}
+
+void KatamaryGame::SpawnLightProjectile()
+{
+	if (MaximumActiveLightProjectileCount > 0 && static_cast<int>(ActiveLightProjectiles.size()) >= MaximumActiveLightProjectileCount)
+	{
+		DeactivateLightProjectile(ActiveLightProjectiles.front());
+		ActiveLightProjectiles.erase(ActiveLightProjectiles.begin());
+	}
+
+	const DirectX::XMFLOAT3 LightShotDirection = BuildLightShotDirection();
+	const DirectX::XMFLOAT3 PlayerWorldLocation = PlayerActor->GetLocation(ETransformSpace::World);
+	const DirectX::XMFLOAT3 ProjectileSpawnLocation(
+		PlayerWorldLocation.x + (LightShotDirection.x * LightProjectileSpawnOffsetDistance),
+		PlayerWorldLocation.y + (LightShotDirection.y * LightProjectileSpawnOffsetDistance),
+		PlayerWorldLocation.z + (LightShotDirection.z * LightProjectileSpawnOffsetDistance));
+
+	std::unique_ptr<Actor> LightProjectileActor = std::make_unique<Actor>();
+	Transform LightProjectileTransform;
+	LightProjectileTransform.Position = ProjectileSpawnLocation;
+	LightProjectileTransform.Scale = DirectX::XMFLOAT3(LightProjectileVisualScale, LightProjectileVisualScale, LightProjectileVisualScale);
+	LightProjectileActor->SetTransform(LightProjectileTransform);
+
+	std::unique_ptr<MeshUniversalComponent> LightProjectileMeshComponent = std::make_unique<MeshUniversalComponent>();
+	LightProjectileMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleSphere.fbx";
+	LightProjectileMeshComponent->BaseColor = DirectX::XMFLOAT4(1.0f, 0.9f, 0.35f, 1.0f);
+
+	std::unique_ptr<PhysicsComponent> LightProjectilePhysicsComponent = std::make_unique<PhysicsComponent>();
+	LightProjectilePhysicsComponent->SetMass(0.25f);
+	LightProjectilePhysicsComponent->SetUseGravity(false);
+	LightProjectilePhysicsComponent->SetLinearDamping(0.0f);
+	LightProjectilePhysicsComponent->SetAngularDamping(0.0f);
+	LightProjectilePhysicsComponent->EnableAutoConvexColliderFromMesh(false);
+	LightProjectilePhysicsComponent->EnableAutoTriangleMeshColliderFromMesh(false);
+	LightProjectilePhysicsComponent->SetSphereCollider(0.25f);
+	LightProjectilePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Simulation);
+	LightProjectilePhysicsComponent->SetCollisionLayer(PhysicsCollisionLayerCollectibleCollected);
+	LightProjectilePhysicsComponent->SetCollisionMask(0xFFFFFFFFu);
+
+	const DirectX::XMFLOAT3 ProjectileVelocity(
+		LightShotDirection.x * LightProjectileSpeed,
+		LightShotDirection.y * LightProjectileSpeed,
+		LightShotDirection.z * LightProjectileSpeed);
+	LightProjectilePhysicsComponent->SetVelocity(ProjectileVelocity);
+
+	std::unique_ptr<LightComponent> LightProjectileLightComponent = std::make_unique<LightComponent>();
+	LightProjectileLightComponent->SetLightType(LightType::Point);
+	LightProjectileLightComponent->SetColor(DirectX::XMFLOAT4(1.0f, 0.92f, 0.55f, 1.0f));
+	LightProjectileLightComponent->SetIntensity(LightProjectileLightIntensity);
+	LightProjectileLightComponent->SetRange(LightProjectileLightRange);
+
+	MeshUniversalComponent* LightProjectileMeshComponentRawPointer = LightProjectileMeshComponent.get();
+	PhysicsComponent* LightProjectilePhysicsComponentRawPointer = LightProjectilePhysicsComponent.get();
+	LightComponent* LightProjectileLightComponentRawPointer = LightProjectileLightComponent.get();
+	Actor* LightProjectileActorRawPointer = LightProjectileActor.get();
+
+	LightProjectileActor->AddComponent(std::move(LightProjectileMeshComponent));
+	LightProjectileActor->AddComponent(std::move(LightProjectilePhysicsComponent));
+	LightProjectileActor->AddComponent(std::move(LightProjectileLightComponent));
+	AddActor(std::move(LightProjectileActor));
+
+	LightProjectileData NewLightProjectileData = {};
+	NewLightProjectileData.ProjectileActor = LightProjectileActorRawPointer;
+	NewLightProjectileData.ProjectilePhysicsComponent = LightProjectilePhysicsComponentRawPointer;
+	NewLightProjectileData.ProjectileMeshComponent = LightProjectileMeshComponentRawPointer;
+	NewLightProjectileData.ProjectileLightComponent = LightProjectileLightComponentRawPointer;
+	NewLightProjectileData.RemainingLifetimeSeconds = LightProjectileLifetimeSeconds;
+	ActiveLightProjectiles.push_back(NewLightProjectileData);
+}
+
+void KatamaryGame::DeactivateLightProjectile(LightProjectileData& ExistingLightProjectileData)
+{
+	if (ExistingLightProjectileData.ProjectileLightComponent != nullptr)
+	{
+		ExistingLightProjectileData.ProjectileLightComponent->SetIsActive(false);
+	}
+
+	if (ExistingLightProjectileData.ProjectileMeshComponent != nullptr)
+	{
+		ExistingLightProjectileData.ProjectileMeshComponent->SetIsActive(false);
+	}
+
+	if (ExistingLightProjectileData.ProjectilePhysicsComponent != nullptr)
+	{
+		ExistingLightProjectileData.ProjectilePhysicsComponent->ClearForces();
+		ExistingLightProjectileData.ProjectilePhysicsComponent->SetVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+		ExistingLightProjectileData.ProjectilePhysicsComponent->SetAngularVelocity(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+		ExistingLightProjectileData.ProjectilePhysicsComponent->SetCollisionMode(PhysicsCollisionMode::Trigger);
+		ExistingLightProjectileData.ProjectilePhysicsComponent->SetIsStatic(true);
+		ExistingLightProjectileData.ProjectilePhysicsComponent->SetIsActive(false);
+	}
+
+	ExistingLightProjectileData.ProjectileActor = nullptr;
+	ExistingLightProjectileData.ProjectilePhysicsComponent = nullptr;
+	ExistingLightProjectileData.ProjectileMeshComponent = nullptr;
+	ExistingLightProjectileData.ProjectileLightComponent = nullptr;
+	ExistingLightProjectileData.RemainingLifetimeSeconds = 0.0f;
+}
+
 DirectX::XMFLOAT3 KatamaryGame::BuildCameraRelativeMovementDirection(float MovementInputForward, float MovementInputRight) const
 {
 	float CameraYaw = 0.0f;
@@ -529,6 +667,45 @@ DirectX::XMFLOAT3 KatamaryGame::BuildCameraRelativeMovementDirection(float Movem
 		(CameraForwardDirection.x * MovementInputForward) + (CameraRightDirection.x * MovementInputRight),
 		0.0f,
 		(CameraForwardDirection.z * MovementInputForward) + (CameraRightDirection.z * MovementInputRight));
+}
+
+DirectX::XMFLOAT3 KatamaryGame::BuildLightShotDirection() const
+{
+	if (PlayerActor == nullptr)
+	{
+		return DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f);
+	}
+
+	DirectX::XMFLOAT3 CameraWorldLocation = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	CameraSubsystem* CameraSubsystemInstance = GetSubsystem<CameraSubsystem>();
+	if (CameraSubsystemInstance != nullptr)
+	{
+		CameraComponent* ActiveCameraComponent = CameraSubsystemInstance->GetActiveCamera();
+		if (ActiveCameraComponent != nullptr && ActiveCameraComponent->GetOwningActor() != nullptr)
+		{
+			CameraWorldLocation = ActiveCameraComponent->GetOwningActor()->GetLocation(ETransformSpace::World);
+		}
+	}
+
+	const DirectX::XMFLOAT3 PlayerWorldLocation = PlayerActor->GetLocation(ETransformSpace::World);
+	DirectX::XMFLOAT3 ShotDirection(
+		PlayerWorldLocation.x - CameraWorldLocation.x,
+		PlayerWorldLocation.y - CameraWorldLocation.y,
+		PlayerWorldLocation.z - CameraWorldLocation.z);
+	const float ShotDirectionLengthSquared =
+		(ShotDirection.x * ShotDirection.x) +
+		(ShotDirection.y * ShotDirection.y) +
+		(ShotDirection.z * ShotDirection.z);
+	if (ShotDirectionLengthSquared <= 0.0001f)
+	{
+		return DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f);
+	}
+
+	const float InverseShotDirectionLength = 1.0f / std::sqrt(ShotDirectionLengthSquared);
+	ShotDirection.x *= InverseShotDirectionLength;
+	ShotDirection.y *= InverseShotDirectionLength;
+	ShotDirection.z *= InverseShotDirectionLength;
+	return ShotDirection;
 }
 
 void KatamaryGame::HandlePhysicsCollisionDetected(

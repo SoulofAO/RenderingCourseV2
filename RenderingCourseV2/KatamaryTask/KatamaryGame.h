@@ -41,6 +41,17 @@ class Actor;
 class CameraComponent;
 class KatamaryUIRenderingComponent;
 class PhysicsComponent;
+class MeshUniversalComponent;
+class LightComponent;
+
+struct LightProjectileData
+{
+	Actor* ProjectileActor;
+	PhysicsComponent* ProjectilePhysicsComponent;
+	MeshUniversalComponent* ProjectileMeshComponent;
+	LightComponent* ProjectileLightComponent;
+	float RemainingLifetimeSeconds;
+};
 
 class KatamaryGame : public Game
 {
@@ -55,6 +66,7 @@ public:
 	void SetUseWeldCollectMode(bool NewUseWeldCollectMode);
 	void HandlePlayerMovementInput(float DeltaTime, float MovementInputForward, float MovementInputRight);
 	void HandlePlayerJumpInput();
+	void HandleLightShotInput();
 
 protected:
 	void BeginPlay() override;
@@ -74,7 +86,11 @@ private:
 	void UpdatePlayerCollisionSphereRadius();
 	bool IsPlayerNearSurfaceForJump() const;
 	void UpdateGameplayCamera();
+	void UpdateLightProjectiles(float DeltaTime);
+	void SpawnLightProjectile();
+	void DeactivateLightProjectile(LightProjectileData& ExistingLightProjectileData);
 	DirectX::XMFLOAT3 BuildCameraRelativeMovementDirection(float MovementInputForward, float MovementInputRight) const;
+	DirectX::XMFLOAT3 BuildLightShotDirection() const;
 	void HandlePhysicsCollisionDetected(
 		PhysicsComponent* FirstPhysicsComponent,
 		PhysicsComponent* SecondPhysicsComponent,
@@ -103,10 +119,18 @@ private:
 	float PlayerJumpImpulse;
 	float PlayerJumpTraceExtraDistance;
 	float PlayerMaximumPlanarSpeed;
+	float LightProjectileLifetimeSeconds;
+	float LightProjectileSpeed;
+	float LightProjectileSpawnOffsetDistance;
+	float LightProjectileVisualScale;
+	float LightProjectileLightRange;
+	float LightProjectileLightIntensity;
 	float RoundDurationSeconds;
 	float RemainingTimeSeconds;
+	int MaximumActiveLightProjectileCount;
 	bool IsRoundFinished;
 	bool UseWeldCollectMode;
 	int CollectedItemCount;
 	int SpawnedCollectibleCount;
+	std::vector<LightProjectileData> ActiveLightProjectiles;
 };
