@@ -75,6 +75,8 @@ public:
 		bool NewIsEnabled,
 		const DirectX::XMFLOAT3& NewWorldBoundarySphereCenter,
 		float NewWorldBoundarySphereRadius);
+	void SetGridFloorEnabled(bool NewIsGridFloorEnabled);
+	bool GetGridFloorEnabled() const;
 
 	template<typename TSubsystem>
 	TSubsystem* GetSubsystem() const
@@ -172,6 +174,7 @@ protected:
 	bool ForceRebuildInputResourcesAndReinitializeScene();
 	LightComponent* FindFirstDirectionalLightComponent() const;
 	void ApplyWorldBoundarySphereSettings();
+	void UpdateGridFloorVisibilityState();
 
 	LPCWSTR Name;
 	int ScreenWidth;
@@ -183,6 +186,7 @@ protected:
 	std::vector<std::unique_ptr<Actor>> Actors;
 	std::vector<std::unique_ptr<GameInputHandler>> InputHandlers;
 	Actor* FallbackCameraActor;
+	Actor* GridFloorActor;
 	Actor* SelectedActorForGizmo;
 	CameraComponent* FallbackCameraComponentInstance;
 
@@ -196,6 +200,7 @@ protected:
 	bool HasInputResourcesRebuildResult;
 	bool LastInputResourcesRebuildSucceeded;
 	bool IsWorldBoundarySphereEnabled;
+	bool IsGridFloorEnabled;
 	DirectX::XMFLOAT3 WorldBoundarySphereCenter;
 	float WorldBoundarySphereRadius;
 	bool IsEmbeddedPlayStarted;

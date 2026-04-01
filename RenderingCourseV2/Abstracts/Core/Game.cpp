@@ -7,6 +7,7 @@
 #include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Components/CameraComponent.h"
 #include "Abstracts/Components/MeshUniversalComponent.h"
+#include "Abstracts/Components/GridFloorRenderingComponent.h"
 #include "Abstracts/Components/FPSSpectateCameraComponent.h"
 #include "Abstracts/Components/UIRenderingComponent.h"
 #include "Abstracts/Components/ParticleRenderingComponent.h"
@@ -57,6 +58,7 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, FrameCount(0)
 	, IsExitRequested(false)
 	, FallbackCameraActor(nullptr)
+	, GridFloorActor(nullptr)
 	, SelectedActorForGizmo(nullptr)
 	, FallbackCameraComponentInstance(nullptr)
 	, CurrentMouseInputMode(MouseInputMode::GameAndUI)
@@ -64,6 +66,7 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, HasInputResourcesRebuildResult(false)
 	, LastInputResourcesRebuildSucceeded(false)
 	, IsWorldBoundarySphereEnabled(false)
+	, IsGridFloorEnabled(true)
 	, WorldBoundarySphereCenter(0.0f, 0.0f, 0.0f)
 	, WorldBoundarySphereRadius(4000.0f)
 	, IsEmbeddedPlayStarted(false)
@@ -341,6 +344,8 @@ void Game::Update(float DeltaTime)
 	{
 		ExistingSubsystem->Update(DeltaTime);
 	}
+
+	UpdateGridFloorVisibilityState();
 
 	if (Input)
 	{
@@ -638,6 +643,22 @@ void Game::BeginPlay()
 	{
 		CameraSystem->SetFallbackCamera(FallbackCameraComponentInstance);
 	}
+
+	if (GridFloorActor == nullptr)
+	{
+		std::unique_ptr<Actor> NewGridFloorActor = std::make_unique<Actor>();
+		std::unique_ptr<GridFloorRenderingComponent> NewGridFloorRenderingComponent = std::make_unique<GridFloorRenderingComponent>();
+		NewGridFloorRenderingComponent->SetGridHalfExtent(200.0f);
+		NewGridFloorRenderingComponent->SetMinorGridStep(1.0f);
+		NewGridFloorRenderingComponent->SetMajorLineStep(5);
+		NewGridFloorRenderingComponent->SetLineWidth(0.02f);
+		NewGridFloorRenderingComponent->SetIsActive(false);
+		NewGridFloorActor->AddComponent(std::move(NewGridFloorRenderingComponent));
+		GridFloorActor = NewGridFloorActor.get();
+		AddActor(std::move(NewGridFloorActor));
+	}
+
+	UpdateGridFloorVisibilityState();
 }
 
 void Game::RegisterInputHandler(std::unique_ptr<GameInputHandler> NewInputHandler)
@@ -747,6 +768,17 @@ void Game::SetWorldBoundarySphereRadius(float NewWorldBoundarySphereRadius)
 float Game::GetWorldBoundarySphereRadius() const
 {
 	return WorldBoundarySphereRadius;
+}
+
+void Game::SetGridFloorEnabled(bool NewIsGridFloorEnabled)
+{
+	IsGridFloorEnabled = NewIsGridFloorEnabled;
+	UpdateGridFloorVisibilityState();
+}
+
+bool Game::GetGridFloorEnabled() const
+{
+	return IsGridFloorEnabled;
 }
 
 void Game::SetWorldBoundarySphereSettings(
@@ -1193,6 +1225,7 @@ void Game::ToggleCameraPossessionFromUserInterface()
 
 	const bool IsFallbackCameraCurrentlyPossessed = GetIsFallbackCameraPossessed();
 	CameraSystem->SetIsFallbackCameraForced(!IsFallbackCameraCurrentlyPossessed);
+	UpdateGridFloorVisibilityState();
 }
 
 LightComponent* Game::FindFirstDirectionalLightComponent() const
@@ -1235,6 +1268,23 @@ void Game::ApplyWorldBoundarySphereSettings()
 	{
 		PhysicsSubsystemInstance->DisableWorldBoundarySphere();
 	}
+}
+
+void Game::UpdateGridFloorVisibilityState()
+{
+	if (GridFloorActor == nullptr)
+	{
+		return;
+	}
+
+	GridFloorRenderingComponent* GridFloorRenderingComponentInstance = GridFloorActor->GetFirstComponentByClass<GridFloorRenderingComponent>(false);
+	if (GridFloorRenderingComponentInstance == nullptr)
+	{
+		return;
+	}
+
+	const bool IsGridFloorVisible = IsGridFloorEnabled && GetIsFallbackCameraPossessed();
+	GridFloorRenderingComponentInstance->SetIsActive(IsGridFloorVisible);
 }
 
 void Game::ApplyMouseInputMode()

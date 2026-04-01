@@ -138,6 +138,7 @@
     <ClCompile Include="Abstracts\Components\FPSSpectateCameraComponentSettingsUI.cpp" />
     <ClCompile Include="Abstracts\Components\FPSSpectateCameraComponent.cpp" />
     <ClCompile Include="Abstracts\Components\GameComponent.cpp" />
+    <ClCompile Include="Abstracts\Components\GridFloorRenderingComponent.cpp" />
     <ClCompile Include="Abstracts\Components\LightComponent.cpp" />
     <ClCompile Include="Abstracts\Components\MeshUniversalComponent.cpp" />
     <ClCompile Include="Abstracts\Components\ParticleRenderingComponent.cpp" />
@@ -220,6 +221,7 @@
     <ClInclude Include="Abstracts\Components\FPSSpectateCameraComponentSettingsUI.h" />
     <ClInclude Include="Abstracts\Components\FPSSpectateCameraComponent.h" />
     <ClInclude Include="Abstracts\Components\GameComponent.h" />
+    <ClInclude Include="Abstracts\Components\GridFloorRenderingComponent.h" />
     <ClInclude Include="Abstracts\Components\LightComponent.h" />
     <ClInclude Include="Abstracts\Components\MeshUniversalComponent.h" />
     <ClInclude Include="Abstracts\Components\ParticleRenderingComponent.h" />
@@ -313,8 +315,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Abstracts\LightingShared.hlsli" />
+    <None Include="Shaders\Abstracts\GridFloor.hlsl" />
     <None Include="Shaders\Abstracts\MeshUniversalDefault.hlsl" />
     <None Include="Shaders\Deferred\DeferredGeometryPass.hlsl" />
+    <None Include="Shaders\Deferred\GridFloorDeferred.hlsl" />
     <None Include="Shaders\Deferred\DeferredLightingPass.hlsl" />
     <None Include="Shaders\FirstTask\MyVeryFirstShader.hlsl" />
     <None Include="Shaders\ParticleSystem\BaseParticleMaterial.hlsl" />
