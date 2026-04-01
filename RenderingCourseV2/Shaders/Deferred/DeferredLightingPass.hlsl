@@ -53,6 +53,10 @@ cbuffer DeferredLightBuffer : register(b1)
 	float ShadowCascadeCountValue;
 	float3 ShadowCascadeCountValuePadding;
 	float4x4 CascadeViewProjectionMatrices[4];
+	uint LightingPassMode;
+	uint SingleLightIndex;
+	uint LightingPassPadding0;
+	uint LightingPassPadding1;
 	float DeferredDebugBufferViewMode;
 	float3 DeferredDebugBufferViewModePadding;
 };
@@ -222,13 +226,48 @@ float4 PSMain(VS_OUT Input) : SV_Target
 
 	float3 NormalDirection = normalize(EncodedNormal.xyz * 2.0f - 1.0f);
 	float3 WorldPosition = ReconstructWorldPosition(Input.TextureCoordinates, DepthValue);
-	float3 LightDirection = normalize(-DirectionalLightDirection);
 	float3 ViewDirection = normalize(CameraWorldPosition - WorldPosition);
-	float3 HalfDirection = normalize(LightDirection + ViewDirection);
-
-	float Diffuse = max(dot(NormalDirection, LightDirection), 0.0f);
 	float SpecularPower = Material.x;
 	float SpecularIntensity = Material.y;
+
+	if (LightingPassMode == 1u)
+	{
+		if (UseFullBrightnessWithoutLighting > 0.5f)
+		{
+			return float4(0.0f, 0.0f, 0.0f, 0.0f);
+		}
+		uint PointIndex = min(SingleLightIndex, 15u);
+		float3 PointContribution = CalculatePointLightContribution(
+			WorldPosition,
+			NormalDirection,
+			ViewDirection,
+			Albedo.rgb,
+			SpecularPower,
+			SpecularIntensity,
+			PointLights[PointIndex]);
+		return float4(PointContribution, 0.0f);
+	}
+	if (LightingPassMode == 2u)
+	{
+		if (UseFullBrightnessWithoutLighting > 0.5f)
+		{
+			return float4(0.0f, 0.0f, 0.0f, 0.0f);
+		}
+		uint SpotIndex = min(SingleLightIndex, 15u);
+		float3 SpotContribution = CalculateSpotLightContribution(
+			WorldPosition,
+			NormalDirection,
+			ViewDirection,
+			Albedo.rgb,
+			SpecularPower,
+			SpecularIntensity,
+			SpotLights[SpotIndex]);
+		return float4(SpotContribution, 0.0f);
+	}
+
+	float3 LightDirection = normalize(-DirectionalLightDirection);
+	float3 HalfDirection = normalize(LightDirection + ViewDirection);
+	float Diffuse = max(dot(NormalDirection, LightDirection), 0.0f);
 	float Specular = pow(max(dot(NormalDirection, HalfDirection), 0.0f), SpecularPower) * SpecularIntensity;
 
 	if (DeferredDebugBufferViewMode > 0.5f && DeferredDebugBufferViewMode < 1.5f)

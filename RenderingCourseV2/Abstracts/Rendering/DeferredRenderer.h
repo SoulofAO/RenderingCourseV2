@@ -41,7 +41,7 @@ public:
 	void EnsureTargets(ID3D11Device* Device, int ScreenWidth, int ScreenHeight);
 	void BeginGeometryPass(ID3D11DeviceContext* DeviceContext);
 	void EndGeometryPass(ID3D11DeviceContext* DeviceContext);
-	void RenderLightingPass(
+	void RenderDirectionalDeferredLightingPass(
 		ID3D11DeviceContext* DeviceContext,
 		ID3D11RenderTargetView* FinalRenderTargetView,
 		const DirectX::XMMATRIX& ViewMatrix,
@@ -50,11 +50,37 @@ public:
 		const DirectX::XMFLOAT3& DirectionalLightDirection,
 		const DirectX::XMFLOAT4& DirectionalLightColor,
 		float DirectionalLightIntensity,
-		const std::vector<DeferredPointLightData>& PointLights,
-		const std::vector<DeferredSpotLightData>& SpotLights,
 		float UseFullBrightnessWithoutLighting,
 		float ShadowStrength,
 		float DeferredDebugBufferViewMode);
+	void RenderSinglePointLightDeferredLightingPass(
+		ID3D11DeviceContext* DeviceContext,
+		ID3D11RenderTargetView* FinalRenderTargetView,
+		const DirectX::XMMATRIX& ViewMatrix,
+		const DirectX::XMMATRIX& InverseViewProjectionMatrix,
+		const DirectX::XMFLOAT3& CameraWorldPosition,
+		const std::vector<DeferredPointLightData>& PointLights,
+		int SinglePointLightIndex,
+		float UseFullBrightnessWithoutLighting,
+		float ShadowStrength,
+		float DeferredDebugBufferViewMode,
+		bool IsStencilShadowTestEnabled);
+	void RenderSingleSpotLightDeferredLightingPass(
+		ID3D11DeviceContext* DeviceContext,
+		ID3D11RenderTargetView* FinalRenderTargetView,
+		const DirectX::XMMATRIX& ViewMatrix,
+		const DirectX::XMMATRIX& InverseViewProjectionMatrix,
+		const DirectX::XMFLOAT3& CameraWorldPosition,
+		const std::vector<DeferredSpotLightData>& SpotLights,
+		int SingleSpotLightIndex,
+		float UseFullBrightnessWithoutLighting,
+		float ShadowStrength,
+		float DeferredDebugBufferViewMode,
+		bool IsStencilShadowTestEnabled);
+	void ClearGBufferStencil(ID3D11DeviceContext* DeviceContext);
+	void BeginShadowVolumeStencilPass(ID3D11DeviceContext* DeviceContext);
+	void EndShadowVolumeStencilPass(ID3D11DeviceContext* DeviceContext);
+	void BindShadowVolumePassPipelineForSubPass(ID3D11DeviceContext* DeviceContext, int SubPassIndex) const;
 	void PrepareCascadedShadowMaps(
 		const DirectX::XMMATRIX& CameraViewMatrix,
 		const DirectX::XMMATRIX& CameraProjectionMatrix,
@@ -71,11 +97,18 @@ public:
 
 	ID3D11DepthStencilView* GetDepthStencilView() const;
 	ID3D11ShaderResourceView* GetGBufferDepthShaderResourceView() const;
+	ID3D11Buffer* GetShadowVolumeTransformConstantBuffer() const;
 
 private:
 	void ReleaseTargets();
 	void ReleaseShadowResources();
+	void ReleaseStencilShadowVolumeResources();
 	bool CompileShader(ID3D11Device* Device, const std::string& Path, const char* EntryPoint, const char* Model, ID3DBlob** ByteCode, ID3D11DeviceChild** ShaderObject);
+	void ExecuteDeferredLightingDrawCall(
+		ID3D11DeviceContext* DeviceContext,
+		ID3D11RenderTargetView* FinalRenderTargetView,
+		bool UseAdditiveBlend,
+		bool IsStencilShadowTestEnabled);
 
 	ID3D11Texture2D* GBufferAlbedoTexture;
 	ID3D11Texture2D* GBufferNormalTexture;
@@ -101,6 +134,17 @@ private:
 	ID3D11DepthStencilView* ShadowDepthDSVs[4];
 	ID3D11SamplerState* ShadowComparisonSampler;
 	ID3D11RasterizerState* ShadowRasterizerState;
+	ID3D11VertexShader* ShadowVolumeVertexShader;
+	ID3DBlob* ShadowVolumeVertexShaderByteCode;
+	ID3D11InputLayout* ShadowVolumeInputLayout;
+	ID3D11Buffer* ShadowVolumeTransformConstantBuffer;
+	ID3D11DepthStencilState* ShadowVolumeDepthStencilDepthFailPass1;
+	ID3D11DepthStencilState* ShadowVolumeDepthStencilDepthFailPass2;
+	ID3D11RasterizerState* ShadowVolumeRasterizerCullFront;
+	ID3D11RasterizerState* ShadowVolumeRasterizerCullBack;
+	ID3D11DepthStencilState* LightingStencilEqualZeroState;
+	ID3D11BlendState* LightingAdditiveBlendState;
+	ID3D11BlendState* ShadowVolumeColorWriteDisabledBlendState;
 	std::array<DirectX::XMFLOAT4X4, 4> ShadowCascadeViewMatricesStorage;
 	std::array<DirectX::XMFLOAT4X4, 4> ShadowCascadeProjectionMatricesStorage;
 	std::array<DirectX::XMFLOAT4X4, 4> ShadowCascadeViewProjectionMatricesStorage;

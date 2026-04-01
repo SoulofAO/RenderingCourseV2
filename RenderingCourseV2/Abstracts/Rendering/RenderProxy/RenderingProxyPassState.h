@@ -3,6 +3,8 @@
 #include <d3d11.h>
 #include <directxmath.h>
 
+class DeferredRenderer;
+
 struct ForwardMainRenderPassState
 {
 	ID3D11DeviceContext* DeviceContext;
@@ -35,4 +37,13 @@ struct DeferredShadowRenderPassState
 	ID3D11DeviceContext* DeviceContext;
 	DirectX::XMMATRIX ViewMatrix;
 	DirectX::XMMATRIX ProjectionMatrix;
+};
+
+struct DeferredStencilShadowRenderPassState
+{
+	ID3D11DeviceContext* DeviceContext;
+	DeferredRenderer* DeferredRendererInstance;
+	DirectX::XMMATRIX ViewMatrix;
+	DirectX::XMMATRIX ProjectionMatrix;
+	DirectX::XMFLOAT3 LightWorldPosition;
 };

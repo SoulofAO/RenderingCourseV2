@@ -9,7 +9,7 @@
 PointLightShadowWallsTestGame::PointLightShadowWallsTestGame(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	: TestsBaseGame(ApplicationName, ScreenWidth, ScreenHeight)
 {
-	bSpawnDirectionalLightActor = false;
+	bSpawnDirectionalLightActor = true;
 }
 
 PointLightShadowWallsTestGame::~PointLightShadowWallsTestGame() = default;

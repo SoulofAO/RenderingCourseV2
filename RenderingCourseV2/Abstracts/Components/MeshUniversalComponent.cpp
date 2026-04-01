@@ -8,8 +8,12 @@
 #include "Abstracts/Resources/ResourceManager.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include <d3dcompiler.h>
+#include <cmath>
+#include <cstdint>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <utility>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -35,6 +39,11 @@ MeshUniversalComponent::MeshUniversalComponent()
 	, UseOrthographicProjection(false)
 	, OrthographicProjectionWidth(4.5f)
 	, OrthographicProjectionHeight(2.6f)
+	, ShadowVolumeVertexBuffer(nullptr)
+	, ShadowVolumeIndexBuffer(nullptr)
+	, ShadowVolumeIndexCount(0)
+	, CachedShadowVolumeLightWorldPosition(0.0f, 0.0f, 0.0f)
+	, ShadowVolumeGeometryValid(false)
 {
 	Vertices = {
 		MeshUniversalVertex{
@@ -411,8 +420,214 @@ void MeshUniversalComponent::ReleaseShaderProgramResources()
 	}
 }
 
+void MeshUniversalComponent::ReleaseShadowVolumeGeometry()
+{
+	if (ShadowVolumeVertexBuffer != nullptr)
+	{
+		ShadowVolumeVertexBuffer->Release();
+		ShadowVolumeVertexBuffer = nullptr;
+	}
+
+	if (ShadowVolumeIndexBuffer != nullptr)
+	{
+		ShadowVolumeIndexBuffer->Release();
+		ShadowVolumeIndexBuffer = nullptr;
+	}
+
+	ShadowVolumeIndexCount = 0;
+	ShadowVolumeGeometryValid = false;
+}
+
+void MeshUniversalComponent::EnsureShadowVolumeGeometryForLight(ID3D11Device* Device, const DirectX::XMFLOAT3& LightWorldPosition)
+{
+	if (Device == nullptr)
+	{
+		return;
+	}
+
+	const float Epsilon = 0.0001f;
+	if (
+		ShadowVolumeGeometryValid &&
+		std::fabs(CachedShadowVolumeLightWorldPosition.x - LightWorldPosition.x) < Epsilon &&
+		std::fabs(CachedShadowVolumeLightWorldPosition.y - LightWorldPosition.y) < Epsilon &&
+		std::fabs(CachedShadowVolumeLightWorldPosition.z - LightWorldPosition.z) < Epsilon)
+	{
+		return;
+	}
+
+	ReleaseShadowVolumeGeometry();
+	CachedShadowVolumeLightWorldPosition = LightWorldPosition;
+
+	if (Indices.size() < 3 || Vertices.empty())
+	{
+		return;
+	}
+
+	const DirectX::XMMATRIX WorldMatrix = GetWorldTransform().ToMatrix();
+	const DirectX::XMVECTOR LightWorldPositionVector = DirectX::XMLoadFloat3(&LightWorldPosition);
+
+	const size_t TriangleCount = Indices.size() / 3;
+	std::vector<bool> TriangleFacesLight;
+	TriangleFacesLight.resize(TriangleCount);
+	std::vector<DirectX::XMFLOAT3> WorldVertexPositions;
+	WorldVertexPositions.resize(Vertices.size());
+	for (size_t VertexIndex = 0; VertexIndex < Vertices.size(); ++VertexIndex)
+	{
+		const DirectX::XMVECTOR LocalPosition = DirectX::XMLoadFloat4(&Vertices[VertexIndex].Position);
+		const DirectX::XMVECTOR WorldPosition = DirectX::XMVector4Transform(LocalPosition, WorldMatrix);
+		DirectX::XMFLOAT3 StoredWorldPosition;
+		DirectX::XMStoreFloat3(&StoredWorldPosition, WorldPosition);
+		WorldVertexPositions[VertexIndex] = StoredWorldPosition;
+	}
+
+	for (size_t TriangleIndex = 0; TriangleIndex < TriangleCount; ++TriangleIndex)
+	{
+		const uint32_t Index0 = Indices[TriangleIndex * 3 + 0];
+		const uint32_t Index1 = Indices[TriangleIndex * 3 + 1];
+		const uint32_t Index2 = Indices[TriangleIndex * 3 + 2];
+		const DirectX::XMVECTOR Position0 = DirectX::XMLoadFloat3(&WorldVertexPositions[Index0]);
+		const DirectX::XMVECTOR Position1 = DirectX::XMLoadFloat3(&WorldVertexPositions[Index1]);
+		const DirectX::XMVECTOR Position2 = DirectX::XMLoadFloat3(&WorldVertexPositions[Index2]);
+		const DirectX::XMVECTOR Edge0 = DirectX::XMVectorSubtract(Position1, Position0);
+		const DirectX::XMVECTOR Edge1 = DirectX::XMVectorSubtract(Position2, Position0);
+		DirectX::XMVECTOR Normal = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(Edge0, Edge1));
+		const DirectX::XMVECTOR Center = DirectX::XMVectorScale(
+			DirectX::XMVectorAdd(DirectX::XMVectorAdd(Position0, Position1), Position2),
+			1.0f / 3.0f);
+		const DirectX::XMVECTOR ToLight = DirectX::XMVectorSubtract(LightWorldPositionVector, Center);
+		const float DotValue = DirectX::XMVectorGetX(DirectX::XMVector3Dot(Normal, DirectX::XMVector3Normalize(ToLight)));
+		TriangleFacesLight[TriangleIndex] = DotValue > 0.0f;
+	}
+
+	std::map<std::pair<uint32_t, uint32_t>, std::vector<uint32_t>> EdgeToTriangleIndices;
+	for (size_t TriangleIndex = 0; TriangleIndex < TriangleCount; ++TriangleIndex)
+	{
+		const uint32_t Index0 = Indices[TriangleIndex * 3 + 0];
+		const uint32_t Index1 = Indices[TriangleIndex * 3 + 1];
+		const uint32_t Index2 = Indices[TriangleIndex * 3 + 2];
+		const std::pair<uint32_t, uint32_t> Edge0 = Index0 < Index1 ? std::make_pair(Index0, Index1) : std::make_pair(Index1, Index0);
+		const std::pair<uint32_t, uint32_t> Edge1 = Index1 < Index2 ? std::make_pair(Index1, Index2) : std::make_pair(Index2, Index1);
+		const std::pair<uint32_t, uint32_t> Edge2 = Index2 < Index0 ? std::make_pair(Index2, Index0) : std::make_pair(Index0, Index2);
+		EdgeToTriangleIndices[Edge0].push_back(static_cast<uint32_t>(TriangleIndex));
+		EdgeToTriangleIndices[Edge1].push_back(static_cast<uint32_t>(TriangleIndex));
+		EdgeToTriangleIndices[Edge2].push_back(static_cast<uint32_t>(TriangleIndex));
+	}
+
+	std::vector<DirectX::XMFLOAT4> ShadowVolumePositions;
+	std::vector<uint32_t> ShadowVolumeIndices;
+
+	const float ShadowVolumeExtrusionDistance = 5000.0f;
+
+	for (size_t TriangleIndex = 0; TriangleIndex < TriangleCount; ++TriangleIndex)
+	{
+		if (TriangleFacesLight[TriangleIndex])
+		{
+			continue;
+		}
+
+		const uint32_t Index0 = Indices[TriangleIndex * 3 + 0];
+		const uint32_t Index1 = Indices[TriangleIndex * 3 + 1];
+		const uint32_t Index2 = Indices[TriangleIndex * 3 + 2];
+		const uint32_t BaseVertexIndex = static_cast<uint32_t>(ShadowVolumePositions.size());
+		ShadowVolumePositions.push_back(DirectX::XMFLOAT4(WorldVertexPositions[Index0].x, WorldVertexPositions[Index0].y, WorldVertexPositions[Index0].z, 1.0f));
+		ShadowVolumePositions.push_back(DirectX::XMFLOAT4(WorldVertexPositions[Index1].x, WorldVertexPositions[Index1].y, WorldVertexPositions[Index1].z, 1.0f));
+		ShadowVolumePositions.push_back(DirectX::XMFLOAT4(WorldVertexPositions[Index2].x, WorldVertexPositions[Index2].y, WorldVertexPositions[Index2].z, 1.0f));
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 0);
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 1);
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 2);
+	}
+
+	for (const auto& EdgeEntry : EdgeToTriangleIndices)
+	{
+		const std::pair<uint32_t, uint32_t> EdgeKey = EdgeEntry.first;
+		const std::vector<uint32_t>& TriangleIndicesForEdge = EdgeEntry.second;
+		bool IsSilhouetteEdge = false;
+		if (TriangleIndicesForEdge.size() == 2)
+		{
+			const bool FirstFace = TriangleFacesLight[TriangleIndicesForEdge[0]];
+			const bool SecondFace = TriangleFacesLight[TriangleIndicesForEdge[1]];
+			IsSilhouetteEdge = (FirstFace != SecondFace);
+		}
+		else if (TriangleIndicesForEdge.size() == 1)
+		{
+			IsSilhouetteEdge = TriangleFacesLight[TriangleIndicesForEdge[0]];
+		}
+		else
+		{
+			IsSilhouetteEdge = false;
+		}
+
+		if (IsSilhouetteEdge == false)
+		{
+			continue;
+		}
+
+		const uint32_t VertexIndex0 = EdgeKey.first;
+		const uint32_t VertexIndex1 = EdgeKey.second;
+		const DirectX::XMVECTOR Position0 = DirectX::XMLoadFloat3(&WorldVertexPositions[VertexIndex0]);
+		const DirectX::XMVECTOR Position1 = DirectX::XMLoadFloat3(&WorldVertexPositions[VertexIndex1]);
+		const DirectX::XMVECTOR ExtrudeDirection0 = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(Position0, LightWorldPositionVector));
+		const DirectX::XMVECTOR ExtrudeDirection1 = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(Position1, LightWorldPositionVector));
+		const DirectX::XMVECTOR ExtrudedPosition0 = DirectX::XMVectorAdd(
+			Position0,
+			DirectX::XMVectorScale(ExtrudeDirection0, ShadowVolumeExtrusionDistance));
+		const DirectX::XMVECTOR ExtrudedPosition1 = DirectX::XMVectorAdd(
+			Position1,
+			DirectX::XMVectorScale(ExtrudeDirection1, ShadowVolumeExtrusionDistance));
+		DirectX::XMFLOAT3 StoredExtruded0;
+		DirectX::XMFLOAT3 StoredExtruded1;
+		DirectX::XMStoreFloat3(&StoredExtruded0, ExtrudedPosition0);
+		DirectX::XMStoreFloat3(&StoredExtruded1, ExtrudedPosition1);
+
+		const uint32_t BaseVertexIndex = static_cast<uint32_t>(ShadowVolumePositions.size());
+		ShadowVolumePositions.push_back(DirectX::XMFLOAT4(WorldVertexPositions[VertexIndex0].x, WorldVertexPositions[VertexIndex0].y, WorldVertexPositions[VertexIndex0].z, 1.0f));
+		ShadowVolumePositions.push_back(DirectX::XMFLOAT4(WorldVertexPositions[VertexIndex1].x, WorldVertexPositions[VertexIndex1].y, WorldVertexPositions[VertexIndex1].z, 1.0f));
+		ShadowVolumePositions.push_back(DirectX::XMFLOAT4(StoredExtruded1.x, StoredExtruded1.y, StoredExtruded1.z, 1.0f));
+		ShadowVolumePositions.push_back(DirectX::XMFLOAT4(StoredExtruded0.x, StoredExtruded0.y, StoredExtruded0.z, 1.0f));
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 0);
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 1);
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 2);
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 0);
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 2);
+		ShadowVolumeIndices.push_back(BaseVertexIndex + 3);
+	}
+
+	if (ShadowVolumeIndices.empty())
+	{
+		return;
+	}
+
+	const UINT VertexBufferByteWidth = static_cast<UINT>(ShadowVolumePositions.size() * sizeof(DirectX::XMFLOAT4));
+	const UINT IndexBufferByteWidth = static_cast<UINT>(ShadowVolumeIndices.size() * sizeof(uint32_t));
+
+	D3D11_BUFFER_DESC VertexBufferDescription = {};
+	VertexBufferDescription.Usage = D3D11_USAGE_DEFAULT;
+	VertexBufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	VertexBufferDescription.ByteWidth = VertexBufferByteWidth;
+
+	D3D11_SUBRESOURCE_DATA VertexSubresourceData = {};
+	VertexSubresourceData.pSysMem = ShadowVolumePositions.data();
+
+	Device->CreateBuffer(&VertexBufferDescription, &VertexSubresourceData, &ShadowVolumeVertexBuffer);
+
+	D3D11_BUFFER_DESC IndexBufferDescription = {};
+	IndexBufferDescription.Usage = D3D11_USAGE_DEFAULT;
+	IndexBufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	IndexBufferDescription.ByteWidth = IndexBufferByteWidth;
+
+	D3D11_SUBRESOURCE_DATA IndexSubresourceData = {};
+	IndexSubresourceData.pSysMem = ShadowVolumeIndices.data();
+
+	Device->CreateBuffer(&IndexBufferDescription, &IndexSubresourceData, &ShadowVolumeIndexBuffer);
+
+	ShadowVolumeIndexCount = static_cast<UINT>(ShadowVolumeIndices.size());
+	ShadowVolumeGeometryValid = true;
+}
+
 void MeshUniversalComponent::ReleaseRenderResources()
 {
+	ReleaseShadowVolumeGeometry();
+
 	if (TransformConstantBuffer != nullptr)
 	{
 		TransformConstantBuffer->Release();

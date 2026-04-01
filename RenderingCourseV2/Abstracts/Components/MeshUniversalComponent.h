@@ -84,6 +84,8 @@ private:
 		ID3DBlob** OutputByteCode) const;
 	void ReleaseShaderProgramResources();
 	void ReleaseRenderResources();
+	void EnsureShadowVolumeGeometryForLight(ID3D11Device* Device, const DirectX::XMFLOAT3& LightWorldPosition);
+	void ReleaseShadowVolumeGeometry();
 
 	ID3D11InputLayout* Layout;
 	ID3D11VertexShader* VertexShader;
@@ -109,6 +111,11 @@ private:
 	bool UseOrthographicProjection;
 	float OrthographicProjectionWidth;
 	float OrthographicProjectionHeight;
+	ID3D11Buffer* ShadowVolumeVertexBuffer;
+	ID3D11Buffer* ShadowVolumeIndexBuffer;
+	UINT ShadowVolumeIndexCount;
+	DirectX::XMFLOAT3 CachedShadowVolumeLightWorldPosition;
+	bool ShadowVolumeGeometryValid;
 
 	friend class MeshUniversalForwardRendererProxyObject;
 	friend class MeshUniversalDeferredRendererProxyObject;

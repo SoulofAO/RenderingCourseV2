@@ -9,6 +9,21 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/DeferredRendererProxyObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/DeferredRendererProxyObject.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/RenderingProxyPassState.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/RenderingProxyPassState.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Tests/PointLightShadowWallsTestGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Tests/PointLightShadowWallsTestGame.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -55,25 +70,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "C/C++ Project.RenderingCourseV2.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "LastUpdates",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "configurable.group.build",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;C/C++ Project.RenderingCourseV2.executor&quot;: &quot;Debug&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;LastUpdates&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.build&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="RenderingCourseV2" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
@@ -128,7 +143,8 @@
       <workItem from="1774960614453" duration="7509000" />
       <workItem from="1775041543458" duration="5890000" />
       <workItem from="1775049413120" duration="4750000" />
-      <workItem from="1775054458906" duration="817000" />
+      <workItem from="1775054458906" duration="2052000" />
+      <workItem from="1775057341494" duration="2000" />
     </task>
     <servers />
   </component>
