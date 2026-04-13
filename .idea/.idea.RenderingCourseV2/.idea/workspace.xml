@@ -9,22 +9,8 @@
   <component name="ChangeListManager">
     <list default="true" id="07189b94-8a0b-4a02-a98b-66622fbbe4be" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RenderingCourseV2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Components/MeshUniversalComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderPipeline.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/DeferredRenderer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/DeferredRendererProxyObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/DeferredRendererProxyObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/RenderingProxyPassState.h" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Abstracts/Rendering/RenderProxy/RenderingProxyPassState.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.command.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.read.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/Renderin.104bf5f3.tlog/CL.write.1.tlog" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.idb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Renderin.104bf5f3/x64/Debug/vc143.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Shaders/Deferred/DeferredLightingPass.hlsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/Tests/PointLightShadowWallsTestGame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/Tests/PointLightShadowWallsTestGame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/MySuper3DApp.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/RenderingCourseV2/imgui.ini" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -145,6 +131,7 @@
       <workItem from="1775049413120" duration="4750000" />
       <workItem from="1775054458906" duration="2052000" />
       <workItem from="1775057341494" duration="2000" />
+      <workItem from="1775500997632" duration="1249000" />
     </task>
     <servers />
   </component>

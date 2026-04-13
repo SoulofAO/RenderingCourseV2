@@ -57,15 +57,18 @@ GameConfigurator BuildSinglePlayerGameConfigurator(
 
 GameConfigurator BuildTwoPlayerSplitScreenGameConfigurator(
 	const wchar_t* SessionName,
-	int GameIdentifier,
-	const std::function<std::unique_ptr<Game>()>& GameFactory)
+	int GameIdentifier1,
+	int GameIdentifier2,
+	const std::function<std::unique_ptr<Game>()>& GameFactory1,
+	const std::function<std::unique_ptr<Game>()>& GameFactory2)
 {
 	GameConfigurator NewGameConfigurator = {};
 	NewGameConfigurator.SessionName = SessionName;
 	NewGameConfigurator.ReceiveInputWhenSessionIsInactive = true;
-	NewGameConfigurator.Games.push_back(GameDefinition{ GameIdentifier, GameFactory });
-	NewGameConfigurator.Players.push_back(PlayerBinding{ 1, 0, 0, ViewportRectangleNormalized{ 0.0f, 0.0f, 0.5f, 1.0f }, GameIdentifier });
-	NewGameConfigurator.Players.push_back(PlayerBinding{ 2, 1, 0, ViewportRectangleNormalized{ 0.5f, 0.0f, 0.5f, 1.0f }, GameIdentifier });
+	NewGameConfigurator.Games.push_back(GameDefinition{ GameIdentifier1, GameFactory1 });
+	NewGameConfigurator.Games.push_back(GameDefinition{ GameIdentifier2, GameFactory2 });
+	NewGameConfigurator.Players.push_back(PlayerBinding{ 1, 0, 0, ViewportRectangleNormalized{ 0.0f, 0.0f, 0.5f, 1.0f }, GameIdentifier1 });
+	NewGameConfigurator.Players.push_back(PlayerBinding{ 2, 1, 0, ViewportRectangleNormalized{ 0.5f, 0.0f, 0.5f, 1.0f }, GameIdentifier2 });
 	return NewGameConfigurator;
 }
 
@@ -93,7 +96,7 @@ std::unique_ptr<Game> BuildSelectionGame()
 			SelectionGameEntry{ "Particle Test Game", BuildSinglePlayerGameConfigurator(L"ParticleTestSession", ParticleTestGameIdentifier, BuildParticleTestGame) },
 			SelectionGameEntry{ "Point Light Shadow Walls Test", BuildSinglePlayerGameConfigurator(L"PointLightShadowWallsSession", PointLightShadowWallsTestGameIdentifier, BuildPointLightShadowWallsTestGame) },
 			SelectionGameEntry{ "Katamary Game", BuildSinglePlayerGameConfigurator(L"KatamarySession", KatamaryTaskGameIdentifier, BuildKatamaryTaskGame) },
-			SelectionGameEntry{ "Planets SplitScreen 2 Players", BuildTwoPlayerSplitScreenGameConfigurator(L"PlanetsSplitScreenSession", PlanetsGameIdentifier, BuildPlanetsTaskGame) }
+			SelectionGameEntry{ "Planets SplitScreen 2 Players", BuildTwoPlayerSplitScreenGameConfigurator(L"PlanetsSplitScreenSession", PlanetsGameIdentifier, KatamaryTaskGameIdentifier, BuildPlanetsTaskGame,  BuildKatamaryTaskGame ) }
 		});
 	return NewSelectionGame;
 }
