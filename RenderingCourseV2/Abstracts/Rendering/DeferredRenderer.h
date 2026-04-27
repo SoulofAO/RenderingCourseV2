@@ -54,6 +54,7 @@ public:
 		const std::vector<DeferredSpotLightData>& SpotLights,
 		float UseFullBrightnessWithoutLighting,
 		float ShadowStrength,
+		float UseShadowedAlbedoTextureWithoutShadowDimming,
 		float DeferredDebugBufferViewMode);
 	void PrepareCascadedShadowMaps(
 		const DirectX::XMMATRIX& CameraViewMatrix,

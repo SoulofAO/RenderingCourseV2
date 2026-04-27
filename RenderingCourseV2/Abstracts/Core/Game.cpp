@@ -70,6 +70,7 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, IsWorldBoundarySphereEnabled(false)
 	, IsGridFloorEnabled(true)
 	, IsParticleIndexOverlayEnabled(false)
+	, UseShadowedAlbedoTextureWithoutShadowDimming(true)
 	, WorldBoundarySphereCenter(0.0f, 0.0f, 0.0f)
 	, WorldBoundarySphereRadius(4000.0f)
 	, IsEmbeddedPlayStarted(false)
@@ -792,6 +793,16 @@ bool Game::GetGridFloorEnabled() const
 	return IsGridFloorEnabled;
 }
 
+void Game::SetUseShadowedAlbedoTextureWithoutShadowDimming(bool NewUseShadowedAlbedoTextureWithoutShadowDimming)
+{
+	UseShadowedAlbedoTextureWithoutShadowDimming = NewUseShadowedAlbedoTextureWithoutShadowDimming;
+}
+
+bool Game::GetUseShadowedAlbedoTextureWithoutShadowDimming() const
+{
+	return UseShadowedAlbedoTextureWithoutShadowDimming;
+}
+
 void Game::SetWorldBoundarySphereSettings(
 	bool NewIsEnabled,
 	const DirectX::XMFLOAT3& NewWorldBoundarySphereCenter,
@@ -965,6 +976,8 @@ void Game::DrawCameraPossessionUserInterface()
 			{
 				SceneViewportSubsystemInstance->SetIsShadowRenderingEnabled(IsShadowRenderingEnabled);
 			}
+			ImGui::Checkbox("Shadowed Albedo Without Shadow Dimming", &UseShadowedAlbedoTextureWithoutShadowDimming);
+			SceneViewportSubsystemInstance->SetUseShadowedAlbedoTextureWithoutShadowDimming(UseShadowedAlbedoTextureWithoutShadowDimming);
 
 			const bool IsDeferredRenderingEnabled = SceneViewportSubsystemInstance->IsDeferredRenderingEnabled();
 			ImGui::BeginDisabled(IsDeferredRenderingEnabled == false);

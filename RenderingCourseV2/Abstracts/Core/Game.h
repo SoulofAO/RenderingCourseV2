@@ -90,6 +90,8 @@ public:
 		float NewWorldBoundarySphereRadius);
 	void SetGridFloorEnabled(bool NewIsGridFloorEnabled);
 	bool GetGridFloorEnabled() const;
+	void SetUseShadowedAlbedoTextureWithoutShadowDimming(bool NewUseShadowedAlbedoTextureWithoutShadowDimming);
+	bool GetUseShadowedAlbedoTextureWithoutShadowDimming() const;
 
 	template<typename TSubsystem>
 	TSubsystem* GetSubsystem() const
@@ -217,6 +219,7 @@ protected:
 	bool IsWorldBoundarySphereEnabled;
 	bool IsGridFloorEnabled;
 	bool IsParticleIndexOverlayEnabled;
+	bool UseShadowedAlbedoTextureWithoutShadowDimming;
 	DirectX::XMFLOAT3 WorldBoundarySphereCenter;
 	float WorldBoundarySphereRadius;
 	bool IsEmbeddedPlayStarted;

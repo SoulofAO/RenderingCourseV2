@@ -129,8 +129,9 @@ struct DeferredLightBufferData
 	float ShadowCascadeCountValue;
 	DirectX::XMFLOAT3 ShadowCascadeCountValuePadding;
 	DirectX::XMFLOAT4X4 CascadeViewProjectionMatrices[ShadowCascadeCount];
+	float UseShadowedAlbedoTextureWithoutShadowDimming;
 	float DeferredDebugBufferViewMode;
-	DirectX::XMFLOAT3 DeferredDebugBufferViewModePadding;
+	DirectX::XMFLOAT2 DeferredDebugBufferViewModePadding;
 };
 
 DeferredRenderer::DeferredRenderer()
@@ -438,6 +439,7 @@ void DeferredRenderer::RenderLightingPass(
 	const std::vector<DeferredSpotLightData>& SpotLights,
 	float UseFullBrightnessWithoutLighting,
 	float ShadowStrength,
+	float UseShadowedAlbedoTextureWithoutShadowDimming,
 	float DeferredDebugBufferViewMode)
 {
 	if (DeviceContext == nullptr || FinalRenderTargetView == nullptr || LightingVertexShader == nullptr || LightingPixelShader == nullptr)
@@ -479,6 +481,7 @@ void DeferredRenderer::RenderLightingPass(
 	{
 		LightBufferData.CascadeViewProjectionMatrices[CascadeIndex] = ShadowCascadeViewProjectionMatricesStorage[CascadeIndex];
 	}
+	LightBufferData.UseShadowedAlbedoTextureWithoutShadowDimming = UseShadowedAlbedoTextureWithoutShadowDimming;
 	LightBufferData.DeferredDebugBufferViewMode = DeferredDebugBufferViewMode;
 	DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
 

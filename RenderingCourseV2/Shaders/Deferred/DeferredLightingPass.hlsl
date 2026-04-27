@@ -54,8 +54,9 @@ cbuffer DeferredLightBuffer : register(b1)
 	float ShadowCascadeCountValue;
 	float3 ShadowCascadeCountValuePadding;
 	float4x4 CascadeViewProjectionMatrices[4];
+	float UseShadowedAlbedoTextureWithoutShadowDimming;
 	float DeferredDebugBufferViewMode;
-	float3 DeferredDebugBufferViewModePadding;
+	float2 DeferredDebugBufferViewModePadding;
 };
 
 struct VS_OUT
@@ -263,13 +264,18 @@ float4 PSMain(VS_OUT Input) : SV_Target
 	}
 	float UseShadowedAlbedoTexture = Material.z;
 	float3 LightingAlbedo = Albedo.rgb;
+	float EffectiveShadowVisibility = ShadowVisibility;
 	if (UseShadowedAlbedoTexture > 0.5f && ShadowVisibility < 0.999f)
 	{
 		LightingAlbedo = ShadowAlbedo.rgb;
+		if (UseShadowedAlbedoTextureWithoutShadowDimming > 0.5f)
+		{
+			EffectiveShadowVisibility = 1.0f;
+		}
 	}
 	float3 AmbientColor = Albedo.rgb * 0.15f;
-	float3 DirectionalDiffuseColor = LightingAlbedo * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
-	float3 DirectionalSpecularColor = Specular * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
+	float3 DirectionalDiffuseColor = LightingAlbedo * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity * EffectiveShadowVisibility;
+	float3 DirectionalSpecularColor = Specular * DirectionalLightColor.rgb * DirectionalLightIntensity * EffectiveShadowVisibility;
 	float3 AdditionalLightsColor = float3(0.0f, 0.0f, 0.0f);
 	int PointLightCount = clamp((int)PointLightCountValue, 0, 16);
 	[loop]

@@ -70,11 +70,13 @@ public:
 	bool GetIsShadowRenderingEnabled() const;
 	int GetShadowCascadeCountSetting() const;
 	float GetShadowMaximumDistanceSetting() const;
+	bool GetUseShadowedAlbedoTextureWithoutShadowDimming() const;
 
 	void SetFrameCameraData(const DirectX::XMMATRIX& NewViewMatrix, const DirectX::XMMATRIX& NewProjectionMatrix, const DirectX::XMFLOAT3& NewCameraWorldPosition);
 	void SetDirectionalLightData(const DirectX::XMFLOAT3& NewLightDirection, const DirectX::XMFLOAT4& NewLightColor, float NewLightIntensity, float NewUseFullBrightnessWithoutLighting);
 	void SetIsShadowRenderingEnabled(bool NewIsShadowRenderingEnabled);
 	void SetShadowCascadeSettings(int NewShadowCascadeCount, float NewShadowMaximumDistance);
+	void SetUseShadowedAlbedoTextureWithoutShadowDimming(bool NewUseShadowedAlbedoTextureWithoutShadowDimming);
 	void SetRenderPipelineType(RenderPipelineType NewRenderPipelineType);
 	RenderPipelineType GetRenderPipelineType() const;
 	void SetDeferredDebugBufferViewMode(DeferredDebugBufferViewMode NewDeferredDebugBufferViewMode);
@@ -115,6 +117,7 @@ private:
 	bool IsShadowRenderingEnabled;
 	int ShadowCascadeCountSetting;
 	float ShadowMaximumDistanceSetting;
+	bool UseShadowedAlbedoTextureWithoutShadowDimming;
 	DeferredDebugBufferViewMode CurrentDeferredDebugBufferViewMode;
 	RenderPipelineType CurrentRenderPipelineType;
 	bool ParticleDistanceSortEnabled;

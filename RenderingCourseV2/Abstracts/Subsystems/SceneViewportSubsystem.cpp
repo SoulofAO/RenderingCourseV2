@@ -24,6 +24,7 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, IsShadowRenderingEnabled(true)
 	, ShadowCascadeCountSetting(4)
 	, ShadowMaximumDistanceSetting(160.0f)
+	, UseShadowedAlbedoTextureWithoutShadowDimming(true)
 	, CurrentDeferredDebugBufferViewMode(DeferredDebugBufferViewMode::FinalLighting)
 	, CurrentRenderPipelineType(RenderPipelineType::Forward)
 	, ParticleDistanceSortEnabled(true)
@@ -358,6 +359,11 @@ float SceneViewportSubsystem::GetShadowMaximumDistanceSetting() const
 	return ShadowMaximumDistanceSetting;
 }
 
+bool SceneViewportSubsystem::GetUseShadowedAlbedoTextureWithoutShadowDimming() const
+{
+	return UseShadowedAlbedoTextureWithoutShadowDimming;
+}
+
 void SceneViewportSubsystem::SetFrameCameraData(const DirectX::XMMATRIX& NewViewMatrix, const DirectX::XMMATRIX& NewProjectionMatrix, const DirectX::XMFLOAT3& NewCameraWorldPosition)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, NewViewMatrix);
@@ -390,6 +396,11 @@ void SceneViewportSubsystem::SetShadowCascadeSettings(int NewShadowCascadeCount,
 	{
 		DeferredRendererInstance->SetShadowCascadeSettings(ShadowCascadeCountSetting, ShadowMaximumDistanceSetting);
 	}
+}
+
+void SceneViewportSubsystem::SetUseShadowedAlbedoTextureWithoutShadowDimming(bool NewUseShadowedAlbedoTextureWithoutShadowDimming)
+{
+	UseShadowedAlbedoTextureWithoutShadowDimming = NewUseShadowedAlbedoTextureWithoutShadowDimming;
 }
 
 void SceneViewportSubsystem::SetRenderPipelineType(RenderPipelineType NewRenderPipelineType)
