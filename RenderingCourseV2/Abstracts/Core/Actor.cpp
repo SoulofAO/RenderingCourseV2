@@ -2,6 +2,8 @@
 #include "Abstracts/Components/ActorComponent.h"
 #include <algorithm>
 
+static uint64_t GlobalActorUniqueIndexCounter = 1;
+
 static Transform ApplyPivotToTransform(const Transform& SourceTransform, const Transform& PivotTransform)
 {
 	Transform PivotedTransform = SourceTransform;
@@ -43,6 +45,7 @@ static Transform RemovePivotFromTransform(const Transform& PivotedTransform, con
 
 Actor::Actor()
 	: OwningGame(nullptr)
+	, UniqueIndex(GlobalActorUniqueIndexCounter++)
 	, LocalTransform()
 	, PivotTransform()
 	, ParentActor(nullptr)
@@ -62,6 +65,11 @@ void Actor::SetOwningGame(Game* GameInstance)
 Game* Actor::GetOwningGame() const
 {
 	return OwningGame;
+}
+
+uint64_t Actor::GetUniqueIndex() const
+{
+	return UniqueIndex;
 }
 
 void Actor::Initialize()

@@ -40,6 +40,8 @@ struct MeshUniversalMaterialBufferData
 	float SpecularIntensity;
 	float UseAlbedoTexture;
 	float UseNormalTexture;
+	float UseShadowedAlbedoTexture;
+	DirectX::XMFLOAT3 Padding0;
 };
 
 class SceneViewportSubsystem;
@@ -69,6 +71,7 @@ public:
 	std::vector<unsigned int> Indices;
 	std::string ModelMeshPath = "";
 	std::string AlbedoTexturePath = "";
+	std::string ShadowedAlbedoTexturePath = "";
 	std::string NormalTexturePath = "";
 	std::string SpecularTexturePath = "";
 	std::string EmissiveTexturePath = "";
@@ -84,8 +87,6 @@ private:
 		ID3DBlob** OutputByteCode) const;
 	void ReleaseShaderProgramResources();
 	void ReleaseRenderResources();
-	void EnsureShadowVolumeGeometryForLight(ID3D11Device* Device, const DirectX::XMFLOAT3& LightWorldPosition);
-	void ReleaseShadowVolumeGeometry();
 
 	ID3D11InputLayout* Layout;
 	ID3D11VertexShader* VertexShader;
@@ -103,6 +104,7 @@ private:
 	ID3D11Buffer* IndexBuffer;
 	ID3D11RasterizerState* RasterState;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AlbedoTexture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ShadowedAlbedoTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> NormalTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> SpecularTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> EmissiveTexture;
@@ -111,11 +113,6 @@ private:
 	bool UseOrthographicProjection;
 	float OrthographicProjectionWidth;
 	float OrthographicProjectionHeight;
-	ID3D11Buffer* ShadowVolumeVertexBuffer;
-	ID3D11Buffer* ShadowVolumeIndexBuffer;
-	UINT ShadowVolumeIndexCount;
-	DirectX::XMFLOAT3 CachedShadowVolumeLightWorldPosition;
-	bool ShadowVolumeGeometryValid;
 
 	friend class MeshUniversalForwardRendererProxyObject;
 	friend class MeshUniversalDeferredRendererProxyObject;

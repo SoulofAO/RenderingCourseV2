@@ -1,8 +1,5 @@
 #include "Abstracts/Rendering/RenderProxy/MeshUniversalDeferredRendererProxyObject.h"
 #include "Abstracts/Components/MeshUniversalComponent.h"
-#include "Abstracts/Core/Game.h"
-#include "Abstracts/Rendering/DeferredRenderer.h"
-#include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 
 MeshUniversalDeferredRendererProxyObject::MeshUniversalDeferredRendererProxyObject(MeshUniversalComponent* NewOwnerComponent)
 	: OwnerComponent(NewOwnerComponent)
@@ -73,6 +70,7 @@ void MeshUniversalDeferredRendererProxyObject::RenderDeferredGeometryPass(const 
 		MaterialBufferData.SpecularIntensity = OwnerComponent->SpecularIntensity;
 		MaterialBufferData.UseAlbedoTexture = OwnerComponent->AlbedoTexture ? 1.0f : 0.0f;
 		MaterialBufferData.UseNormalTexture = OwnerComponent->NormalTexture ? 1.0f : 0.0f;
+		MaterialBufferData.UseShadowedAlbedoTexture = OwnerComponent->ShadowedAlbedoTexture ? 1.0f : 0.0f;
 		DeviceContext->UpdateSubresource(OwnerComponent->MaterialConstantBuffer, 0, nullptr, &MaterialBufferData, 0, 0);
 		DeviceContext->PSSetConstantBuffers(2, 1, &OwnerComponent->MaterialConstantBuffer);
 	}
@@ -139,79 +137,4 @@ void MeshUniversalDeferredRendererProxyObject::RenderDeferredShadowPass(const De
 	}
 	DeviceContext->PSSetShader(nullptr, nullptr, 0);
 	DeviceContext->DrawIndexed(OwnerComponent->IndexCount, 0, 0);
-}
-
-void MeshUniversalDeferredRendererProxyObject::RenderDeferredStencilShadowVolumePass(
-	const DeferredStencilShadowRenderPassState& DeferredStencilShadowRenderPassStateValue)
-{
-	if (OwnerComponent == nullptr)
-	{
-		return;
-	}
-
-	if (DeferredStencilShadowRenderPassStateValue.DeferredRendererInstance == nullptr)
-	{
-		return;
-	}
-
-	ID3D11DeviceContext* DeviceContext = DeferredStencilShadowRenderPassStateValue.DeviceContext;
-	if (DeviceContext == nullptr)
-	{
-		return;
-	}
-
-	Game* OwningGame = OwnerComponent->GetOwningGame();
-	if (OwningGame == nullptr)
-	{
-		return;
-	}
-
-	SceneViewportSubsystem* SceneViewport = OwningGame->GetSubsystem<SceneViewportSubsystem>();
-	if (SceneViewport == nullptr)
-	{
-		return;
-	}
-
-	ID3D11Device* Device = SceneViewport->GetDevice();
-	if (Device == nullptr)
-	{
-		return;
-	}
-
-	OwnerComponent->EnsureShadowVolumeGeometryForLight(Device, DeferredStencilShadowRenderPassStateValue.LightWorldPosition);
-	if (
-		OwnerComponent->ShadowVolumeIndexCount == 0 ||
-		OwnerComponent->ShadowVolumeVertexBuffer == nullptr ||
-		OwnerComponent->ShadowVolumeIndexBuffer == nullptr)
-	{
-		return;
-	}
-
-	const DirectX::XMMATRIX WorldMatrix = OwnerComponent->GetWorldTransform().ToMatrix();
-	const DirectX::XMMATRIX WorldViewProjectionMatrix =
-		WorldMatrix *
-		DeferredStencilShadowRenderPassStateValue.ViewMatrix *
-		DeferredStencilShadowRenderPassStateValue.ProjectionMatrix;
-
-	DirectX::XMFLOAT4X4 WorldViewProjectionMatrixStorage;
-	DirectX::XMStoreFloat4x4(&WorldViewProjectionMatrixStorage, DirectX::XMMatrixTranspose(WorldViewProjectionMatrix));
-
-	ID3D11Buffer* ShadowVolumeTransformConstantBuffer =
-		DeferredStencilShadowRenderPassStateValue.DeferredRendererInstance->GetShadowVolumeTransformConstantBuffer();
-	if (ShadowVolumeTransformConstantBuffer == nullptr)
-	{
-		return;
-	}
-
-	DeviceContext->UpdateSubresource(ShadowVolumeTransformConstantBuffer, 0, nullptr, &WorldViewProjectionMatrixStorage, 0, 0);
-
-	const UINT VertexBufferStride = sizeof(DirectX::XMFLOAT4);
-	const UINT VertexBufferOffset = 0;
-	DeviceContext->IASetVertexBuffers(0, 1, &OwnerComponent->ShadowVolumeVertexBuffer, &VertexBufferStride, &VertexBufferOffset);
-	DeviceContext->IASetIndexBuffer(OwnerComponent->ShadowVolumeIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	DeferredStencilShadowRenderPassStateValue.DeferredRendererInstance->BindShadowVolumePassPipelineForSubPass(DeviceContext, 0);
-	DeviceContext->DrawIndexed(OwnerComponent->ShadowVolumeIndexCount, 0, 0);
-	DeferredStencilShadowRenderPassStateValue.DeferredRendererInstance->BindShadowVolumePassPipelineForSubPass(DeviceContext, 1);
-	DeviceContext->DrawIndexed(OwnerComponent->ShadowVolumeIndexCount, 0, 0);
 }

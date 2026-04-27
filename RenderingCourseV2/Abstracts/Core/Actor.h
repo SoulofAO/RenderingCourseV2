@@ -3,6 +3,7 @@
 #include "Abstracts/Core/Object.h"
 #include "Abstracts/Core/Transform.h"
 #include "Abstracts/Components/ActorComponent.h"
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -16,6 +17,7 @@ public:
 
 	void SetOwningGame(Game* GameInstance);
 	Game* GetOwningGame() const;
+	uint64_t GetUniqueIndex() const;
 
 	void Initialize() override;
 	void Update(float DeltaTime) override;
@@ -99,6 +101,7 @@ private:
 	void RemoveChildActorReference(Actor* ExistingChildActor);
 
 	Game* OwningGame;
+	uint64_t UniqueIndex;
 	std::vector<std::unique_ptr<ActorComponent>> Components;
 	Transform LocalTransform;
 	Transform PivotTransform;

@@ -75,7 +75,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\include;$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
@@ -92,7 +92,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\include;$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -106,7 +106,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\include;$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
@@ -114,6 +114,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\debug\lib;$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc145-mtd.lib;DirectXTex.lib;imguid.lib;imguizmo.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle2_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;kubazip.lib;minizip.lib;poly2tri.lib;polyclipping.lib;pugixml.lib;zlibd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -123,13 +125,15 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(DirectXTexIncludeDir);$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\include;$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\include\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(VcpkgManifestRoot)vcpkg_installed\$(VcpkgTriplet)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc145-mt.lib;DirectXTex.lib;imgui.lib;imguizmo.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle2_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;kubazip.lib;minizip.lib;poly2tri.lib;polyclipping.lib;pugixml.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

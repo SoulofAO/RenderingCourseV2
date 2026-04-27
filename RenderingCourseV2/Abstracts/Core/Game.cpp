@@ -848,6 +848,14 @@ void Game::DrawCameraPossessionUserInterface()
 		{
 			ImGui::Separator();
 			ImGui::TextUnformatted("Actor Gizmo");
+			if (SelectedActorForGizmo != nullptr)
+			{
+				ImGui::Text("Selected Actor Index: %llu", static_cast<unsigned long long>(SelectedActorForGizmo->GetUniqueIndex()));
+			}
+			else
+			{
+				ImGui::TextUnformatted("Selected Actor Index: none");
+			}
 
 			int ActorGizmoOperationModeIndex = static_cast<int>(CurrentActorGizmoOperationMode);
 			const char* ActorGizmoOperationModeItems[] =

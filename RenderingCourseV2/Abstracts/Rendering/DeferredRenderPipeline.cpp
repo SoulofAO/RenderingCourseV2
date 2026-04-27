@@ -4,7 +4,6 @@
 #include "Abstracts/Rendering/DeferredRenderer.h"
 #include "Abstracts/Rendering/RenderProxy/DeferredRendererProxyObject.h"
 #include "Abstracts/Rendering/RenderProxy/ForwardRendererProxyObject.h"
-#include "Abstracts/Rendering/RenderProxy/RenderingProxyPassState.h"
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 
 void DeferredRenderPipeline::RenderFrame(
@@ -111,10 +110,7 @@ void DeferredRenderPipeline::RenderFrame(
 	const DirectX::XMMATRIX ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
 	const DirectX::XMMATRIX InverseViewProjectionMatrix = DirectX::XMMatrixInverse(nullptr, ViewProjectionMatrix);
 
-	const float ShadowStrengthValue = IsShadowRenderingEnabled ? 1.0f : 0.0f;
-	const float DeferredDebugBufferViewModeValue = static_cast<float>(SceneViewport->GetDeferredDebugBufferViewMode());
-
-	DeferredRendererInstance->RenderDirectionalDeferredLightingPass(
+	DeferredRendererInstance->RenderLightingPass(
 		DeviceContext,
 		RenderTargetView,
 		ViewMatrix,
@@ -123,103 +119,11 @@ void DeferredRenderPipeline::RenderFrame(
 		SceneViewport->GetDirectionalLightDirection(),
 		SceneViewport->GetDirectionalLightColor(),
 		SceneViewport->GetDirectionalLightIntensity(),
+		SceneViewport->GetPointLights(),
+		SceneViewport->GetSpotLights(),
 		SceneViewport->GetUseFullBrightnessWithoutLighting(),
-		ShadowStrengthValue,
-		DeferredDebugBufferViewModeValue);
-
-	const std::vector<DeferredPointLightData>& PointLights = SceneViewport->GetPointLights();
-	const std::vector<DeferredSpotLightData>& SpotLights = SceneViewport->GetSpotLights();
-	const bool StencilShadowVolumesEnabled = IsShadowRenderingEnabled;
-
-	for (int PointLightIndex = 0; PointLightIndex < static_cast<int>(PointLights.size()) && PointLightIndex < MaximumDeferredPointLightCount; ++PointLightIndex)
-	{
-		if (StencilShadowVolumesEnabled)
-		{
-			DeferredRendererInstance->ClearGBufferStencil(DeviceContext);
-			DeferredRendererInstance->BeginShadowVolumeStencilPass(DeviceContext);
-
-			DeferredStencilShadowRenderPassState DeferredStencilShadowRenderPassStateValue = {};
-			DeferredStencilShadowRenderPassStateValue.DeviceContext = DeviceContext;
-			DeferredStencilShadowRenderPassStateValue.DeferredRendererInstance = DeferredRendererInstance;
-			DeferredStencilShadowRenderPassStateValue.ViewMatrix = ViewMatrix;
-			DeferredStencilShadowRenderPassStateValue.ProjectionMatrix = ProjectionMatrix;
-			DeferredStencilShadowRenderPassStateValue.LightWorldPosition = PointLights[static_cast<size_t>(PointLightIndex)].Position;
-
-			for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
-			{
-				if (ExistingRenderingComponent == nullptr)
-				{
-					continue;
-				}
-
-				DeferredRendererProxyObject* DeferredRendererProxyObjectInstance = ExistingRenderingComponent->GetDeferredRendererProxyObject();
-				if (DeferredRendererProxyObjectInstance != nullptr)
-				{
-					DeferredRendererProxyObjectInstance->RenderDeferredStencilShadowVolumePass(DeferredStencilShadowRenderPassStateValue);
-				}
-			}
-
-			DeferredRendererInstance->EndShadowVolumeStencilPass(DeviceContext);
-		}
-
-		DeferredRendererInstance->RenderSinglePointLightDeferredLightingPass(
-			DeviceContext,
-			RenderTargetView,
-			ViewMatrix,
-			InverseViewProjectionMatrix,
-			SceneViewport->GetCameraWorldPosition(),
-			PointLights,
-			PointLightIndex,
-			SceneViewport->GetUseFullBrightnessWithoutLighting(),
-			ShadowStrengthValue,
-			DeferredDebugBufferViewModeValue,
-			StencilShadowVolumesEnabled);
-	}
-
-	for (int SpotLightIndex = 0; SpotLightIndex < static_cast<int>(SpotLights.size()) && SpotLightIndex < MaximumDeferredSpotLightCount; ++SpotLightIndex)
-	{
-		if (StencilShadowVolumesEnabled)
-		{
-			DeferredRendererInstance->ClearGBufferStencil(DeviceContext);
-			DeferredRendererInstance->BeginShadowVolumeStencilPass(DeviceContext);
-
-			DeferredStencilShadowRenderPassState DeferredStencilShadowRenderPassStateValue = {};
-			DeferredStencilShadowRenderPassStateValue.DeviceContext = DeviceContext;
-			DeferredStencilShadowRenderPassStateValue.DeferredRendererInstance = DeferredRendererInstance;
-			DeferredStencilShadowRenderPassStateValue.ViewMatrix = ViewMatrix;
-			DeferredStencilShadowRenderPassStateValue.ProjectionMatrix = ProjectionMatrix;
-			DeferredStencilShadowRenderPassStateValue.LightWorldPosition = SpotLights[static_cast<size_t>(SpotLightIndex)].Position;
-
-			for (RenderingComponent* ExistingRenderingComponent : RenderingComponents)
-			{
-				if (ExistingRenderingComponent == nullptr)
-				{
-					continue;
-				}
-
-				DeferredRendererProxyObject* DeferredRendererProxyObjectInstance = ExistingRenderingComponent->GetDeferredRendererProxyObject();
-				if (DeferredRendererProxyObjectInstance != nullptr)
-				{
-					DeferredRendererProxyObjectInstance->RenderDeferredStencilShadowVolumePass(DeferredStencilShadowRenderPassStateValue);
-				}
-			}
-
-			DeferredRendererInstance->EndShadowVolumeStencilPass(DeviceContext);
-		}
-
-		DeferredRendererInstance->RenderSingleSpotLightDeferredLightingPass(
-			DeviceContext,
-			RenderTargetView,
-			ViewMatrix,
-			InverseViewProjectionMatrix,
-			SceneViewport->GetCameraWorldPosition(),
-			SpotLights,
-			SpotLightIndex,
-			SceneViewport->GetUseFullBrightnessWithoutLighting(),
-			ShadowStrengthValue,
-			DeferredDebugBufferViewModeValue,
-			StencilShadowVolumesEnabled);
-	}
+		IsShadowRenderingEnabled ? 1.0f : 0.0f,
+		static_cast<float>(SceneViewport->GetDeferredDebugBufferViewMode()));
 
 	ID3D11DepthStencilView* SceneDepthStencilView = SceneViewport->GetDepthStencilView();
 	DeviceContext->OMSetRenderTargets(1, &RenderTargetView, SceneDepthStencilView);

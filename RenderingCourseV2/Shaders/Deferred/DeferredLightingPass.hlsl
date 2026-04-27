@@ -1,8 +1,9 @@
 Texture2D GBufferAlbedo : register(t0);
 Texture2D GBufferNormal : register(t1);
 Texture2D GBufferMaterial : register(t2);
-Texture2D GBufferDepth : register(t3);
-Texture2DArray ShadowDepthTexture : register(t4);
+Texture2D GBufferShadowAlbedo : register(t3);
+Texture2D GBufferDepth : register(t4);
+Texture2DArray ShadowDepthTexture : register(t5);
 SamplerState GBufferSampler : register(s0);
 SamplerComparisonState ShadowComparisonSampler : register(s1);
 
@@ -53,10 +54,6 @@ cbuffer DeferredLightBuffer : register(b1)
 	float ShadowCascadeCountValue;
 	float3 ShadowCascadeCountValuePadding;
 	float4x4 CascadeViewProjectionMatrices[4];
-	uint LightingPassMode;
-	uint SingleLightIndex;
-	uint LightingPassPadding0;
-	uint LightingPassPadding1;
 	float DeferredDebugBufferViewMode;
 	float3 DeferredDebugBufferViewModePadding;
 };
@@ -222,52 +219,18 @@ float4 PSMain(VS_OUT Input) : SV_Target
 	float4 Albedo = GBufferAlbedo.Sample(GBufferSampler, Input.TextureCoordinates);
 	float4 EncodedNormal = GBufferNormal.Sample(GBufferSampler, Input.TextureCoordinates);
 	float4 Material = GBufferMaterial.Sample(GBufferSampler, Input.TextureCoordinates);
+	float4 ShadowAlbedo = GBufferShadowAlbedo.Sample(GBufferSampler, Input.TextureCoordinates);
 	float DepthValue = GBufferDepth.Sample(GBufferSampler, Input.TextureCoordinates).r;
 
 	float3 NormalDirection = normalize(EncodedNormal.xyz * 2.0f - 1.0f);
 	float3 WorldPosition = ReconstructWorldPosition(Input.TextureCoordinates, DepthValue);
+	float3 LightDirection = normalize(-DirectionalLightDirection);
 	float3 ViewDirection = normalize(CameraWorldPosition - WorldPosition);
+	float3 HalfDirection = normalize(LightDirection + ViewDirection);
+
+	float Diffuse = max(dot(NormalDirection, LightDirection), 0.0f);
 	float SpecularPower = Material.x;
 	float SpecularIntensity = Material.y;
-
-	if (LightingPassMode == 1u)
-	{
-		if (UseFullBrightnessWithoutLighting > 0.5f)
-		{
-			return float4(0.0f, 0.0f, 0.0f, 0.0f);
-		}
-		uint PointIndex = min(SingleLightIndex, 15u);
-		float3 PointContribution = CalculatePointLightContribution(
-			WorldPosition,
-			NormalDirection,
-			ViewDirection,
-			Albedo.rgb,
-			SpecularPower,
-			SpecularIntensity,
-			PointLights[PointIndex]);
-		return float4(PointContribution, 0.0f);
-	}
-	if (LightingPassMode == 2u)
-	{
-		if (UseFullBrightnessWithoutLighting > 0.5f)
-		{
-			return float4(0.0f, 0.0f, 0.0f, 0.0f);
-		}
-		uint SpotIndex = min(SingleLightIndex, 15u);
-		float3 SpotContribution = CalculateSpotLightContribution(
-			WorldPosition,
-			NormalDirection,
-			ViewDirection,
-			Albedo.rgb,
-			SpecularPower,
-			SpecularIntensity,
-			SpotLights[SpotIndex]);
-		return float4(SpotContribution, 0.0f);
-	}
-
-	float3 LightDirection = normalize(-DirectionalLightDirection);
-	float3 HalfDirection = normalize(LightDirection + ViewDirection);
-	float Diffuse = max(dot(NormalDirection, LightDirection), 0.0f);
 	float Specular = pow(max(dot(NormalDirection, HalfDirection), 0.0f), SpecularPower) * SpecularIntensity;
 
 	if (DeferredDebugBufferViewMode > 0.5f && DeferredDebugBufferViewMode < 1.5f)
@@ -298,8 +261,14 @@ float4 PSMain(VS_OUT Input) : SV_Target
 	{
 		return float4(ShadowVisibility, ShadowVisibility, ShadowVisibility, 1.0f);
 	}
+	float UseShadowedAlbedoTexture = Material.z;
+	float3 LightingAlbedo = Albedo.rgb;
+	if (UseShadowedAlbedoTexture > 0.5f && ShadowVisibility < 0.999f)
+	{
+		LightingAlbedo = ShadowAlbedo.rgb;
+	}
 	float3 AmbientColor = Albedo.rgb * 0.15f;
-	float3 DirectionalDiffuseColor = Albedo.rgb * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
+	float3 DirectionalDiffuseColor = LightingAlbedo * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
 	float3 DirectionalSpecularColor = Specular * DirectionalLightColor.rgb * DirectionalLightIntensity * ShadowVisibility;
 	float3 AdditionalLightsColor = float3(0.0f, 0.0f, 0.0f);
 	int PointLightCount = clamp((int)PointLightCountValue, 0, 16);
@@ -310,7 +279,7 @@ float4 PSMain(VS_OUT Input) : SV_Target
 			WorldPosition,
 			NormalDirection,
 			ViewDirection,
-			Albedo.rgb,
+			LightingAlbedo,
 			SpecularPower,
 			SpecularIntensity,
 			PointLights[PointLightIndex]);
@@ -323,7 +292,7 @@ float4 PSMain(VS_OUT Input) : SV_Target
 			WorldPosition,
 			NormalDirection,
 			ViewDirection,
-			Albedo.rgb,
+			LightingAlbedo,
 			SpecularPower,
 			SpecularIntensity,
 			SpotLights[SpotLightIndex]);

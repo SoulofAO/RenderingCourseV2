@@ -29,6 +29,7 @@ void LightingTestGame::BuildTestScene()
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
 	FloorMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleCube.fbx";
+	FloorMeshComponent->ShadowedAlbedoTexturePath = "InputResources/Textures/TestTexture.png";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.08f, 0.08f, 0.09f, 1.0f);
 	FloorMeshComponent->SpecularPower = 10.0f;
 	FloorMeshComponent->SpecularIntensity = 0.25f;

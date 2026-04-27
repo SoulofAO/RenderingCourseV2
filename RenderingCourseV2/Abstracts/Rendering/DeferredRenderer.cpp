@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <cstdint>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -104,11 +103,6 @@ namespace
 	}
 }
 
-struct ShadowVolumeTransformBufferData
-{
-	DirectX::XMFLOAT4X4 WorldViewProjectionMatrix;
-};
-
 struct DeferredCameraBufferData
 {
 	DirectX::XMFLOAT4X4 ViewMatrix;
@@ -135,10 +129,6 @@ struct DeferredLightBufferData
 	float ShadowCascadeCountValue;
 	DirectX::XMFLOAT3 ShadowCascadeCountValuePadding;
 	DirectX::XMFLOAT4X4 CascadeViewProjectionMatrices[ShadowCascadeCount];
-	uint32_t LightingPassMode;
-	uint32_t SingleLightIndex;
-	uint32_t LightingPassPadding0;
-	uint32_t LightingPassPadding1;
 	float DeferredDebugBufferViewMode;
 	DirectX::XMFLOAT3 DeferredDebugBufferViewModePadding;
 };
@@ -147,13 +137,16 @@ DeferredRenderer::DeferredRenderer()
 	: GBufferAlbedoTexture(nullptr)
 	, GBufferNormalTexture(nullptr)
 	, GBufferMaterialTexture(nullptr)
+	, GBufferShadowAlbedoTexture(nullptr)
 	, GBufferDepthTexture(nullptr)
 	, GBufferAlbedoRTV(nullptr)
 	, GBufferNormalRTV(nullptr)
 	, GBufferMaterialRTV(nullptr)
+	, GBufferShadowAlbedoRTV(nullptr)
 	, GBufferAlbedoSRV(nullptr)
 	, GBufferNormalSRV(nullptr)
 	, GBufferMaterialSRV(nullptr)
+	, GBufferShadowAlbedoSRV(nullptr)
 	, GBufferDepthSRV(nullptr)
 	, GBufferDepthDSV(nullptr)
 	, LightingVertexShader(nullptr)
@@ -167,17 +160,6 @@ DeferredRenderer::DeferredRenderer()
 	, ShadowDepthSRV(nullptr)
 	, ShadowComparisonSampler(nullptr)
 	, ShadowRasterizerState(nullptr)
-	, ShadowVolumeVertexShader(nullptr)
-	, ShadowVolumeVertexShaderByteCode(nullptr)
-	, ShadowVolumeInputLayout(nullptr)
-	, ShadowVolumeTransformConstantBuffer(nullptr)
-	, ShadowVolumeDepthStencilDepthFailPass1(nullptr)
-	, ShadowVolumeDepthStencilDepthFailPass2(nullptr)
-	, ShadowVolumeRasterizerCullFront(nullptr)
-	, ShadowVolumeRasterizerCullBack(nullptr)
-	, LightingStencilEqualZeroState(nullptr)
-	, LightingAdditiveBlendState(nullptr)
-	, ShadowVolumeColorWriteDisabledBlendState(nullptr)
 	, ShadowCascadeSplitDepths(10.0f, 30.0f, 60.0f, 120.0f)
 	, ShadowMapResolution(2048)
 	, ShadowCascadeCountSetting(ShadowCascadeCount)
@@ -283,125 +265,12 @@ void DeferredRenderer::Initialize(ID3D11Device* Device)
 	ShadowRasterizerDescription.SlopeScaledDepthBias = 2.5f;
 	ShadowRasterizerDescription.DepthClipEnable = TRUE;
 	Device->CreateRasterizerState(&ShadowRasterizerDescription, &ShadowRasterizerState);
-
-	CompileShader(
-		Device,
-		"./Shaders/Deferred/ShadowVolumePass.hlsl",
-		"VSMain",
-		"vs_5_0",
-		&ShadowVolumeVertexShaderByteCode,
-		reinterpret_cast<ID3D11DeviceChild**>(&ShadowVolumeVertexShader));
-
-	D3D11_INPUT_ELEMENT_DESC ShadowVolumeInputElementDescription = {};
-	ShadowVolumeInputElementDescription.SemanticName = "POSITION";
-	ShadowVolumeInputElementDescription.SemanticIndex = 0;
-	ShadowVolumeInputElementDescription.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	ShadowVolumeInputElementDescription.InputSlot = 0;
-	ShadowVolumeInputElementDescription.AlignedByteOffset = 0;
-	ShadowVolumeInputElementDescription.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	ShadowVolumeInputElementDescription.InstanceDataStepRate = 0;
-	Device->CreateInputLayout(
-		&ShadowVolumeInputElementDescription,
-		1,
-		ShadowVolumeVertexShaderByteCode->GetBufferPointer(),
-		ShadowVolumeVertexShaderByteCode->GetBufferSize(),
-		&ShadowVolumeInputLayout);
-
-	D3D11_BUFFER_DESC ShadowVolumeTransformBufferDescription = {};
-	ShadowVolumeTransformBufferDescription.Usage = D3D11_USAGE_DEFAULT;
-	ShadowVolumeTransformBufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	ShadowVolumeTransformBufferDescription.ByteWidth = static_cast<UINT>(sizeof(ShadowVolumeTransformBufferData));
-	Device->CreateBuffer(&ShadowVolumeTransformBufferDescription, nullptr, &ShadowVolumeTransformConstantBuffer);
-
-	D3D11_DEPTH_STENCIL_DESC ShadowVolumeDepthStencilPass1Description = {};
-	ShadowVolumeDepthStencilPass1Description.DepthEnable = TRUE;
-	ShadowVolumeDepthStencilPass1Description.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	ShadowVolumeDepthStencilPass1Description.DepthFunc = D3D11_COMPARISON_LESS;
-	ShadowVolumeDepthStencilPass1Description.StencilEnable = TRUE;
-	ShadowVolumeDepthStencilPass1Description.StencilReadMask = 0xFF;
-	ShadowVolumeDepthStencilPass1Description.StencilWriteMask = 0xFF;
-	ShadowVolumeDepthStencilPass1Description.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass1Description.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass1Description.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass1Description.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	ShadowVolumeDepthStencilPass1Description.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass1Description.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-	ShadowVolumeDepthStencilPass1Description.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass1Description.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	Device->CreateDepthStencilState(&ShadowVolumeDepthStencilPass1Description, &ShadowVolumeDepthStencilDepthFailPass1);
-
-	D3D11_DEPTH_STENCIL_DESC ShadowVolumeDepthStencilPass2Description = {};
-	ShadowVolumeDepthStencilPass2Description.DepthEnable = TRUE;
-	ShadowVolumeDepthStencilPass2Description.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	ShadowVolumeDepthStencilPass2Description.DepthFunc = D3D11_COMPARISON_LESS;
-	ShadowVolumeDepthStencilPass2Description.StencilEnable = TRUE;
-	ShadowVolumeDepthStencilPass2Description.StencilReadMask = 0xFF;
-	ShadowVolumeDepthStencilPass2Description.StencilWriteMask = 0xFF;
-	ShadowVolumeDepthStencilPass2Description.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass2Description.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-	ShadowVolumeDepthStencilPass2Description.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass2Description.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	ShadowVolumeDepthStencilPass2Description.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass2Description.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass2Description.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	ShadowVolumeDepthStencilPass2Description.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	Device->CreateDepthStencilState(&ShadowVolumeDepthStencilPass2Description, &ShadowVolumeDepthStencilDepthFailPass2);
-
-	D3D11_RASTERIZER_DESC ShadowVolumeRasterizerCullFrontDescription = {};
-	ShadowVolumeRasterizerCullFrontDescription.FillMode = D3D11_FILL_SOLID;
-	ShadowVolumeRasterizerCullFrontDescription.CullMode = D3D11_CULL_FRONT;
-	ShadowVolumeRasterizerCullFrontDescription.FrontCounterClockwise = FALSE;
-	ShadowVolumeRasterizerCullFrontDescription.DepthClipEnable = TRUE;
-	Device->CreateRasterizerState(&ShadowVolumeRasterizerCullFrontDescription, &ShadowVolumeRasterizerCullFront);
-
-	D3D11_RASTERIZER_DESC ShadowVolumeRasterizerCullBackDescription = {};
-	ShadowVolumeRasterizerCullBackDescription.FillMode = D3D11_FILL_SOLID;
-	ShadowVolumeRasterizerCullBackDescription.CullMode = D3D11_CULL_BACK;
-	ShadowVolumeRasterizerCullBackDescription.FrontCounterClockwise = FALSE;
-	ShadowVolumeRasterizerCullBackDescription.DepthClipEnable = TRUE;
-	Device->CreateRasterizerState(&ShadowVolumeRasterizerCullBackDescription, &ShadowVolumeRasterizerCullBack);
-
-	D3D11_DEPTH_STENCIL_DESC LightingStencilEqualZeroDescription = {};
-	LightingStencilEqualZeroDescription.DepthEnable = FALSE;
-	LightingStencilEqualZeroDescription.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	LightingStencilEqualZeroDescription.DepthFunc = D3D11_COMPARISON_ALWAYS;
-	LightingStencilEqualZeroDescription.StencilEnable = TRUE;
-	LightingStencilEqualZeroDescription.StencilReadMask = 0xFF;
-	LightingStencilEqualZeroDescription.StencilWriteMask = 0x00;
-	LightingStencilEqualZeroDescription.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	LightingStencilEqualZeroDescription.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-	LightingStencilEqualZeroDescription.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	LightingStencilEqualZeroDescription.FrontFace.StencilFunc = D3D11_COMPARISON_EQUAL;
-	LightingStencilEqualZeroDescription.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	LightingStencilEqualZeroDescription.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-	LightingStencilEqualZeroDescription.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	LightingStencilEqualZeroDescription.BackFace.StencilFunc = D3D11_COMPARISON_EQUAL;
-	Device->CreateDepthStencilState(&LightingStencilEqualZeroDescription, &LightingStencilEqualZeroState);
-
-	D3D11_BLEND_DESC LightingAdditiveBlendDescription = {};
-	LightingAdditiveBlendDescription.RenderTarget[0].BlendEnable = TRUE;
-	LightingAdditiveBlendDescription.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-	LightingAdditiveBlendDescription.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-	LightingAdditiveBlendDescription.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-	LightingAdditiveBlendDescription.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
-	LightingAdditiveBlendDescription.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-	LightingAdditiveBlendDescription.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-	LightingAdditiveBlendDescription.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-	Device->CreateBlendState(&LightingAdditiveBlendDescription, &LightingAdditiveBlendState);
-
-	D3D11_BLEND_DESC ShadowVolumeColorWriteDisabledBlendDescription = {};
-	for (int RenderTargetIndex = 0; RenderTargetIndex < 8; ++RenderTargetIndex)
-	{
-		ShadowVolumeColorWriteDisabledBlendDescription.RenderTarget[RenderTargetIndex].RenderTargetWriteMask = 0;
-	}
-	Device->CreateBlendState(&ShadowVolumeColorWriteDisabledBlendDescription, &ShadowVolumeColorWriteDisabledBlendState);
 }
 
 void DeferredRenderer::Shutdown()
 {
 	ReleaseTargets();
 	ReleaseShadowResources();
-	ReleaseStencilShadowVolumeResources();
 
 	if (LightingVertexShader != nullptr)
 	{
@@ -458,75 +327,6 @@ void DeferredRenderer::Shutdown()
 	}
 }
 
-void DeferredRenderer::ReleaseStencilShadowVolumeResources()
-{
-	if (ShadowVolumeVertexShader != nullptr)
-	{
-		ShadowVolumeVertexShader->Release();
-		ShadowVolumeVertexShader = nullptr;
-	}
-
-	if (ShadowVolumeVertexShaderByteCode != nullptr)
-	{
-		ShadowVolumeVertexShaderByteCode->Release();
-		ShadowVolumeVertexShaderByteCode = nullptr;
-	}
-
-	if (ShadowVolumeInputLayout != nullptr)
-	{
-		ShadowVolumeInputLayout->Release();
-		ShadowVolumeInputLayout = nullptr;
-	}
-
-	if (ShadowVolumeTransformConstantBuffer != nullptr)
-	{
-		ShadowVolumeTransformConstantBuffer->Release();
-		ShadowVolumeTransformConstantBuffer = nullptr;
-	}
-
-	if (ShadowVolumeDepthStencilDepthFailPass1 != nullptr)
-	{
-		ShadowVolumeDepthStencilDepthFailPass1->Release();
-		ShadowVolumeDepthStencilDepthFailPass1 = nullptr;
-	}
-
-	if (ShadowVolumeDepthStencilDepthFailPass2 != nullptr)
-	{
-		ShadowVolumeDepthStencilDepthFailPass2->Release();
-		ShadowVolumeDepthStencilDepthFailPass2 = nullptr;
-	}
-
-	if (ShadowVolumeRasterizerCullFront != nullptr)
-	{
-		ShadowVolumeRasterizerCullFront->Release();
-		ShadowVolumeRasterizerCullFront = nullptr;
-	}
-
-	if (ShadowVolumeRasterizerCullBack != nullptr)
-	{
-		ShadowVolumeRasterizerCullBack->Release();
-		ShadowVolumeRasterizerCullBack = nullptr;
-	}
-
-	if (LightingStencilEqualZeroState != nullptr)
-	{
-		LightingStencilEqualZeroState->Release();
-		LightingStencilEqualZeroState = nullptr;
-	}
-
-	if (LightingAdditiveBlendState != nullptr)
-	{
-		LightingAdditiveBlendState->Release();
-		LightingAdditiveBlendState = nullptr;
-	}
-
-	if (ShadowVolumeColorWriteDisabledBlendState != nullptr)
-	{
-		ShadowVolumeColorWriteDisabledBlendState->Release();
-		ShadowVolumeColorWriteDisabledBlendState = nullptr;
-	}
-}
-
 void DeferredRenderer::EnsureTargets(ID3D11Device* Device, int ScreenWidth, int ScreenHeight)
 {
 	if (Device == nullptr || ScreenWidth <= 0 || ScreenHeight <= 0)
@@ -556,12 +356,15 @@ void DeferredRenderer::EnsureTargets(ID3D11Device* Device, int ScreenWidth, int 
 	Device->CreateTexture2D(&RenderTargetDescription, nullptr, &GBufferAlbedoTexture);
 	Device->CreateTexture2D(&RenderTargetDescription, nullptr, &GBufferNormalTexture);
 	Device->CreateTexture2D(&RenderTargetDescription, nullptr, &GBufferMaterialTexture);
+	Device->CreateTexture2D(&RenderTargetDescription, nullptr, &GBufferShadowAlbedoTexture);
 	Device->CreateRenderTargetView(GBufferAlbedoTexture, nullptr, &GBufferAlbedoRTV);
 	Device->CreateRenderTargetView(GBufferNormalTexture, nullptr, &GBufferNormalRTV);
 	Device->CreateRenderTargetView(GBufferMaterialTexture, nullptr, &GBufferMaterialRTV);
+	Device->CreateRenderTargetView(GBufferShadowAlbedoTexture, nullptr, &GBufferShadowAlbedoRTV);
 	Device->CreateShaderResourceView(GBufferAlbedoTexture, nullptr, &GBufferAlbedoSRV);
 	Device->CreateShaderResourceView(GBufferNormalTexture, nullptr, &GBufferNormalSRV);
 	Device->CreateShaderResourceView(GBufferMaterialTexture, nullptr, &GBufferMaterialSRV);
+	Device->CreateShaderResourceView(GBufferShadowAlbedoTexture, nullptr, &GBufferShadowAlbedoSRV);
 
 	D3D11_TEXTURE2D_DESC DepthDescription = {};
 	DepthDescription.Width = static_cast<UINT>(ScreenWidth);
@@ -595,17 +398,19 @@ void DeferredRenderer::BeginGeometryPass(ID3D11DeviceContext* DeviceContext)
 		return;
 	}
 
-	ID3D11RenderTargetView* GeometryTargets[3] = {
+	ID3D11RenderTargetView* GeometryTargets[4] = {
 		GBufferAlbedoRTV,
 		GBufferNormalRTV,
-		GBufferMaterialRTV
+		GBufferMaterialRTV,
+		GBufferShadowAlbedoRTV
 	};
-	DeviceContext->OMSetRenderTargets(3, GeometryTargets, GBufferDepthDSV);
+	DeviceContext->OMSetRenderTargets(4, GeometryTargets, GBufferDepthDSV);
 
 	const float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	DeviceContext->ClearRenderTargetView(GBufferAlbedoRTV, ClearColor);
 	DeviceContext->ClearRenderTargetView(GBufferNormalRTV, ClearColor);
 	DeviceContext->ClearRenderTargetView(GBufferMaterialRTV, ClearColor);
+	DeviceContext->ClearRenderTargetView(GBufferShadowAlbedoRTV, ClearColor);
 	DeviceContext->ClearDepthStencilView(GBufferDepthDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
@@ -616,68 +421,11 @@ void DeferredRenderer::EndGeometryPass(ID3D11DeviceContext* DeviceContext)
 		return;
 	}
 
-	ID3D11RenderTargetView* NullRenderTargets[3] = { nullptr, nullptr, nullptr };
-	DeviceContext->OMSetRenderTargets(3, NullRenderTargets, nullptr);
+	ID3D11RenderTargetView* NullRenderTargets[4] = { nullptr, nullptr, nullptr, nullptr };
+	DeviceContext->OMSetRenderTargets(4, NullRenderTargets, nullptr);
 }
 
-void DeferredRenderer::ExecuteDeferredLightingDrawCall(
-	ID3D11DeviceContext* DeviceContext,
-	ID3D11RenderTargetView* FinalRenderTargetView,
-	bool UseAdditiveBlend,
-	bool IsStencilShadowTestEnabled)
-{
-	if (DeviceContext == nullptr || FinalRenderTargetView == nullptr || LightingVertexShader == nullptr || LightingPixelShader == nullptr)
-	{
-		return;
-	}
-
-	if (UseAdditiveBlend)
-	{
-		DeviceContext->OMSetBlendState(LightingAdditiveBlendState, nullptr, 0xffffffff);
-	}
-	else
-	{
-		DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-	}
-
-	if (IsStencilShadowTestEnabled && GBufferDepthDSV != nullptr)
-	{
-		DeviceContext->OMSetRenderTargets(1, &FinalRenderTargetView, GBufferDepthDSV);
-		DeviceContext->OMSetDepthStencilState(LightingStencilEqualZeroState, 0);
-	}
-	else
-	{
-		DeviceContext->OMSetRenderTargets(1, &FinalRenderTargetView, nullptr);
-		DeviceContext->OMSetDepthStencilState(nullptr, 0);
-	}
-
-	ID3D11ShaderResourceView* ShaderResourceViews[5] = {
-		GBufferAlbedoSRV,
-		GBufferNormalSRV,
-		GBufferMaterialSRV,
-		GBufferDepthSRV,
-		ShadowDepthSRV
-	};
-	ID3D11SamplerState* SamplerStates[2] = { GBufferSampler, ShadowComparisonSampler };
-	DeviceContext->PSSetShaderResources(0, 5, ShaderResourceViews);
-	DeviceContext->PSSetSamplers(0, 2, SamplerStates);
-	DeviceContext->VSSetShader(LightingVertexShader, nullptr, 0);
-	DeviceContext->PSSetShader(LightingPixelShader, nullptr, 0);
-	DeviceContext->VSSetConstantBuffers(0, 1, &CameraConstantBuffer);
-	DeviceContext->PSSetConstantBuffers(0, 1, &CameraConstantBuffer);
-	DeviceContext->PSSetConstantBuffers(1, 1, &LightConstantBuffer);
-	DeviceContext->IASetInputLayout(nullptr);
-	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	DeviceContext->Draw(3, 0);
-
-	ID3D11ShaderResourceView* NullShaderResources[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
-	DeviceContext->PSSetShaderResources(0, 5, NullShaderResources);
-	DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-	DeviceContext->OMSetDepthStencilState(nullptr, 0);
-	DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-}
-
-void DeferredRenderer::RenderDirectionalDeferredLightingPass(
+void DeferredRenderer::RenderLightingPass(
 	ID3D11DeviceContext* DeviceContext,
 	ID3D11RenderTargetView* FinalRenderTargetView,
 	const DirectX::XMMATRIX& ViewMatrix,
@@ -686,6 +434,8 @@ void DeferredRenderer::RenderDirectionalDeferredLightingPass(
 	const DirectX::XMFLOAT3& DirectionalLightDirection,
 	const DirectX::XMFLOAT4& DirectionalLightColor,
 	float DirectionalLightIntensity,
+	const std::vector<DeferredPointLightData>& PointLights,
+	const std::vector<DeferredSpotLightData>& SpotLights,
 	float UseFullBrightnessWithoutLighting,
 	float ShadowStrength,
 	float DeferredDebugBufferViewMode)
@@ -694,6 +444,8 @@ void DeferredRenderer::RenderDirectionalDeferredLightingPass(
 	{
 		return;
 	}
+
+	DeviceContext->OMSetRenderTargets(1, &FinalRenderTargetView, nullptr);
 
 	DeferredCameraBufferData CameraBufferData = {};
 	DirectX::XMStoreFloat4x4(&CameraBufferData.ViewMatrix, DirectX::XMMatrixTranspose(ViewMatrix));
@@ -705,128 +457,18 @@ void DeferredRenderer::RenderDirectionalDeferredLightingPass(
 	LightBufferData.DirectionalLightDirection = DirectionalLightDirection;
 	LightBufferData.DirectionalLightColor = DirectionalLightColor;
 	LightBufferData.DirectionalLightIntensity = DirectionalLightIntensity;
-	LightBufferData.PointLightCountValue = 0.0f;
-	LightBufferData.SpotLightCountValue = 0.0f;
-	LightBufferData.UseFullBrightnessWithoutLighting = UseFullBrightnessWithoutLighting;
-	LightBufferData.ShadowBias = 0.0015f;
-	LightBufferData.ShadowStrength = ShadowStrength;
-	LightBufferData.ShadowMapTexelSize = 1.0f / static_cast<float>(ShadowMapResolution);
-	LightBufferData.CascadeSplitDepths = ShadowCascadeSplitDepths;
-	LightBufferData.ShadowCascadeCountValue = static_cast<float>(ShadowCascadeCountSetting);
-	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
-	{
-		LightBufferData.CascadeViewProjectionMatrices[CascadeIndex] = ShadowCascadeViewProjectionMatricesStorage[CascadeIndex];
-	}
-	LightBufferData.LightingPassMode = 0u;
-	LightBufferData.SingleLightIndex = 0u;
-	LightBufferData.LightingPassPadding0 = 0u;
-	LightBufferData.LightingPassPadding1 = 0u;
-	LightBufferData.DeferredDebugBufferViewMode = DeferredDebugBufferViewMode;
-	DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
-
-	ExecuteDeferredLightingDrawCall(DeviceContext, FinalRenderTargetView, false, false);
-}
-
-void DeferredRenderer::RenderSinglePointLightDeferredLightingPass(
-	ID3D11DeviceContext* DeviceContext,
-	ID3D11RenderTargetView* FinalRenderTargetView,
-	const DirectX::XMMATRIX& ViewMatrix,
-	const DirectX::XMMATRIX& InverseViewProjectionMatrix,
-	const DirectX::XMFLOAT3& CameraWorldPosition,
-	const std::vector<DeferredPointLightData>& PointLights,
-	int SinglePointLightIndex,
-	float UseFullBrightnessWithoutLighting,
-	float ShadowStrength,
-	float DeferredDebugBufferViewMode,
-	bool IsStencilShadowTestEnabled)
-{
-	if (DeviceContext == nullptr || FinalRenderTargetView == nullptr || LightingVertexShader == nullptr || LightingPixelShader == nullptr)
-	{
-		return;
-	}
-
-	if (SinglePointLightIndex < 0 || SinglePointLightIndex >= MaximumDeferredPointLightCount)
-	{
-		return;
-	}
-
-	DeferredCameraBufferData CameraBufferData = {};
-	DirectX::XMStoreFloat4x4(&CameraBufferData.ViewMatrix, DirectX::XMMatrixTranspose(ViewMatrix));
-	DirectX::XMStoreFloat4x4(&CameraBufferData.InverseViewProjectionMatrix, DirectX::XMMatrixTranspose(InverseViewProjectionMatrix));
-	CameraBufferData.CameraWorldPosition = CameraWorldPosition;
-	DeviceContext->UpdateSubresource(CameraConstantBuffer, 0, nullptr, &CameraBufferData, 0, 0);
-
-	DeferredLightBufferData LightBufferData = {};
-	LightBufferData.DirectionalLightDirection = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	LightBufferData.DirectionalLightIntensity = 0.0f;
-	LightBufferData.DirectionalLightColor = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	const int PointLightCount = (std::min)(static_cast<int>(PointLights.size()), MaximumDeferredPointLightCount);
+	LightBufferData.PointLightCountValue = static_cast<float>(PointLightCount);
 	for (int PointLightIndex = 0; PointLightIndex < PointLightCount; ++PointLightIndex)
 	{
 		LightBufferData.PointLights[PointLightIndex] = PointLights[PointLightIndex];
 	}
-	LightBufferData.PointLightCountValue = 0.0f;
-	LightBufferData.SpotLightCountValue = 0.0f;
-	LightBufferData.UseFullBrightnessWithoutLighting = UseFullBrightnessWithoutLighting;
-	LightBufferData.ShadowBias = 0.0015f;
-	LightBufferData.ShadowStrength = ShadowStrength;
-	LightBufferData.ShadowMapTexelSize = 1.0f / static_cast<float>(ShadowMapResolution);
-	LightBufferData.CascadeSplitDepths = ShadowCascadeSplitDepths;
-	LightBufferData.ShadowCascadeCountValue = static_cast<float>(ShadowCascadeCountSetting);
-	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
-	{
-		LightBufferData.CascadeViewProjectionMatrices[CascadeIndex] = ShadowCascadeViewProjectionMatricesStorage[CascadeIndex];
-	}
-	LightBufferData.LightingPassMode = 1u;
-	LightBufferData.SingleLightIndex = static_cast<uint32_t>(SinglePointLightIndex);
-	LightBufferData.LightingPassPadding0 = 0u;
-	LightBufferData.LightingPassPadding1 = 0u;
-	LightBufferData.DeferredDebugBufferViewMode = DeferredDebugBufferViewMode;
-	DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
-
-	ExecuteDeferredLightingDrawCall(DeviceContext, FinalRenderTargetView, true, IsStencilShadowTestEnabled);
-}
-
-void DeferredRenderer::RenderSingleSpotLightDeferredLightingPass(
-	ID3D11DeviceContext* DeviceContext,
-	ID3D11RenderTargetView* FinalRenderTargetView,
-	const DirectX::XMMATRIX& ViewMatrix,
-	const DirectX::XMMATRIX& InverseViewProjectionMatrix,
-	const DirectX::XMFLOAT3& CameraWorldPosition,
-	const std::vector<DeferredSpotLightData>& SpotLights,
-	int SingleSpotLightIndex,
-	float UseFullBrightnessWithoutLighting,
-	float ShadowStrength,
-	float DeferredDebugBufferViewMode,
-	bool IsStencilShadowTestEnabled)
-{
-	if (DeviceContext == nullptr || FinalRenderTargetView == nullptr || LightingVertexShader == nullptr || LightingPixelShader == nullptr)
-	{
-		return;
-	}
-
-	if (SingleSpotLightIndex < 0 || SingleSpotLightIndex >= MaximumDeferredSpotLightCount)
-	{
-		return;
-	}
-
-	DeferredCameraBufferData CameraBufferData = {};
-	DirectX::XMStoreFloat4x4(&CameraBufferData.ViewMatrix, DirectX::XMMatrixTranspose(ViewMatrix));
-	DirectX::XMStoreFloat4x4(&CameraBufferData.InverseViewProjectionMatrix, DirectX::XMMatrixTranspose(InverseViewProjectionMatrix));
-	CameraBufferData.CameraWorldPosition = CameraWorldPosition;
-	DeviceContext->UpdateSubresource(CameraConstantBuffer, 0, nullptr, &CameraBufferData, 0, 0);
-
-	DeferredLightBufferData LightBufferData = {};
-	LightBufferData.DirectionalLightDirection = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	LightBufferData.DirectionalLightIntensity = 0.0f;
-	LightBufferData.DirectionalLightColor = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	const int SpotLightCount = (std::min)(static_cast<int>(SpotLights.size()), MaximumDeferredSpotLightCount);
+	LightBufferData.SpotLightCountValue = static_cast<float>(SpotLightCount);
 	for (int SpotLightIndex = 0; SpotLightIndex < SpotLightCount; ++SpotLightIndex)
 	{
 		LightBufferData.SpotLights[SpotLightIndex] = SpotLights[SpotLightIndex];
 	}
-	LightBufferData.PointLightCountValue = 0.0f;
-	LightBufferData.SpotLightCountValue = 0.0f;
 	LightBufferData.UseFullBrightnessWithoutLighting = UseFullBrightnessWithoutLighting;
 	LightBufferData.ShadowBias = 0.0015f;
 	LightBufferData.ShadowStrength = ShadowStrength;
@@ -837,80 +479,31 @@ void DeferredRenderer::RenderSingleSpotLightDeferredLightingPass(
 	{
 		LightBufferData.CascadeViewProjectionMatrices[CascadeIndex] = ShadowCascadeViewProjectionMatricesStorage[CascadeIndex];
 	}
-	LightBufferData.LightingPassMode = 2u;
-	LightBufferData.SingleLightIndex = static_cast<uint32_t>(SingleSpotLightIndex);
-	LightBufferData.LightingPassPadding0 = 0u;
-	LightBufferData.LightingPassPadding1 = 0u;
 	LightBufferData.DeferredDebugBufferViewMode = DeferredDebugBufferViewMode;
 	DeviceContext->UpdateSubresource(LightConstantBuffer, 0, nullptr, &LightBufferData, 0, 0);
 
-	ExecuteDeferredLightingDrawCall(DeviceContext, FinalRenderTargetView, true, IsStencilShadowTestEnabled);
-}
-
-void DeferredRenderer::ClearGBufferStencil(ID3D11DeviceContext* DeviceContext)
-{
-	if (DeviceContext == nullptr || GBufferDepthDSV == nullptr)
-	{
-		return;
-	}
-
-	DeviceContext->ClearDepthStencilView(GBufferDepthDSV, D3D11_CLEAR_STENCIL, 1.0f, 0);
-}
-
-void DeferredRenderer::BeginShadowVolumeStencilPass(ID3D11DeviceContext* DeviceContext)
-{
-	if (DeviceContext == nullptr || GBufferDepthDSV == nullptr || ShadowVolumeVertexShader == nullptr || ShadowVolumeInputLayout == nullptr)
-	{
-		return;
-	}
-
-	if (ShadowVolumeColorWriteDisabledBlendState != nullptr)
-	{
-		DeviceContext->OMSetBlendState(ShadowVolumeColorWriteDisabledBlendState, nullptr, 0xffffffff);
-	}
-
-	DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-	DeviceContext->OMSetRenderTargets(0, nullptr, GBufferDepthDSV);
-	DeviceContext->VSSetShader(ShadowVolumeVertexShader, nullptr, 0);
-	DeviceContext->PSSetShader(nullptr, nullptr, 0);
-	DeviceContext->IASetInputLayout(ShadowVolumeInputLayout);
-	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
-
-void DeferredRenderer::EndShadowVolumeStencilPass(ID3D11DeviceContext* DeviceContext)
-{
-	if (DeviceContext == nullptr)
-	{
-		return;
-	}
-
-	DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-	DeviceContext->RSSetState(nullptr);
-	DeviceContext->OMSetDepthStencilState(nullptr, 0);
-	DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-	DeviceContext->VSSetShader(nullptr, nullptr, 0);
+	ID3D11ShaderResourceView* ShaderResourceViews[6] = {
+		GBufferAlbedoSRV,
+		GBufferNormalSRV,
+		GBufferMaterialSRV,
+		GBufferShadowAlbedoSRV,
+		GBufferDepthSRV,
+		ShadowDepthSRV
+	};
+	ID3D11SamplerState* SamplerStates[2] = { GBufferSampler, ShadowComparisonSampler };
+	DeviceContext->PSSetShaderResources(0, 6, ShaderResourceViews);
+	DeviceContext->PSSetSamplers(0, 2, SamplerStates);
+	DeviceContext->VSSetShader(LightingVertexShader, nullptr, 0);
+	DeviceContext->PSSetShader(LightingPixelShader, nullptr, 0);
+	DeviceContext->VSSetConstantBuffers(0, 1, &CameraConstantBuffer);
+	DeviceContext->PSSetConstantBuffers(0, 1, &CameraConstantBuffer);
+	DeviceContext->PSSetConstantBuffers(1, 1, &LightConstantBuffer);
 	DeviceContext->IASetInputLayout(nullptr);
-}
+	DeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	DeviceContext->Draw(3, 0);
 
-void DeferredRenderer::BindShadowVolumePassPipelineForSubPass(ID3D11DeviceContext* DeviceContext, int SubPassIndex) const
-{
-	if (DeviceContext == nullptr)
-	{
-		return;
-	}
-
-	if (SubPassIndex == 0)
-	{
-		DeviceContext->RSSetState(ShadowVolumeRasterizerCullFront);
-		DeviceContext->OMSetDepthStencilState(ShadowVolumeDepthStencilDepthFailPass1, 0);
-	}
-	else
-	{
-		DeviceContext->RSSetState(ShadowVolumeRasterizerCullBack);
-		DeviceContext->OMSetDepthStencilState(ShadowVolumeDepthStencilDepthFailPass2, 0);
-	}
-
-	DeviceContext->VSSetConstantBuffers(0, 1, &ShadowVolumeTransformConstantBuffer);
+	ID3D11ShaderResourceView* NullShaderResources[6] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+	DeviceContext->PSSetShaderResources(0, 6, NullShaderResources);
 }
 
 void DeferredRenderer::PrepareCascadedShadowMaps(
@@ -1122,11 +715,6 @@ ID3D11ShaderResourceView* DeferredRenderer::GetGBufferDepthShaderResourceView() 
 	return GBufferDepthSRV;
 }
 
-ID3D11Buffer* DeferredRenderer::GetShadowVolumeTransformConstantBuffer() const
-{
-	return ShadowVolumeTransformConstantBuffer;
-}
-
 void DeferredRenderer::ReleaseTargets()
 {
 	if (GBufferAlbedoRTV != nullptr)
@@ -1147,6 +735,12 @@ void DeferredRenderer::ReleaseTargets()
 		GBufferMaterialRTV = nullptr;
 	}
 
+	if (GBufferShadowAlbedoRTV != nullptr)
+	{
+		GBufferShadowAlbedoRTV->Release();
+		GBufferShadowAlbedoRTV = nullptr;
+	}
+
 	if (GBufferAlbedoSRV != nullptr)
 	{
 		GBufferAlbedoSRV->Release();
@@ -1163,6 +757,12 @@ void DeferredRenderer::ReleaseTargets()
 	{
 		GBufferMaterialSRV->Release();
 		GBufferMaterialSRV = nullptr;
+	}
+
+	if (GBufferShadowAlbedoSRV != nullptr)
+	{
+		GBufferShadowAlbedoSRV->Release();
+		GBufferShadowAlbedoSRV = nullptr;
 	}
 
 	if (GBufferDepthSRV != nullptr)
@@ -1193,6 +793,12 @@ void DeferredRenderer::ReleaseTargets()
 	{
 		GBufferMaterialTexture->Release();
 		GBufferMaterialTexture = nullptr;
+	}
+
+	if (GBufferShadowAlbedoTexture != nullptr)
+	{
+		GBufferShadowAlbedoTexture->Release();
+		GBufferShadowAlbedoTexture = nullptr;
 	}
 
 	if (GBufferDepthTexture != nullptr)

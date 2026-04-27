@@ -22,6 +22,8 @@ cbuffer MaterialConstantBuffer : register(b2)
     float SpecularIntensity;
     float UseAlbedoTexture;
     float UseNormalTexture;
+    float UseShadowedAlbedoTexture;
+    float3 MaterialPadding0;
 };
 
 struct VS_IN
@@ -43,7 +45,8 @@ struct PS_IN
 };
 
 Texture2D AlbedoTexture : register(t0);
-Texture2D NormalTexture : register(t1);
-Texture2D SpecularTexture : register(t2);
-Texture2D EmissiveTexture : register(t3);
+Texture2D ShadowedAlbedoTexture : register(t1);
+Texture2D NormalTexture : register(t2);
+Texture2D SpecularTexture : register(t3);
+Texture2D EmissiveTexture : register(t4);
 SamplerState DefaultSampler : register(s0);
