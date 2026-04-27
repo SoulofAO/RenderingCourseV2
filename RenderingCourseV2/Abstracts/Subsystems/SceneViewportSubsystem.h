@@ -89,6 +89,7 @@ public:
 	void EndDearImGuiFrame();
 	bool HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 	bool GetIsDearImGuiInitialized() const;
+	ID3D11ShaderResourceView* GetDearImGuiBackBufferCopyShaderResourceView() const;
 	void SetFrameRenderTargetOverride(
 		ID3D11RenderTargetView* NewRenderTargetView,
 		ID3D11DepthStencilView* NewDepthStencilView,

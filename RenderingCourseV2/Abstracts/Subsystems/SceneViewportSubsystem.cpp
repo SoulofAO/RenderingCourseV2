@@ -613,6 +613,17 @@ bool SceneViewportSubsystem::GetIsDearImGuiInitialized() const
 	return RenderRuntimeSubsystem->GetIsDearImGuiInitialized();
 }
 
+ID3D11ShaderResourceView* SceneViewportSubsystem::GetDearImGuiBackBufferCopyShaderResourceView() const
+{
+	RenderRuntimeGameInstanceSubsystem* RenderRuntimeSubsystem = ResolveRenderRuntimeSubsystem();
+	if (RenderRuntimeSubsystem == nullptr)
+	{
+		return nullptr;
+	}
+
+	return RenderRuntimeSubsystem->GetDearImGuiBackBufferCopyShaderResourceView();
+}
+
 bool SceneViewportSubsystem::EnsureRenderingResourcesInitialized()
 {
 	ID3D11Device* DeviceInstance = GetDevice();

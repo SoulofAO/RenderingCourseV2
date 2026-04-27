@@ -17,6 +17,8 @@ RenderRuntimeGameInstanceSubsystem::RenderRuntimeGameInstanceSubsystem()
 	, BackBufferRenderView(nullptr)
 	, BackBufferDepthTexture(nullptr)
 	, BackBufferDepthStencilView(nullptr)
+	, DearImGuiBackBufferCopyTexture(nullptr)
+	, DearImGuiBackBufferCopyShaderResourceView(nullptr)
 	, ScreenWidth(0)
 	, ScreenHeight(0)
 	, IsWindowMinimized(false)
@@ -119,6 +121,8 @@ void RenderRuntimeGameInstanceSubsystem::EndRuntimeFrame()
 	{
 		return;
 	}
+
+	UpdateDearImGuiBackBufferCopyFromBackBuffer();
 
 	if (Context != nullptr)
 	{
@@ -251,6 +255,11 @@ bool RenderRuntimeGameInstanceSubsystem::GetIsDearImGuiInitialized() const
 	return IsDearImGuiInitialized;
 }
 
+ID3D11ShaderResourceView* RenderRuntimeGameInstanceSubsystem::GetDearImGuiBackBufferCopyShaderResourceView() const
+{
+	return DearImGuiBackBufferCopyShaderResourceView;
+}
+
 HWND RenderRuntimeGameInstanceSubsystem::GetWindowHandle() const
 {
 	if (Display == nullptr)
@@ -320,6 +329,8 @@ void RenderRuntimeGameInstanceSubsystem::CreateBackBuffer()
 
 void RenderRuntimeGameInstanceSubsystem::DestroyResources()
 {
+	ReleaseDearImGuiBackBufferCopyResources();
+
 	if (BackBufferDepthStencilView != nullptr)
 	{
 		BackBufferDepthStencilView->Release();
@@ -351,4 +362,68 @@ void RenderRuntimeGameInstanceSubsystem::DestroyResources()
 		Context = nullptr;
 	}
 	Display.reset();
+}
+
+bool RenderRuntimeGameInstanceSubsystem::EnsureDearImGuiBackBufferCopyResources()
+{
+	if (Device.Get() == nullptr || BackBuffer == nullptr || ScreenWidth <= 0 || ScreenHeight <= 0)
+	{
+		return false;
+	}
+
+	if (DearImGuiBackBufferCopyTexture != nullptr && DearImGuiBackBufferCopyShaderResourceView != nullptr)
+	{
+		return true;
+	}
+
+	ReleaseDearImGuiBackBufferCopyResources();
+
+	D3D11_TEXTURE2D_DESC BackBufferCopyTextureDescription = {};
+	BackBufferCopyTextureDescription.Width = static_cast<UINT>(ScreenWidth);
+	BackBufferCopyTextureDescription.Height = static_cast<UINT>(ScreenHeight);
+	BackBufferCopyTextureDescription.MipLevels = 1;
+	BackBufferCopyTextureDescription.ArraySize = 1;
+	BackBufferCopyTextureDescription.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	BackBufferCopyTextureDescription.SampleDesc.Count = 1;
+	BackBufferCopyTextureDescription.Usage = D3D11_USAGE_DEFAULT;
+	BackBufferCopyTextureDescription.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	if (FAILED(Device->CreateTexture2D(&BackBufferCopyTextureDescription, nullptr, &DearImGuiBackBufferCopyTexture)))
+	{
+		return false;
+	}
+	if (FAILED(Device->CreateShaderResourceView(DearImGuiBackBufferCopyTexture, nullptr, &DearImGuiBackBufferCopyShaderResourceView)))
+	{
+		ReleaseDearImGuiBackBufferCopyResources();
+		return false;
+	}
+
+	return true;
+}
+
+void RenderRuntimeGameInstanceSubsystem::ReleaseDearImGuiBackBufferCopyResources()
+{
+	if (DearImGuiBackBufferCopyShaderResourceView != nullptr)
+	{
+		DearImGuiBackBufferCopyShaderResourceView->Release();
+		DearImGuiBackBufferCopyShaderResourceView = nullptr;
+	}
+	if (DearImGuiBackBufferCopyTexture != nullptr)
+	{
+		DearImGuiBackBufferCopyTexture->Release();
+		DearImGuiBackBufferCopyTexture = nullptr;
+	}
+}
+
+void RenderRuntimeGameInstanceSubsystem::UpdateDearImGuiBackBufferCopyFromBackBuffer()
+{
+	if (Context == nullptr || BackBuffer == nullptr)
+	{
+		return;
+	}
+	if (EnsureDearImGuiBackBufferCopyResources() == false)
+	{
+		return;
+	}
+
+	Context->CopyResource(DearImGuiBackBufferCopyTexture, BackBuffer);
 }

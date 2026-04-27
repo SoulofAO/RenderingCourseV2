@@ -75,6 +75,11 @@ Game::Game(LPCWSTR ApplicationName, int ScreenWidth, int ScreenHeight)
 	, WorldBoundarySphereRadius(4000.0f)
 	, IsEmbeddedPlayStarted(false)
 	, CreateDefaultSceneViewportSubsystem(true)
+	, HasSceneViewportTextureDrawRect(false)
+	, SceneViewportTextureDrawPositionX(0.0f)
+	, SceneViewportTextureDrawPositionY(0.0f)
+	, SceneViewportTextureDrawWidth(0.0f)
+	, SceneViewportTextureDrawHeight(0.0f)
 	, OwningGameInstance(nullptr)
 {
 	GlobalGame = this;
@@ -285,6 +290,7 @@ void Game::RenderFrame(
 		false,
 		[this]()
 		{
+			DrawSceneViewportTextureWindow();
 			DrawCameraPossessionUserInterface();
 			for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
 			{
@@ -401,6 +407,7 @@ void Game::Draw()
 		false,
 		[this]()
 		{
+			DrawSceneViewportTextureWindow();
 			DrawCameraPossessionUserInterface();
 			for (Actor* ExistingActor : GetAllActorsByClass<Actor>())
 			{
@@ -1068,6 +1075,56 @@ void Game::DrawCameraPossessionUserInterface()
 	DrawActorTranslationGizmo();
 }
 
+void Game::DrawSceneViewportTextureWindow()
+{
+	SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+	if (SceneViewportSubsystemInstance == nullptr)
+	{
+		HasSceneViewportTextureDrawRect = false;
+		return;
+	}
+
+	ID3D11ShaderResourceView* SceneViewportShaderResourceView = SceneViewportSubsystemInstance->GetDearImGuiBackBufferCopyShaderResourceView();
+	if (SceneViewportShaderResourceView == nullptr)
+	{
+		HasSceneViewportTextureDrawRect = false;
+		return;
+	}
+
+	const ImGuiWindowFlags WindowFlags =
+		ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoScrollWithMouse;
+	const bool IsWindowOpen = ImGui::Begin("Scene Viewport Texture", nullptr, WindowFlags);
+	if (IsWindowOpen)
+	{
+		ImGui::Text(
+			"TextureID: 0x%p",
+			reinterpret_cast<void*>(SceneViewportShaderResourceView));
+
+		const ImVec2 AvailableContentRegion = ImGui::GetContentRegionAvail();
+		if (AvailableContentRegion.x > 4.0f && AvailableContentRegion.y > 4.0f)
+		{
+			ImGui::Image(reinterpret_cast<ImTextureID>(SceneViewportShaderResourceView), AvailableContentRegion);
+			const ImVec2 TextureDrawStartPosition = ImGui::GetItemRectMin();
+			const ImVec2 TextureDrawSize = ImGui::GetItemRectSize();
+			HasSceneViewportTextureDrawRect = true;
+			SceneViewportTextureDrawPositionX = TextureDrawStartPosition.x;
+			SceneViewportTextureDrawPositionY = TextureDrawStartPosition.y;
+			SceneViewportTextureDrawWidth = TextureDrawSize.x;
+			SceneViewportTextureDrawHeight = TextureDrawSize.y;
+		}
+		else
+		{
+			HasSceneViewportTextureDrawRect = false;
+		}
+	}
+	else
+	{
+		HasSceneViewportTextureDrawRect = false;
+	}
+	ImGui::End();
+}
+
 void Game::UpdateSelectedActorFromMouseClick()
 {
 	if (GetIsFallbackCameraPossessed() == false)
@@ -1202,12 +1259,6 @@ void Game::DrawActorTranslationGizmo()
 		return;
 	}
 
-	ImGuiViewport* MainViewport = ImGui::GetMainViewport();
-	if (MainViewport == nullptr)
-	{
-		return;
-	}
-
 	const Transform ActorTransform = SelectedActorForGizmo->GetTransform(ETransformSpace::World);
 	DirectX::XMFLOAT4X4 ViewMatrixStorage;
 	DirectX::XMFLOAT4X4 ProjectionMatrixStorage;
@@ -1226,11 +1277,28 @@ void Game::DrawActorTranslationGizmo()
 		return;
 	}
 
-	ImGuizmo::SetRect(
-		MainViewport->Pos.x,
-		MainViewport->Pos.y,
-		ViewportWidth,
-		ViewportHeight);
+	if (HasSceneViewportTextureDrawRect)
+	{
+		ImGuizmo::SetRect(
+			SceneViewportTextureDrawPositionX,
+			SceneViewportTextureDrawPositionY,
+			SceneViewportTextureDrawWidth,
+			SceneViewportTextureDrawHeight);
+	}
+	else
+	{
+		ImGuiViewport* MainViewport = ImGui::GetMainViewport();
+		if (MainViewport == nullptr)
+		{
+			return;
+		}
+
+		ImGuizmo::SetRect(
+			MainViewport->Pos.x,
+			MainViewport->Pos.y,
+			ViewportWidth,
+			ViewportHeight);
+	}
 	ImGuizmo::OPERATION CurrentImGuizmoOperation = ImGuizmo::TRANSLATE;
 	if (CurrentActorGizmoOperationMode == ActorGizmoOperationMode::Rotate)
 	{

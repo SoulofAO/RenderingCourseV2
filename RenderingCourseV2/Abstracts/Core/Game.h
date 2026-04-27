@@ -186,6 +186,7 @@ protected:
 	void UpdateSelectedActorFromMouseClick();
 	Actor* FindActorUnderMouseCursor() const;
 	void DrawActorTranslationGizmo();
+	void DrawSceneViewportTextureWindow();
 	bool ForceRebuildInputResourcesAndReinitializeScene();
 	LightComponent* FindFirstDirectionalLightComponent() const;
 	void ApplyWorldBoundarySphereSettings();
@@ -224,6 +225,11 @@ protected:
 	float WorldBoundarySphereRadius;
 	bool IsEmbeddedPlayStarted;
 	bool CreateDefaultSceneViewportSubsystem;
+	bool HasSceneViewportTextureDrawRect;
+	float SceneViewportTextureDrawPositionX;
+	float SceneViewportTextureDrawPositionY;
+	float SceneViewportTextureDrawWidth;
+	float SceneViewportTextureDrawHeight;
 	std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> ExternalMessageHandler;
 	GameInstance* OwningGameInstance;
 };

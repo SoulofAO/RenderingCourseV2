@@ -38,6 +38,7 @@ public:
 	void EndDearImGuiFrame();
 	bool HandleDearImGuiMessage(HWND WindowHandle, UINT Message, WPARAM WParam, LPARAM LParam);
 	bool GetIsDearImGuiInitialized() const;
+	ID3D11ShaderResourceView* GetDearImGuiBackBufferCopyShaderResourceView() const;
 	HWND GetWindowHandle() const;
 	ID3D11Device* GetDevice() const;
 	ID3D11DeviceContext* GetDeviceContext() const;
@@ -50,6 +51,9 @@ public:
 private:
 	void CreateBackBuffer();
 	void DestroyResources();
+	bool EnsureDearImGuiBackBufferCopyResources();
+	void ReleaseDearImGuiBackBufferCopyResources();
+	void UpdateDearImGuiBackBufferCopyFromBackBuffer();
 
 	std::unique_ptr<DisplayWin32> Display;
 	Microsoft::WRL::ComPtr<ID3D11Device> Device;
@@ -59,6 +63,8 @@ private:
 	ID3D11RenderTargetView* BackBufferRenderView;
 	ID3D11Texture2D* BackBufferDepthTexture;
 	ID3D11DepthStencilView* BackBufferDepthStencilView;
+	ID3D11Texture2D* DearImGuiBackBufferCopyTexture;
+	ID3D11ShaderResourceView* DearImGuiBackBufferCopyShaderResourceView;
 	int ScreenWidth;
 	int ScreenHeight;
 	bool IsWindowMinimized;
