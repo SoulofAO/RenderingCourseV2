@@ -26,6 +26,12 @@ cbuffer MaterialConstantBuffer : register(b2)
     float3 MaterialPadding0;
 };
 
+cbuffer PickConstantBuffer : register(b3)
+{
+    uint DeferredPickIdentifierUint32;
+    uint3 PickConstantPaddingUint32;
+};
+
 struct VS_IN
 {
     float4 Position : POSITION0;

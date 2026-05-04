@@ -1,8 +1,10 @@
 #include "Abstracts/Rendering/DeferredRenderer.h"
 #include <d3dcompiler.h>
+#include <DirectXPackedVector.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstring>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -142,11 +144,13 @@ DeferredRenderer::DeferredRenderer()
 	, GBufferNormalTexture(nullptr)
 	, GBufferMaterialTexture(nullptr)
 	, GBufferShadowAlbedoTexture(nullptr)
+	, GBufferPickTexture(nullptr)
 	, GBufferDepthTexture(nullptr)
 	, GBufferAlbedoRTV(nullptr)
 	, GBufferNormalRTV(nullptr)
 	, GBufferMaterialRTV(nullptr)
 	, GBufferShadowAlbedoRTV(nullptr)
+	, GBufferPickRTV(nullptr)
 	, GBufferAlbedoSRV(nullptr)
 	, GBufferNormalSRV(nullptr)
 	, GBufferMaterialSRV(nullptr)
@@ -170,6 +174,11 @@ DeferredRenderer::DeferredRenderer()
 	, ShadowMaximumDistanceSetting(160.0f)
 	, CachedWidth(0)
 	, CachedHeight(0)
+	, InspectReadbackAlbedoStagingTexture(nullptr)
+	, InspectReadbackNormalStagingTexture(nullptr)
+	, InspectReadbackMaterialStagingTexture(nullptr)
+	, InspectReadbackPickStagingTexture(nullptr)
+	, InspectReadbackDepthStagingTexture(nullptr)
 {
 	for (int CascadeIndex = 0; CascadeIndex < ShadowCascadeCount; ++CascadeIndex)
 	{
@@ -273,6 +282,7 @@ void DeferredRenderer::Initialize(ID3D11Device* Device)
 
 void DeferredRenderer::Shutdown()
 {
+	ReleaseInspectReadbackStagingTextures();
 	ReleaseTargets();
 	ReleaseShadowResources();
 
@@ -370,6 +380,18 @@ void DeferredRenderer::EnsureTargets(ID3D11Device* Device, int ScreenWidth, int 
 	Device->CreateShaderResourceView(GBufferMaterialTexture, nullptr, &GBufferMaterialSRV);
 	Device->CreateShaderResourceView(GBufferShadowAlbedoTexture, nullptr, &GBufferShadowAlbedoSRV);
 
+	D3D11_TEXTURE2D_DESC PickTextureDescription = {};
+	PickTextureDescription.Width = static_cast<UINT>(ScreenWidth);
+	PickTextureDescription.Height = static_cast<UINT>(ScreenHeight);
+	PickTextureDescription.MipLevels = 1;
+	PickTextureDescription.ArraySize = 1;
+	PickTextureDescription.Format = DXGI_FORMAT_R32_FLOAT;
+	PickTextureDescription.SampleDesc.Count = 1;
+	PickTextureDescription.Usage = D3D11_USAGE_DEFAULT;
+	PickTextureDescription.BindFlags = D3D11_BIND_RENDER_TARGET;
+	Device->CreateTexture2D(&PickTextureDescription, nullptr, &GBufferPickTexture);
+	Device->CreateRenderTargetView(GBufferPickTexture, nullptr, &GBufferPickRTV);
+
 	D3D11_TEXTURE2D_DESC DepthDescription = {};
 	DepthDescription.Width = static_cast<UINT>(ScreenWidth);
 	DepthDescription.Height = static_cast<UINT>(ScreenHeight);
@@ -402,19 +424,22 @@ void DeferredRenderer::BeginGeometryPass(ID3D11DeviceContext* DeviceContext)
 		return;
 	}
 
-	ID3D11RenderTargetView* GeometryTargets[4] = {
+	ID3D11RenderTargetView* GeometryTargets[5] = {
 		GBufferAlbedoRTV,
 		GBufferNormalRTV,
 		GBufferMaterialRTV,
-		GBufferShadowAlbedoRTV
+		GBufferShadowAlbedoRTV,
+		GBufferPickRTV
 	};
-	DeviceContext->OMSetRenderTargets(4, GeometryTargets, GBufferDepthDSV);
+	DeviceContext->OMSetRenderTargets(5, GeometryTargets, GBufferDepthDSV);
 
 	const float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	const float PickClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	DeviceContext->ClearRenderTargetView(GBufferAlbedoRTV, ClearColor);
 	DeviceContext->ClearRenderTargetView(GBufferNormalRTV, ClearColor);
 	DeviceContext->ClearRenderTargetView(GBufferMaterialRTV, ClearColor);
 	DeviceContext->ClearRenderTargetView(GBufferShadowAlbedoRTV, ClearColor);
+	DeviceContext->ClearRenderTargetView(GBufferPickRTV, PickClearColor);
 	DeviceContext->ClearDepthStencilView(GBufferDepthDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
@@ -425,8 +450,8 @@ void DeferredRenderer::EndGeometryPass(ID3D11DeviceContext* DeviceContext)
 		return;
 	}
 
-	ID3D11RenderTargetView* NullRenderTargets[4] = { nullptr, nullptr, nullptr, nullptr };
-	DeviceContext->OMSetRenderTargets(4, NullRenderTargets, nullptr);
+	ID3D11RenderTargetView* NullRenderTargets[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+	DeviceContext->OMSetRenderTargets(5, NullRenderTargets, nullptr);
 }
 
 void DeferredRenderer::RenderLightingPass(
@@ -749,6 +774,12 @@ void DeferredRenderer::ReleaseTargets()
 		GBufferShadowAlbedoRTV = nullptr;
 	}
 
+	if (GBufferPickRTV != nullptr)
+	{
+		GBufferPickRTV->Release();
+		GBufferPickRTV = nullptr;
+	}
+
 	if (GBufferAlbedoSRV != nullptr)
 	{
 		GBufferAlbedoSRV->Release();
@@ -807,6 +838,12 @@ void DeferredRenderer::ReleaseTargets()
 	{
 		GBufferShadowAlbedoTexture->Release();
 		GBufferShadowAlbedoTexture = nullptr;
+	}
+
+	if (GBufferPickTexture != nullptr)
+	{
+		GBufferPickTexture->Release();
+		GBufferPickTexture = nullptr;
 	}
 
 	if (GBufferDepthTexture != nullptr)
@@ -877,4 +914,228 @@ bool DeferredRenderer::CompileShader(ID3D11Device* Device, const std::string& Pa
 		Result = Device->CreatePixelShader((*ByteCode)->GetBufferPointer(), (*ByteCode)->GetBufferSize(), nullptr, reinterpret_cast<ID3D11PixelShader**>(ShaderObject));
 	}
 	return SUCCEEDED(Result);
+}
+
+void DeferredRenderer::ReleaseInspectReadbackStagingTextures()
+{
+	if (InspectReadbackAlbedoStagingTexture != nullptr)
+	{
+		InspectReadbackAlbedoStagingTexture->Release();
+		InspectReadbackAlbedoStagingTexture = nullptr;
+	}
+
+	if (InspectReadbackNormalStagingTexture != nullptr)
+	{
+		InspectReadbackNormalStagingTexture->Release();
+		InspectReadbackNormalStagingTexture = nullptr;
+	}
+
+	if (InspectReadbackMaterialStagingTexture != nullptr)
+	{
+		InspectReadbackMaterialStagingTexture->Release();
+		InspectReadbackMaterialStagingTexture = nullptr;
+	}
+
+	if (InspectReadbackPickStagingTexture != nullptr)
+	{
+		InspectReadbackPickStagingTexture->Release();
+		InspectReadbackPickStagingTexture = nullptr;
+	}
+
+	if (InspectReadbackDepthStagingTexture != nullptr)
+	{
+		InspectReadbackDepthStagingTexture->Release();
+		InspectReadbackDepthStagingTexture = nullptr;
+	}
+}
+
+void DeferredRenderer::EnsureInspectReadbackStagingTextures(ID3D11Device* Device) const
+{
+	if (InspectReadbackAlbedoStagingTexture != nullptr)
+	{
+		return;
+	}
+
+	if (Device == nullptr)
+	{
+		return;
+	}
+
+	D3D11_TEXTURE2D_DESC StagingDescription = {};
+	StagingDescription.Width = 1;
+	StagingDescription.Height = 1;
+	StagingDescription.MipLevels = 1;
+	StagingDescription.ArraySize = 1;
+	StagingDescription.SampleDesc.Count = 1;
+	StagingDescription.Usage = D3D11_USAGE_STAGING;
+	StagingDescription.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	StagingDescription.BindFlags = 0;
+
+	StagingDescription.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	Device->CreateTexture2D(&StagingDescription, nullptr, &InspectReadbackAlbedoStagingTexture);
+	Device->CreateTexture2D(&StagingDescription, nullptr, &InspectReadbackNormalStagingTexture);
+	Device->CreateTexture2D(&StagingDescription, nullptr, &InspectReadbackMaterialStagingTexture);
+
+	StagingDescription.Format = DXGI_FORMAT_R32_FLOAT;
+	Device->CreateTexture2D(&StagingDescription, nullptr, &InspectReadbackPickStagingTexture);
+
+	StagingDescription.Format = DXGI_FORMAT_R24G8_TYPELESS;
+	Device->CreateTexture2D(&StagingDescription, nullptr, &InspectReadbackDepthStagingTexture);
+}
+
+bool DeferredRenderer::ReadGBufferInspectPixel(
+	ID3D11Device* Device,
+	ID3D11DeviceContext* DeviceContext,
+	int PixelPositionX,
+	int PixelPositionY,
+	int ScreenWidth,
+	int ScreenHeight,
+	const DirectX::XMMATRIX& InverseViewProjectionMatrix,
+	DeferredGBufferInspectPixelResult& OutInspectResult) const
+{
+	OutInspectResult = {};
+
+	if (
+		Device == nullptr ||
+		DeviceContext == nullptr ||
+		ScreenWidth <= 0 ||
+		ScreenHeight <= 0 ||
+		GBufferAlbedoTexture == nullptr ||
+		GBufferNormalTexture == nullptr ||
+		GBufferMaterialTexture == nullptr ||
+		GBufferShadowAlbedoTexture == nullptr ||
+		GBufferPickTexture == nullptr ||
+		GBufferDepthTexture == nullptr)
+	{
+		return false;
+	}
+
+	const int ClampedPixelPositionX = (std::max)(0, (std::min)(PixelPositionX, ScreenWidth - 1));
+	const int ClampedPixelPositionY = (std::max)(0, (std::min)(PixelPositionY, ScreenHeight - 1));
+
+	EnsureInspectReadbackStagingTextures(Device);
+	if (
+		InspectReadbackAlbedoStagingTexture == nullptr ||
+		InspectReadbackNormalStagingTexture == nullptr ||
+		InspectReadbackMaterialStagingTexture == nullptr ||
+		InspectReadbackPickStagingTexture == nullptr ||
+		InspectReadbackDepthStagingTexture == nullptr)
+	{
+		return false;
+	}
+
+	D3D11_BOX SourceRegion = {};
+	SourceRegion.left = static_cast<UINT>(ClampedPixelPositionX);
+	SourceRegion.top = static_cast<UINT>(ClampedPixelPositionY);
+	SourceRegion.right = SourceRegion.left + 1;
+	SourceRegion.bottom = SourceRegion.top + 1;
+	SourceRegion.front = 0;
+	SourceRegion.back = 1;
+
+	DeviceContext->CopySubresourceRegion(InspectReadbackAlbedoStagingTexture, 0, 0, 0, 0, GBufferAlbedoTexture, 0, &SourceRegion);
+	DeviceContext->CopySubresourceRegion(InspectReadbackNormalStagingTexture, 0, 0, 0, 0, GBufferNormalTexture, 0, &SourceRegion);
+	DeviceContext->CopySubresourceRegion(InspectReadbackMaterialStagingTexture, 0, 0, 0, 0, GBufferMaterialTexture, 0, &SourceRegion);
+	DeviceContext->CopySubresourceRegion(InspectReadbackPickStagingTexture, 0, 0, 0, 0, GBufferPickTexture, 0, &SourceRegion);
+	DeviceContext->CopySubresourceRegion(InspectReadbackDepthStagingTexture, 0, 0, 0, 0, GBufferDepthTexture, 0, &SourceRegion);
+
+	DeviceContext->Flush();
+
+	auto MapHalf4TextureToFloat4 = [&](ID3D11Texture2D* StagingTexture, DirectX::XMFLOAT4& OutFloat4) -> bool
+	{
+		D3D11_MAPPED_SUBRESOURCE MappedSubresource = {};
+		const HRESULT MapResult = DeviceContext->Map(StagingTexture, 0, D3D11_MAP_READ, 0, &MappedSubresource);
+		if (FAILED(MapResult))
+		{
+			return false;
+		}
+
+		const DirectX::PackedVector::HALF* HalfSource = reinterpret_cast<const DirectX::PackedVector::HALF*>(MappedSubresource.pData);
+		DirectX::PackedVector::XMHALF4 Half4 = {};
+		Half4.x = HalfSource[0];
+		Half4.y = HalfSource[1];
+		Half4.z = HalfSource[2];
+		Half4.w = HalfSource[3];
+		const DirectX::XMVECTOR LoadedVector = DirectX::PackedVector::XMLoadHalf4(&Half4);
+		DirectX::XMStoreFloat4(&OutFloat4, LoadedVector);
+		DeviceContext->Unmap(StagingTexture, 0);
+		return true;
+	};
+
+	DirectX::XMFLOAT4 AlbedoSample = {};
+	DirectX::XMFLOAT4 NormalEncodedSample = {};
+	DirectX::XMFLOAT4 MaterialSample = {};
+	if (
+		MapHalf4TextureToFloat4(InspectReadbackAlbedoStagingTexture, AlbedoSample) == false ||
+		MapHalf4TextureToFloat4(InspectReadbackNormalStagingTexture, NormalEncodedSample) == false ||
+		MapHalf4TextureToFloat4(InspectReadbackMaterialStagingTexture, MaterialSample) == false)
+	{
+		return false;
+	}
+
+	float PickPackedFloat32 = 0.0f;
+	{
+		D3D11_MAPPED_SUBRESOURCE MappedPickSubresource = {};
+		const HRESULT PickMapResult = DeviceContext->Map(InspectReadbackPickStagingTexture, 0, D3D11_MAP_READ, 0, &MappedPickSubresource);
+		if (FAILED(PickMapResult))
+		{
+			return false;
+		}
+
+		const float* PickFloatSource = reinterpret_cast<const float*>(MappedPickSubresource.pData);
+		PickPackedFloat32 = PickFloatSource[0];
+		DeviceContext->Unmap(InspectReadbackPickStagingTexture, 0);
+	}
+
+	uint32_t PickIdentifierUint32 = 0;
+	std::memcpy(&PickIdentifierUint32, &PickPackedFloat32, sizeof(uint32_t));
+
+	uint32_t PackedDepthStencil = 0;
+	{
+		D3D11_MAPPED_SUBRESOURCE MappedDepthSubresource = {};
+		const HRESULT DepthMapResult = DeviceContext->Map(InspectReadbackDepthStagingTexture, 0, D3D11_MAP_READ, 0, &MappedDepthSubresource);
+		if (FAILED(DepthMapResult))
+		{
+			return false;
+		}
+
+		const uint32_t* DepthUintSource = reinterpret_cast<const uint32_t*>(MappedDepthSubresource.pData);
+		PackedDepthStencil = DepthUintSource[0];
+		DeviceContext->Unmap(InspectReadbackDepthStagingTexture, 0);
+	}
+
+	const uint32_t Depth24 = PackedDepthStencil & 0x00FFFFFFu;
+	const float DepthHardwareNormalized = static_cast<float>(Depth24) / 16777215.0f;
+
+	const DirectX::XMVECTOR EncodedNormalVector = DirectX::XMLoadFloat4(&NormalEncodedSample);
+	DirectX::XMVECTOR NormalWorldVector = DirectX::XMVectorSet(
+		(DirectX::XMVectorGetX(EncodedNormalVector) * 2.0f) - 1.0f,
+		(DirectX::XMVectorGetY(EncodedNormalVector) * 2.0f) - 1.0f,
+		(DirectX::XMVectorGetZ(EncodedNormalVector) * 2.0f) - 1.0f,
+		0.0f);
+	NormalWorldVector = DirectX::XMVector3Normalize(NormalWorldVector);
+
+	const float TextureCoordinateX = (static_cast<float>(ClampedPixelPositionX) + 0.5f) / static_cast<float>(ScreenWidth);
+	const float TextureCoordinateY = (static_cast<float>(ClampedPixelPositionY) + 0.5f) / static_cast<float>(ScreenHeight);
+	const float ClipCoordinateX = (TextureCoordinateX * 2.0f) - 1.0f;
+	const float ClipCoordinateY = 1.0f - (TextureCoordinateY * 2.0f);
+	const DirectX::XMVECTOR ClipPositionVector = DirectX::XMVectorSet(ClipCoordinateX, ClipCoordinateY, DepthHardwareNormalized, 1.0f);
+	DirectX::XMVECTOR WorldPositionVector = DirectX::XMVector4Transform(ClipPositionVector, InverseViewProjectionMatrix);
+	WorldPositionVector = DirectX::XMVectorScale(WorldPositionVector, 1.0f / DirectX::XMVectorGetW(WorldPositionVector));
+
+	OutInspectResult.AlbedoSample = AlbedoSample;
+	OutInspectResult.MaterialSample = MaterialSample;
+	OutInspectResult.DepthHardwareNormalized = DepthHardwareNormalized;
+	OutInspectResult.PickIdentifierUint32 = PickIdentifierUint32;
+	DirectX::XMStoreFloat3(&OutInspectResult.WorldPosition, WorldPositionVector);
+	OutInspectResult.NormalWorld = DirectX::XMFLOAT4(
+		DirectX::XMVectorGetX(NormalWorldVector),
+		DirectX::XMVectorGetY(NormalWorldVector),
+		DirectX::XMVectorGetZ(NormalWorldVector),
+		0.0f);
+
+	const bool HasDepthSurfaceHit = DepthHardwareNormalized < 0.9999f;
+	const bool HasPickSurfaceHit = PickIdentifierUint32 != 0;
+	OutInspectResult.HasSurfaceHit = HasDepthSurfaceHit || HasPickSurfaceHit;
+
+	return true;
 }

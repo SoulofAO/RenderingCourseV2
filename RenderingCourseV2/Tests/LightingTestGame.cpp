@@ -29,7 +29,7 @@ void LightingTestGame::BuildTestScene()
 	FloorActor->SetTransform(FloorTransform);
 	std::unique_ptr<MeshUniversalComponent> FloorMeshComponent = std::make_unique<MeshUniversalComponent>();
 	FloorMeshComponent->ModelMeshPath = "InputResources/Meshes/SimpleCube.fbx";
-	FloorMeshComponent->ShadowedAlbedoTexturePath = "InputResources/Textures/TestTexture.png";
+	FloorMeshComponent->ShadowedAlbedoTexturePath = "InputResources/Textures/NoiseTexture.png";
 	FloorMeshComponent->BaseColor = DirectX::XMFLOAT4(0.08f, 0.08f, 0.09f, 1.0f);
 	FloorMeshComponent->SpecularPower = 10.0f;
 	FloorMeshComponent->SpecularIntensity = 0.25f;
@@ -40,8 +40,8 @@ void LightingTestGame::BuildTestScene()
 	{
 		std::unique_ptr<Actor> SphereActor = std::make_unique<Actor>();
 		Transform SphereTransform;
-		SphereTransform.Position = DirectX::XMFLOAT3(-10.0f + static_cast<float>(ActorIndex) * 4.0f, 0.8f, 1.8f);
-		SphereTransform.Scale = DirectX::XMFLOAT3(1.2f, 1.2f, 1.2f);
+		SphereTransform.Position = DirectX::XMFLOAT3(-10.0f + static_cast<float>(ActorIndex) * 4.0f, 4.0f, 1.8f);
+		SphereTransform.Scale = DirectX::XMFLOAT3(1.2f*10, 1.2f*10, 1.2f*10);
 		SphereActor->SetTransform(SphereTransform);
 
 		std::unique_ptr<MeshUniversalComponent> SphereMeshComponent = std::make_unique<MeshUniversalComponent>();

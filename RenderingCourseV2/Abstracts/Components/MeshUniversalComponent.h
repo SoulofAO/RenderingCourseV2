@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Abstracts/Components/RenderingComponent.h"
+#include <cstdint>
 #include <d3d11.h>
 #include <directxmath.h>
 #include <string>
@@ -42,6 +43,14 @@ struct MeshUniversalMaterialBufferData
 	float UseNormalTexture;
 	float UseShadowedAlbedoTexture;
 	DirectX::XMFLOAT3 Padding0;
+};
+
+struct MeshUniversalPickBufferData
+{
+	uint32_t DeferredPickIdentifierUint32;
+	uint32_t PaddingUint32Value0;
+	uint32_t PaddingUint32Value1;
+	uint32_t PaddingUint32Value2;
 };
 
 class SceneViewportSubsystem;
@@ -100,6 +109,7 @@ private:
 	ID3D11Buffer* TransformConstantBuffer;
 	ID3D11Buffer* LightConstantBuffer;
 	ID3D11Buffer* MaterialConstantBuffer;
+	ID3D11Buffer* PickConstantBuffer;
 	ID3D11Buffer* VertexBuffer;
 	ID3D11Buffer* IndexBuffer;
 	ID3D11RasterizerState* RasterState;

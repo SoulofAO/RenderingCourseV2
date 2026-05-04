@@ -609,6 +609,15 @@ LRESULT Game::MessageHandler(HWND WindowHandle, UINT Message, WPARAM WParam, LPA
 		{
 			Input->OnKeyDown(VK_LBUTTON);
 		}
+
+		SceneViewportSubsystem* SceneViewportSubsystemInstance = GetSubsystem<SceneViewportSubsystem>();
+		if (SceneViewportSubsystemInstance != nullptr)
+		{
+			const int MousePositionX = static_cast<int>(LOWORD(LParam));
+			const int MousePositionY = static_cast<int>(HIWORD(LParam));
+			SceneViewportSubsystemInstance->RequestDeferredPixelInspectAtScreenPosition(MousePositionX, MousePositionY);
+		}
+
 		return 0;
 	}
 	case WM_LBUTTONUP:

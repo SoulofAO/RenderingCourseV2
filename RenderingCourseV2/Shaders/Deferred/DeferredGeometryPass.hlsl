@@ -6,6 +6,7 @@ struct GBUFFER_OUT
 	float4 Normal : SV_Target1;
 	float4 Material : SV_Target2;
 	float4 ShadowAlbedo : SV_Target3;
+	float PickPackedFloat32 : SV_Target4;
 };
 
 PS_IN VSMain(VS_IN Input)
@@ -34,5 +35,6 @@ GBUFFER_OUT PSMain(PS_IN Input)
 	Output.Normal = float4(normalize(Input.WorldNormal) * 0.5f + 0.5f, 1.0f);
 	Output.Material = float4(SpecularPower, SpecularIntensity, UseShadowedAlbedoTexture, 1.0f);
 	Output.ShadowAlbedo = float4(ShadowedAlbedoColor, BaseColor.a * ShadowedAlbedoSample.a);
+	Output.PickPackedFloat32 = asfloat(DeferredPickIdentifierUint32);
 	return Output;
 }

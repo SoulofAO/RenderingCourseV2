@@ -101,9 +101,12 @@ public:
 	void ClearFrameViewportOverride();
 	void SetFramePresentEnabled(bool NewFramePresentEnabled);
 
+	void RequestDeferredPixelInspectAtScreenPosition(int PixelPositionScreenX, int PixelPositionScreenY);
+
 	bool bDisplayChangedColor = false;
 
 private:
+	void ProcessPendingDeferredPixelInspectRequest();
 	RenderRuntimeGameInstanceSubsystem* ResolveRenderRuntimeSubsystem() const;
 	bool EnsureRenderingResourcesInitialized();
 
@@ -138,4 +141,8 @@ private:
 	RenderFrameContext ExternalRenderFrameContext;
 	HWND LastKnownWindowHandle;
 	mutable RenderRuntimeGameInstanceSubsystem* CachedRenderRuntimeSubsystem;
+
+	bool HasPendingDeferredPixelInspectRequest;
+	int PendingDeferredPixelInspectScreenPositionX;
+	int PendingDeferredPixelInspectScreenPositionY;
 };

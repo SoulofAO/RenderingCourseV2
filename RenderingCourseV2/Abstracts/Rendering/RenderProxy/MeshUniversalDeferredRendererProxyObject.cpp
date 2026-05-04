@@ -75,6 +75,14 @@ void MeshUniversalDeferredRendererProxyObject::RenderDeferredGeometryPass(const 
 		DeviceContext->PSSetConstantBuffers(2, 1, &OwnerComponent->MaterialConstantBuffer);
 	}
 
+	if (OwnerComponent->PickConstantBuffer != nullptr)
+	{
+		MeshUniversalPickBufferData PickBufferData = {};
+		PickBufferData.DeferredPickIdentifierUint32 = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(OwnerComponent));
+		DeviceContext->UpdateSubresource(OwnerComponent->PickConstantBuffer, 0, nullptr, &PickBufferData, 0, 0);
+		DeviceContext->PSSetConstantBuffers(3, 1, &OwnerComponent->PickConstantBuffer);
+	}
+
 	OwnerComponent->BindMaterialResources(DeviceContext);
 	if (OwnerComponent->DeferredVertexShader != nullptr && OwnerComponent->DeferredPixelShader != nullptr)
 	{

@@ -1,5 +1,6 @@
 #include "Abstracts/Subsystems/SceneViewportSubsystem.h"
 #include "Abstracts/Components/RenderingComponent.h"
+#include "Abstracts/Components/ActorComponent.h"
 #include "Abstracts/Components/LightComponent.h"
 #include "Abstracts/Core/Game.h"
 #include "Abstracts/Core/Actor.h"
@@ -8,8 +9,11 @@
 #include "Abstracts/Rendering/ForwardRenderPipeline.h"
 #include "Abstracts/Rendering/DeferredRenderPipeline.h"
 #include "Abstracts/Subsystems/RenderRuntimeGameInstanceSubsystem.h"
+#include "Abstracts/Components/MeshUniversalComponent.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <iostream>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -39,6 +43,9 @@ SceneViewportSubsystem::SceneViewportSubsystem()
 	, ExternalRenderFrameContext{}
 	, LastKnownWindowHandle(nullptr)
 	, CachedRenderRuntimeSubsystem(nullptr)
+	, HasPendingDeferredPixelInspectRequest(false)
+	, PendingDeferredPixelInspectScreenPositionX(0)
+	, PendingDeferredPixelInspectScreenPositionY(0)
 {
 	DirectX::XMStoreFloat4x4(&ViewMatrixStorage, DirectX::XMMatrixIdentity());
 	DirectX::XMStoreFloat4x4(&ProjectionMatrixStorage, DirectX::XMMatrixIdentity());
@@ -577,6 +584,8 @@ void SceneViewportSubsystem::RenderSceneFrame()
 		ActiveRenderPipeline->RenderFrame(this, RenderingComponents);
 	}
 
+	ProcessPendingDeferredPixelInspectRequest();
+
 	EndDearImGuiFrame();
 	EndFrame();
 }
@@ -715,4 +724,141 @@ RenderRuntimeGameInstanceSubsystem* SceneViewportSubsystem::ResolveRenderRuntime
 	}
 
 	return CachedRenderRuntimeSubsystem;
+}
+
+void SceneViewportSubsystem::RequestDeferredPixelInspectAtScreenPosition(int PixelPositionScreenX, int PixelPositionScreenY)
+{
+	PendingDeferredPixelInspectScreenPositionX = PixelPositionScreenX;
+	PendingDeferredPixelInspectScreenPositionY = PixelPositionScreenY;
+	HasPendingDeferredPixelInspectRequest = true;
+}
+
+void SceneViewportSubsystem::ProcessPendingDeferredPixelInspectRequest()
+{
+	if (HasPendingDeferredPixelInspectRequest == false)
+	{
+		return;
+	}
+
+	HasPendingDeferredPixelInspectRequest = false;
+
+	if (IsDeferredRenderingEnabled() == false)
+	{
+		std::cout << "DeferredPixelInspect: deferred pipeline is not active." << std::endl;
+		return;
+	}
+
+	if (DeferredRendererInstance == nullptr)
+	{
+		std::cout << "DeferredPixelInspect: deferred renderer is not available." << std::endl;
+		return;
+	}
+
+	ID3D11Device* ActiveDevice = GetDevice();
+	ID3D11DeviceContext* ActiveDeviceContext = GetDeviceContext();
+	if (ActiveDevice == nullptr || ActiveDeviceContext == nullptr)
+	{
+		std::cout << "DeferredPixelInspect: device is not available." << std::endl;
+		return;
+	}
+
+	const int ScreenWidth = GetScreenWidth();
+	const int ScreenHeight = GetScreenHeight();
+	if (ScreenWidth <= 0 || ScreenHeight <= 0)
+	{
+		std::cout << "DeferredPixelInspect: invalid screen size." << std::endl;
+		return;
+	}
+
+	DeferredGBufferInspectPixelResult InspectResult = {};
+	const DirectX::XMMATRIX ViewProjectionMatrix = GetViewMatrix() * GetProjectionMatrix();
+	const DirectX::XMMATRIX InverseViewProjectionMatrix = DirectX::XMMatrixInverse(nullptr, ViewProjectionMatrix);
+
+	const bool DidRead = DeferredRendererInstance->ReadGBufferInspectPixel(
+		ActiveDevice,
+		ActiveDeviceContext,
+		PendingDeferredPixelInspectScreenPositionX,
+		PendingDeferredPixelInspectScreenPositionY,
+		ScreenWidth,
+		ScreenHeight,
+		InverseViewProjectionMatrix,
+		InspectResult);
+
+	if (DidRead == false)
+	{
+		std::cout << "DeferredPixelInspect: readback failed." << std::endl;
+		return;
+	}
+
+	std::cout << "DeferredPixelInspect: screen pixel "
+		<< PendingDeferredPixelInspectScreenPositionX << ", " << PendingDeferredPixelInspectScreenPositionY << std::endl;
+	std::cout << "DeferredPixelInspect: world position "
+		<< InspectResult.WorldPosition.x << ", " << InspectResult.WorldPosition.y << ", " << InspectResult.WorldPosition.z << std::endl;
+	std::cout << "DeferredPixelInspect: world normal "
+		<< InspectResult.NormalWorld.x << ", " << InspectResult.NormalWorld.y << ", " << InspectResult.NormalWorld.z << std::endl;
+	std::cout << "DeferredPixelInspect: albedo sample "
+		<< InspectResult.AlbedoSample.x << ", " << InspectResult.AlbedoSample.y << ", " << InspectResult.AlbedoSample.z << ", " << InspectResult.AlbedoSample.w << std::endl;
+	std::cout << "DeferredPixelInspect: material "
+		<< InspectResult.MaterialSample.x << ", " << InspectResult.MaterialSample.y << ", " << InspectResult.MaterialSample.z << ", " << InspectResult.MaterialSample.w << std::endl;
+	std::cout << "DeferredPixelInspect: depth " << InspectResult.DepthHardwareNormalized << std::endl;
+	std::cout << "DeferredPixelInspect: pick id " << InspectResult.PickIdentifierUint32 << std::endl;
+	std::cout << "DeferredPixelInspect: surface hit " << (InspectResult.HasSurfaceHit ? "true" : "false") << std::endl;
+
+	if (InspectResult.HasSurfaceHit == false)
+	{
+		return;
+	}
+
+	Game* OwningGame = GetOwningGame();
+	if (OwningGame == nullptr)
+	{
+		return;
+	}
+
+	MeshUniversalComponent* FoundMeshUniversalComponent = nullptr;
+	Actor* FoundOwnerActor = nullptr;
+	const std::vector<Actor*> AllActors = OwningGame->GetAllActorsByClass<Actor>();
+	for (Actor* ExistingActor : AllActors)
+	{
+		if (ExistingActor == nullptr)
+		{
+			continue;
+		}
+
+		const std::vector<std::unique_ptr<ActorComponent>>& ActorComponents = ExistingActor->GetComponents();
+		for (const std::unique_ptr<ActorComponent>& ExistingComponent : ActorComponents)
+		{
+			MeshUniversalComponent* CandidateMesh = dynamic_cast<MeshUniversalComponent*>(ExistingComponent.get());
+			if (CandidateMesh == nullptr)
+			{
+				continue;
+			}
+
+			const uint32_t CandidatePickIdentifier = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(CandidateMesh));
+			if (CandidatePickIdentifier == InspectResult.PickIdentifierUint32)
+			{
+				FoundMeshUniversalComponent = CandidateMesh;
+				FoundOwnerActor = ExistingActor;
+				break;
+			}
+		}
+
+		if (FoundMeshUniversalComponent != nullptr)
+		{
+			break;
+		}
+	}
+
+	if (FoundMeshUniversalComponent == nullptr)
+	{
+		std::cout << "DeferredPixelInspect: mesh universal component not resolved for pick id." << std::endl;
+		return;
+	}
+
+	std::cout << "DeferredPixelInspect: owner actor unique index " << FoundOwnerActor->GetUniqueIndex() << std::endl;
+	std::cout << "DeferredPixelInspect: albedo texture path " << FoundMeshUniversalComponent->AlbedoTexturePath << std::endl;
+	std::cout << "DeferredPixelInspect: normal texture path " << FoundMeshUniversalComponent->NormalTexturePath << std::endl;
+	std::cout << "DeferredPixelInspect: shadowed albedo texture path " << FoundMeshUniversalComponent->ShadowedAlbedoTexturePath << std::endl;
+	std::cout << "DeferredPixelInspect: specular texture path " << FoundMeshUniversalComponent->SpecularTexturePath << std::endl;
+	std::cout << "DeferredPixelInspect: emissive texture path " << FoundMeshUniversalComponent->EmissiveTexturePath << std::endl;
 }

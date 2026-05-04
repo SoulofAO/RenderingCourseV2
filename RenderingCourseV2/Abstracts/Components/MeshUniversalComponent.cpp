@@ -27,6 +27,7 @@ MeshUniversalComponent::MeshUniversalComponent()
 	, TransformConstantBuffer(nullptr)
 	, LightConstantBuffer(nullptr)
 	, MaterialConstantBuffer(nullptr)
+	, PickConstantBuffer(nullptr)
 	, VertexBuffer(nullptr)
 	, IndexBuffer(nullptr)
 	, RasterState(nullptr)
@@ -249,6 +250,12 @@ bool MeshUniversalComponent::InitializeRenderResources(ID3D11Device* Device, Sce
 	MaterialBufferDescription.ByteWidth = static_cast<UINT>(sizeof(MeshUniversalMaterialBufferData));
 	Device->CreateBuffer(&MaterialBufferDescription, nullptr, &MaterialConstantBuffer);
 
+	D3D11_BUFFER_DESC PickBufferDescription = {};
+	PickBufferDescription.Usage = D3D11_USAGE_DEFAULT;
+	PickBufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	PickBufferDescription.ByteWidth = static_cast<UINT>(sizeof(MeshUniversalPickBufferData));
+	Device->CreateBuffer(&PickBufferDescription, nullptr, &PickConstantBuffer);
+
 	D3D11_SAMPLER_DESC SamplerDescription = {};
 	SamplerDescription.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	SamplerDescription.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -431,6 +438,12 @@ void MeshUniversalComponent::ReleaseRenderResources()
 	{
 		MaterialConstantBuffer->Release();
 		MaterialConstantBuffer = nullptr;
+	}
+
+	if (PickConstantBuffer != nullptr)
+	{
+		PickConstantBuffer->Release();
+		PickConstantBuffer = nullptr;
 	}
 
 	if (VertexBuffer != nullptr)

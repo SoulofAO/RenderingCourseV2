@@ -9,6 +9,17 @@
 constexpr int MaximumDeferredPointLightCount = 16;
 constexpr int MaximumDeferredSpotLightCount = 16;
 
+struct DeferredGBufferInspectPixelResult
+{
+	bool HasSurfaceHit;
+	DirectX::XMFLOAT4 AlbedoSample;
+	DirectX::XMFLOAT4 NormalWorld;
+	DirectX::XMFLOAT4 MaterialSample;
+	float DepthHardwareNormalized;
+	DirectX::XMFLOAT3 WorldPosition;
+	uint32_t PickIdentifierUint32;
+};
+
 struct DeferredPointLightData
 {
 	DirectX::XMFLOAT3 Position;
@@ -74,20 +85,34 @@ public:
 	ID3D11DepthStencilView* GetDepthStencilView() const;
 	ID3D11ShaderResourceView* GetGBufferDepthShaderResourceView() const;
 
+	bool ReadGBufferInspectPixel(
+		ID3D11Device* Device,
+		ID3D11DeviceContext* DeviceContext,
+		int PixelPositionX,
+		int PixelPositionY,
+		int ScreenWidth,
+		int ScreenHeight,
+		const DirectX::XMMATRIX& InverseViewProjectionMatrix,
+		DeferredGBufferInspectPixelResult& OutInspectResult) const;
+
 private:
 	void ReleaseTargets();
 	void ReleaseShadowResources();
+	void ReleaseInspectReadbackStagingTextures();
+	void EnsureInspectReadbackStagingTextures(ID3D11Device* Device) const;
 	bool CompileShader(ID3D11Device* Device, const std::string& Path, const char* EntryPoint, const char* Model, ID3DBlob** ByteCode, ID3D11DeviceChild** ShaderObject);
 
 	ID3D11Texture2D* GBufferAlbedoTexture;
 	ID3D11Texture2D* GBufferNormalTexture;
 	ID3D11Texture2D* GBufferMaterialTexture;
 	ID3D11Texture2D* GBufferShadowAlbedoTexture;
+	ID3D11Texture2D* GBufferPickTexture;
 	ID3D11Texture2D* GBufferDepthTexture;
 	ID3D11RenderTargetView* GBufferAlbedoRTV;
 	ID3D11RenderTargetView* GBufferNormalRTV;
 	ID3D11RenderTargetView* GBufferMaterialRTV;
 	ID3D11RenderTargetView* GBufferShadowAlbedoRTV;
+	ID3D11RenderTargetView* GBufferPickRTV;
 	ID3D11ShaderResourceView* GBufferAlbedoSRV;
 	ID3D11ShaderResourceView* GBufferNormalSRV;
 	ID3D11ShaderResourceView* GBufferMaterialSRV;
@@ -115,4 +140,10 @@ private:
 	float ShadowMaximumDistanceSetting;
 	int CachedWidth;
 	int CachedHeight;
+
+	mutable ID3D11Texture2D* InspectReadbackAlbedoStagingTexture;
+	mutable ID3D11Texture2D* InspectReadbackNormalStagingTexture;
+	mutable ID3D11Texture2D* InspectReadbackMaterialStagingTexture;
+	mutable ID3D11Texture2D* InspectReadbackPickStagingTexture;
+	mutable ID3D11Texture2D* InspectReadbackDepthStagingTexture;
 };
