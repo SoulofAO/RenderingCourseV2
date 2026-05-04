@@ -55,8 +55,11 @@ cbuffer DeferredLightBuffer : register(b1)
 	float3 ShadowCascadeCountValuePadding;
 	float4x4 CascadeViewProjectionMatrices[4];
 	float UseShadowedAlbedoTextureWithoutShadowDimming;
+	float UseShadowedAlbedoTextureShadowEfficiencyAdjustment;
 	float DeferredDebugBufferViewMode;
-	float2 DeferredDebugBufferViewModePadding;
+	float DeferredDebugBufferViewModePadding0;
+	float DeferredDebugBufferViewModePadding1;
+	float3 DeferredDebugBufferViewModePadding2;
 };
 
 struct VS_OUT
@@ -267,10 +270,19 @@ float4 PSMain(VS_OUT Input) : SV_Target
 	float EffectiveShadowVisibility = ShadowVisibility;
 	if (UseShadowedAlbedoTexture > 0.5f && ShadowVisibility < 0.999f)
 	{
-		LightingAlbedo = ShadowAlbedo.rgb;
-		if (UseShadowedAlbedoTextureWithoutShadowDimming > 0.5f)
+		if (UseShadowedAlbedoTextureShadowEfficiencyAdjustment > 0.5f)
 		{
-			EffectiveShadowVisibility = 1.0f;
+			float ShadowAlbedoValueSum = ShadowAlbedo.r + ShadowAlbedo.g + ShadowAlbedo.b;
+			float ShadowEfficiencyOffset = (ShadowAlbedoValueSum - 1.5f) * 0.33333334f;
+			EffectiveShadowVisibility = saturate(EffectiveShadowVisibility + ShadowEfficiencyOffset);
+		}
+		else
+		{
+			LightingAlbedo = ShadowAlbedo.rgb;
+			if (UseShadowedAlbedoTextureWithoutShadowDimming > 0.5f)
+			{
+				EffectiveShadowVisibility = 0.5f;
+			}
 		}
 	}
 	float3 AmbientColor = Albedo.rgb * 0.15f;

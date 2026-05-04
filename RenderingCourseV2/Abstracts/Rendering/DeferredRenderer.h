@@ -55,6 +55,7 @@ public:
 		float UseFullBrightnessWithoutLighting,
 		float ShadowStrength,
 		float UseShadowedAlbedoTextureWithoutShadowDimming,
+		float UseShadowedAlbedoTextureShadowEfficiencyAdjustment,
 		float DeferredDebugBufferViewMode);
 	void PrepareCascadedShadowMaps(
 		const DirectX::XMMATRIX& CameraViewMatrix,

@@ -92,6 +92,8 @@ public:
 	bool GetGridFloorEnabled() const;
 	void SetUseShadowedAlbedoTextureWithoutShadowDimming(bool NewUseShadowedAlbedoTextureWithoutShadowDimming);
 	bool GetUseShadowedAlbedoTextureWithoutShadowDimming() const;
+	void SetUseShadowedAlbedoTextureShadowEfficiencyAdjustment(bool NewUseShadowedAlbedoTextureShadowEfficiencyAdjustment);
+	bool GetUseShadowedAlbedoTextureShadowEfficiencyAdjustment() const;
 
 	template<typename TSubsystem>
 	TSubsystem* GetSubsystem() const
@@ -220,6 +222,7 @@ protected:
 	bool IsGridFloorEnabled;
 	bool IsParticleIndexOverlayEnabled;
 	bool UseShadowedAlbedoTextureWithoutShadowDimming;
+	bool UseShadowedAlbedoTextureShadowEfficiencyAdjustment;
 	DirectX::XMFLOAT3 WorldBoundarySphereCenter;
 	float WorldBoundarySphereRadius;
 	bool IsEmbeddedPlayStarted;

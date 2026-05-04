@@ -124,6 +124,7 @@ void DeferredRenderPipeline::RenderFrame(
 		SceneViewport->GetUseFullBrightnessWithoutLighting(),
 		IsShadowRenderingEnabled ? 1.0f : 0.0f,
 		SceneViewport->GetUseShadowedAlbedoTextureWithoutShadowDimming() ? 1.0f : 0.0f,
+		SceneViewport->GetUseShadowedAlbedoTextureShadowEfficiencyAdjustment() ? 1.0f : 0.0f,
 		static_cast<float>(SceneViewport->GetDeferredDebugBufferViewMode()));
 
 	ID3D11DepthStencilView* SceneDepthStencilView = SceneViewport->GetDepthStencilView();
