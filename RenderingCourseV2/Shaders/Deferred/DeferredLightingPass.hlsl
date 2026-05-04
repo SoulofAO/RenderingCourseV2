@@ -218,6 +218,14 @@ float3 CalculateSpotLightContribution(
 	return DiffuseColor + SpecularColor;
 }
 
+float CalculateShadowNoise(float3 WorldPosition)
+{
+	const float NoiseScale = 0.75f;
+	float3 QuantizedWorldPosition = floor(WorldPosition * NoiseScale) / NoiseScale;
+	float NoiseSeed = dot(QuantizedWorldPosition, float3(12.9898f, 78.233f, 37.719f));
+	return frac(sin(NoiseSeed) * 43758.5453f);
+}
+
 float4 PSMain(VS_OUT Input) : SV_Target
 {
 	float4 Albedo = GBufferAlbedo.Sample(GBufferSampler, Input.TextureCoordinates);
@@ -265,25 +273,13 @@ float4 PSMain(VS_OUT Input) : SV_Target
 	{
 		return float4(ShadowVisibility, ShadowVisibility, ShadowVisibility, 1.0f);
 	}
-	float UseShadowedAlbedoTexture = Material.z;
 	float3 LightingAlbedo = Albedo.rgb;
 	float EffectiveShadowVisibility = ShadowVisibility;
-	if (UseShadowedAlbedoTexture > 0.5f && ShadowVisibility < 0.999f)
+	if (ShadowVisibility < 0.999f)
 	{
-		if (UseShadowedAlbedoTextureShadowEfficiencyAdjustment > 0.5f)
-		{
-			float ShadowAlbedoValueSum = ShadowAlbedo.r + ShadowAlbedo.g + ShadowAlbedo.b;
-			float ShadowEfficiencyOffset = (ShadowAlbedoValueSum - 1.5f) * 0.33333334f;
-			EffectiveShadowVisibility = saturate(EffectiveShadowVisibility + ShadowEfficiencyOffset);
-		}
-		else
-		{
-			LightingAlbedo = ShadowAlbedo.rgb;
-			if (UseShadowedAlbedoTextureWithoutShadowDimming > 0.5f)
-			{
-				EffectiveShadowVisibility = 0.5f;
-			}
-		}
+		float ShadowNoise = CalculateShadowNoise(WorldPosition);
+		float ShadowNoiseOffset = (ShadowNoise - 0.5f) * 0.7f;
+		EffectiveShadowVisibility = saturate(EffectiveShadowVisibility + ShadowNoiseOffset);
 	}
 	float3 AmbientColor = Albedo.rgb * 0.15f;
 	float3 DirectionalDiffuseColor = LightingAlbedo * Diffuse * DirectionalLightColor.rgb * DirectionalLightIntensity * EffectiveShadowVisibility;
